@@ -450,7 +450,12 @@ export class QuranDatasetLoader {
     if (doFetch && url) {
       try {
         const response = await doFetch(url, { cache: this.learning?.dataset?.cacheBust ? 'no-store' : 'default' });
-        if (response && response.ok) {
+        const contentType = response?.headers?.get?.('content-type') || '';
+        if (response && response.ok && contentType && !/json/i.test(contentType)) {
+          // Dev servers answer unknown paths with index.html (SPA fallback): that is
+          // «no dataset here», not a broken one — fall back to the placeholder sample.
+          report.remoteError = 'not-json-response';
+        } else if (response && response.ok) {
           const json = await response.json();
           const normalized = normalizeDataset(json, { origin: 'remote' });
           const validation = validateDataset(normalized);
