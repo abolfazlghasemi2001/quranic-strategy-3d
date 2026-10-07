@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "شهر نور — بازی شهرسازی و استراتژی سه‌بعدی با الهام از قصه‌های قرآنی (فاز ۲: چیدمان ساختمان و HUD)",
+  "description": "شهر نور — بازی شهرسازی و استراتژی سه‌بعدی با الهام از قصه‌های قرآنی (فاز ۳: اقتصاد و زمان)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "node tools/check.mjs"
+    "check": "node tools/check.mjs",
+    "smoke": "node tools/smoke.mjs"
   },
   "keywords": [
     "threejs",
@@ -22,6 +23,8 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^30.1.2",
     "vite": "^7.3.7"
   }
 }

@@ -24,8 +24,13 @@ import {
   mergeGeometries,
 } from '../src/core/GeometryUtils.js';
 import { TerrainMap } from '../src/world/TerrainMap.js';
+import { World } from '../src/world/World.js';
 import { generatePlacements, splitPlacementsByChunk } from '../src/world/Placement.js';
 import { OrbitCameraRig } from '../src/core/OrbitCameraRig.js';
+import { GameState } from '../src/game/GameState.js';
+import { EconomySystem } from '../src/game/EconomySystem.js';
+import { BuildQueue } from '../src/game/BuildQueue.js';
+import { SaveSystem, migrateRecord, SAVE_SCHEMA_VERSION } from '../src/game/SaveSystem.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
@@ -36,6 +41,9 @@ const terrain = readJson('src/data/terrain.json');
 const quality = readJson('src/data/quality.json');
 const gameplay = readJson('src/data/gameplay.json');
 const strings = readJson('src/data/strings.fa.json');
+const economyData = readJson('src/data/economy.json');
+const balanceData = readJson('src/data/balance.json');
+const buildingsData = readJson('src/data/buildings.json');
 
 const WORLD_WIDTH = terrain.grid.cols * terrain.tileSize;
 const WORLD_DEPTH = terrain.grid.rows * terrain.tileSize;
@@ -51,6 +59,16 @@ function makeConfig(tier = 'high') {
     quality: { tier, ...quality.defaults, ...(quality.tiers[tier] || {}) },
     targets: quality.targets,
     seed: world.seed >>> 0,
+    // Mirrors src/core/Config.js tile math (Config imports JSON → not loadable in plain Node).
+    worldToTile(x, z) {
+      return { col: x / terrain.tileSize, row: z / terrain.tileSize };
+    },
+    clampTile(col, row) {
+      return {
+        col: clamp(Math.round(col - 0.5), 0, terrain.grid.cols - 1),
+        row: clamp(Math.round(row - 0.5), 0, terrain.grid.rows - 1),
+      };
+    },
   };
   Object.defineProperties(config, {
     tileSize: { get: () => terrain.tileSize },
@@ -82,14 +100,31 @@ function makeConfig(tier = 'high') {
 
 const results = [];
 let failures = 0;
+const pending = [];
 
 function test(name, fn) {
   try {
-    fn();
+    const out = fn();
+    if (out && typeof out.then === 'function') {
+      // async test: resolve before the report (see await flushPending() below)
+      pending.push(
+        out.then(() => results.push({ name, ok: true, message: '' })).catch((error) => {
+          failures += 1;
+          results.push({ name, ok: false, message: error.message });
+        }),
+      );
+      return;
+    }
     results.push({ name, ok: true, message: '' });
   } catch (error) {
     failures += 1;
     results.push({ name, ok: false, message: error.message });
+  }
+}
+
+async function flushPending() {
+  while (pending.length > 0) {
+    await Promise.all(pending.splice(0, pending.length));
   }
 }
 
@@ -261,6 +296,26 @@ test('terrain map: tile flags mark the road grid', () => {
   assert(flags.length === config.cols * config.rows, 'flag grid size');
   const pathTiles = Array.from(flags).filter((value) => (value & 1) !== 0).length;
   assert(pathTiles > 150, `expected the road network to cover many tiles (got ${pathTiles})`);
+});
+
+test('world: getCellAt maps tile centres/edges to their own tile (regression: half-tile shift)', () => {
+  const config = makeConfig();
+  const w = new World({ config });
+  const ts = terrain.tileSize;
+  const cases = [[0, 0], [1, 1], [5, 5], [6, 5], [10, 10], [19, 19], [20, 20], [39, 39]];
+  for (const [c, r] of cases) {
+    // Exact tile centre — what a tap ray through the middle of a tile hits.
+    const centre = w.getCellAt((c + 0.5) * ts, (r + 0.5) * ts);
+    assert(centre && centre.col === c && centre.row === r, `centre (${c},${r}) → ${JSON.stringify(centre)}`);
+    // Last fraction inside the tile still belongs to it (floor semantics).
+    const edge = w.getCellAt((c + 1) * ts - 1e-6, (r + 1) * ts - 1e-6);
+    assert(edge && edge.col === c && edge.row === r, `edge (${c},${r}) → ${JSON.stringify(edge)}`);
+  }
+  // A coordinate exactly on a boundary belongs to the next tile.
+  const boundary = w.getCellAt(10 * ts, 10 * ts);
+  assert(boundary.col === 10 && boundary.row === 10, `boundary → ${JSON.stringify(boundary)}`);
+  // Off the grid → null (keeps taps outside the map from selecting anything).
+  assert(w.getCellAt(-1, 4) === null && w.getCellAt(4, -1) === null, 'outside grid must be null');
 });
 
 /* -------------------------------------------------------------- placement */
@@ -486,10 +541,281 @@ test('utils: math helpers behave', () => {
   assert(Math.abs(degToRad(180) - Math.PI) < 1e-9, 'degToRad');
 });
 
-/* ------------------------------------------------------------------ report */
+/* ================================================== phase 3: economy & time */
+
+const HOUR = 3600 * 1000;
+
+/** Minimal game wiring for economy/queue tests (no DOM, no Three). */
+function makeEconomy({ seedTown = true } = {}) {
+  const state = new GameState({ economy: economyData });
+  const economy = new EconomySystem({ economy: economyData, balance: balanceData, defs: buildingsData.buildings, state });
+  const queue = new BuildQueue({ economyData, economy, state });
+  const T0 = 1_700_000_000_000; // fixed epoch for determinism
+  if (seedTown) {
+    const tc = buildingsData.buildings.find((b) => b.id === 'town-center');
+    state.createEntity({ type: tc.id, name: tc.name, col: 18, row: 18, size: tc.size, level: 1, status: 'ready', lastAccrualAt: T0 });
+  }
+  return { state, economy, queue, T0 };
+}
+
+function addProducer(economy, state, defId, at = 0) {
+  const def = buildingsData.buildings.find((b) => b.id === defId);
+  return state.createEntity({
+    type: def.id, name: def.name, col: 1, row: 1, size: def.size, level: 1,
+    status: 'ready', pending: 0, lastAccrualAt: at,
+  });
+}
+
+test('balance: every building has a 10-level curve with monotonic costs and times', () => {
+  const ids = buildingsData.buildings.map((b) => b.id);
+  assert(balanceData.maxLevel === 10, 'maxLevel must be 10');
+  for (const id of ids) {
+    const table = balanceData.buildings[id];
+    assert(table && table.levels.length === 10, `${id}: expected 10 levels`);
+    for (let i = 0; i < 10; i += 1) {
+      const entry = table.levels[i];
+      assert(entry.level === i + 1, `${id}: level label ${entry.level} !== ${i + 1}`);
+      assert(entry.cost && entry.cost.rizq >= 0 && entry.cost.nur >= 0 && entry.cost.hekmat >= 0, `${id} L${i + 1}: cost shape`);
+      assert(Number.isFinite(entry.seconds) && entry.seconds > 0, `${id} L${i + 1}: seconds`);
+      if (i > 0) {
+        const prev = table.levels[i - 1];
+        assert(entry.cost.rizq >= prev.cost.rizq, `${id}: rizq cost must not decrease at L${i + 1}`);
+        assert(entry.seconds >= prev.seconds, `${id}: seconds must not decrease at L${i + 1}`);
+      }
+      const def = buildingsData.buildings.find((b) => b.id === id);
+      if (def.produces) {
+        assert(entry.resource === def.produces, `${id} L${i + 1}: resource tag`);
+        assert(entry.ratePerHour > 0 && (i === 0 || entry.ratePerHour >= table.levels[i - 1].ratePerHour), `${id} L${i + 1}: ratePerHour`);
+      }
+    }
+  }
+});
+
+test('economy: starting resources fit inside base storage capacity', () => {
+  for (const key of Object.keys(economyData.storage.base)) {
+    assert(economyData.starting[key] <= economyData.storage.base[key], `${key}: starting must fit base capacity`);
+  }
+  assert(economyData.builders.total === 2, 'two builders (acceptance ③)');
+  assert(economyData.queue.maxJobs >= economyData.builders.total, 'queue must hold at least the active jobs');
+  assert(economyData.speedup.minGohar >= 1 && economyData.speedup.goharPerMinute >= 1, 'speedup pricing');
+  assert(economyData.goharSources.dailyBonus > 0 && economyData.goharSources.townCenterLevelReward > 0, 'gohar in-game sources exist');
+  assert(economyData.offline.maxHours > 0, 'offline cap exists');
+});
+
+test('economy: capacity = base + per-level warehouse bonus (ready only)', () => {
+  const { state, economy } = makeEconomy();
+  const base = economy.capacity();
+  assert(base.rizq === economyData.storage.base.rizq, 'base rizq');
+  const wh = addProducer(economy, state, 'warehouse');
+  wh.status = 'building'; // under construction: no capacity yet
+  assert(economy.capacity().rizq === base.rizq, 'building warehouse grants no capacity');
+  wh.status = 'ready';
+  wh.level = 2;
+  assert(
+    economy.capacity().rizq === base.rizq + 2 * economyData.storage.perWarehouseLevel.rizq,
+    'ready warehouse adds level × per-level capacity',
+  );
+  assert(economy.freeCapacity('rizq') === economy.capacity().rizq - state.resources.rizq, 'free = cap - stored');
+});
+
+test('economy: production accrues at rate/hour and stops at the buffer ceiling', () => {
+  const { state, economy, T0 } = makeEconomy();
+  const farm = addProducer(economy, state, 'farm', T0);
+  const rate = economy.rateOf(farm);
+  economy.accrue(T0 + 10 * 60 * 1000); // 10 minutes
+  assert(Math.abs(farm.pending - (rate * 10) / 60) < 1e-6, `10min of production (got ${farm.pending})`);
+  economy.accrue(T0 + 100 * HOUR); // way past bufferHours
+  const cap = economy.bufferCap(farm);
+  assert(farm.pending <= cap + 1e-6, 'buffer cap respected');
+  assert(Math.abs(farm.pending - cap) < 1e-6, 'pending settles exactly at buffer cap');
+});
+
+test('economy: production stops when storage is full (acceptance ②)', () => {
+  const { state, economy, T0 } = makeEconomy();
+  const farm = addProducer(economy, state, 'farm', T0);
+  state.resources.rizq = economy.capacity().rizq; // fill the warehouse
+  economy.accrue(T0 + 60 * 60 * 1000);
+  assert(farm.pending === 0, 'no production while storage is full');
+  // spending frees space → production resumes
+  state.resources.rizq -= 100;
+  economy.accrue(T0 + 61 * 60 * 1000);
+  assert(farm.pending > 0, 'production resumes once there is room');
+});
+
+test('economy: harvest moves min(pending, free) and never exceeds capacity', () => {
+  const { state, economy, T0 } = makeEconomy();
+  const farm = addProducer(economy, state, 'farm', T0);
+  const cap = economy.capacity().rizq;
+  state.resources.rizq = cap - 50;
+  economy.accrue(T0 + 60 * 60 * 1000); // pending >> 50
+  assert(farm.pending > 50, 'pending exceeds free space');
+  const result = economy.harvest(farm, T0 + 60 * 60 * 1000);
+  assert(result.moved === 50, `harvest clamps to free capacity (got ${result.moved})`);
+  assert(state.resources.rizq === cap, 'storage ends exactly at capacity');
+  assert(farm.pending > 0, 'leftover stays pending for later');
+  assert(result.full === true, 'full flag set for the toast');
+});
+
+test('economy: offline accrual is clamped and backward clocks resync (acceptance ⑤)', () => {
+  const { state, economy, T0 } = makeEconomy();
+  const farm = addProducer(economy, state, 'farm', T0);
+  economy.accrue(T0 + 1000 * HOUR); // absurd forward jump
+  assert(farm.pending <= economy.bufferCap(farm) + 1e-6, 'offline gain bounded by buffer/capacity');
+  // backward clock: gap must be zero, no negative production
+  const before = farm.pending;
+  economy.accrue(T0);
+  assert(farm.pending === before, 'backward clock produces nothing');
+  assert(farm.lastAccrualAt === T0, 'backward clock resyncs the timestamp');
+});
+
+test('economy: speedup cost = max(minGohar, ceil(remaining minutes) × perMinute)', () => {
+  const { economy } = makeEconomy();
+  const now = 1_700_000_000_000;
+  const job = { status: 'active', endsAt: now + 90 * 1000 }; // 1.5 min left
+  const expected = Math.max(economyData.speedup.minGohar, 2 * economyData.speedup.goharPerMinute);
+  assert(economy.speedupCost(job, now) === expected, `speedup of 90s costs ${expected}`);
+  const job2 = { status: 'active', endsAt: now + 5 * 1000 };
+  assert(economy.speedupCost(job2, now) === economyData.speedup.minGohar, 'sub-minute remainder costs the minimum');
+  assert(economy.speedupCost({ status: 'queued' }, now) === null, 'queued jobs cannot be sped up');
+});
+
+test('economy: gohar has no Math.random and no purchase path', async () => {
+  for (const file of ['src/game/EconomySystem.js', 'src/game/BuildQueue.js', 'src/game/SaveSystem.js']) {
+    const source = readFileSync(resolve(root, file), 'utf8');
+    assert(!source.includes('Math.random'), `${file}: no randomness in economy/save logic`);
+    // strip comments, then look for real purchase/buy APIs (not prose)
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert(!/\b(purchase|buy|lootBox|gacha)\s*\(/i.test(code), `${file}: no purchase calls`);
+  }
+});
+
+test('queue: two builders run first jobs, others wait, chained fast-forward works', () => {
+  const { state, economy, queue } = makeEconomy();
+  const now = 1_700_000_000_000;
+  const mk = (targetLevel, entityId) => ({ kind: 'upgrade', entityId, type: 'town-center', targetLevel, durationMs: 60_000 });
+  const r1 = queue.enqueue(mk(2, 1), now);
+  const r2 = queue.enqueue(mk(3, 2), now);
+  const r3 = queue.enqueue(mk(4, 3), now);
+  assert(r1.ok && r2.ok && r3.ok, 'three jobs accepted (maxJobs ≥ 3)');
+  assert(queue.activeJobs().length === 2, 'exactly 2 active jobs (acceptance ③)');
+  assert(queue.queuedJobs().length === 1, 'third job queued');
+  assert(economy.state.jobs[2].status === 'queued', 'FIFO: third enqueue waits when builders are busy');
+
+  // First minute: one finishes → the queued job takes the freed builder.
+  const finished = queue.tick(now + 60_000);
+  assert(finished.length === 2, `two jobs due at t+60s (got ${finished.length})`);
+  // Both actives ended at now+60s; the queued job was promoted chained onto
+  // that completion time (not from `now`), and one builder is then idle.
+  const active = queue.activeJobs();
+  assert(active.length === 1, `promoted job is the only active one (got ${active.length})`);
+  const promoted = active[0];
+  assert(promoted.targetLevel === 4, 'the queued job is the one running');
+  assert(promoted.startedAt === now + 60_000, 'queued job chained onto completion time');
+  assert(promoted.endsAt === now + 120_000, 'chained end time = start + duration');
+  assert(queue.jobs.length === 1, 'completed jobs leave the queue');
+
+  // Long offline gap: everything resolves in chronological order in one tick.
+  const done = queue.tick(now + 10 * 60_000);
+  assert(done.length === 1, 'the chained job completes too');
+  assert(queue.jobs.length === 0, 'queue empty after the gap');
+  void state;
+});
+
+test('queue: speedup spends gohar, finishes the active job immediately', () => {
+  const { economy, queue } = makeEconomy();
+  const now = 1_700_000_000_000;
+  const r = queue.enqueue({ kind: 'build', entityId: 1, type: 'farm', targetLevel: 1, durationMs: 300_000 }, now);
+  assert(r.ok, 'job enqueued');
+  const goharBefore = economy.resources.gohar;
+  const cost = economy.speedupCost(r.job, now);
+  const result = queue.speedup(r.job.id, now + 1_000);
+  assert(result.ok, 'speedup succeeds');
+  assert(economy.resources.gohar === goharBefore - cost, 'gohar deducted');
+  assert(queue.jobs.length === 0, 'job completed instantly');
+});
+
+test('queue: enqueue is rejected when the queue is full', () => {
+  const { queue } = makeEconomy();
+  const now = 1_700_000_000_000;
+  const mk = (id) => ({ kind: 'build', entityId: id, type: 'wall', targetLevel: 1, durationMs: 60_000 });
+  for (let i = 0; i < economyData.queue.maxJobs; i += 1) assert(queue.enqueue(mk(i + 10), now).ok, `job ${i} accepted`);
+  const overflow = queue.enqueue(mk(99), now);
+  assert(!overflow.ok && overflow.reason === 'queue-full', 'overflow rejected with queue-full');
+});
+
+test('save: v1 record migrates to current schema (gold→rizq etc.)', () => {
+  const legacy = {
+    id: 'main',
+    schemaVersion: 1,
+    savedAt: 1_690_000_000_000,
+    payload: {
+      version: 1,
+      resources: { gold: 120, wood: 80, stone: 40 },
+      entities: [{ id: 1, type: 'town-center', name: 'مرکز شهر', col: 18, row: 18, size: [3, 3], level: 2 }],
+      tick: 42,
+      tapCount: 7,
+    },
+  };
+  const result = migrateRecord(legacy);
+  assert(result && !result.future, 'migration succeeds');
+  assert(result.migratedFrom === 1, 'reports the source version');
+  assert(result.payload.resources.rizq === 120 && result.payload.resources.nur === 80 && result.payload.resources.hekmat === 40, 'resource rename');
+  assert(result.payload.resources.gohar > 0, 'gohar default granted');
+  assert(Array.isArray(result.payload.jobs) && result.payload.jobs.length === 0, 'jobs added');
+  assert(result.payload.entities[0].status === 'ready' && result.payload.entities[0].pending === 0, 'entity production fields added');
+  assert(result.payload.lastAccrualAt === 1_690_000_000_000, 'accrual timestamp seeded from savedAt');
+});
+
+test('save: future schema is backed up instead of crashing; current passes through', () => {
+  const future = migrateRecord({ id: 'main', schemaVersion: SAVE_SCHEMA_VERSION + 1, savedAt: 1, payload: { resources: {} } });
+  assert(future && future.future === true, 'future versions are flagged, not parsed');
+  const current = migrateRecord({ id: 'main', schemaVersion: SAVE_SCHEMA_VERSION, savedAt: 2, payload: { resources: { rizq: 5 } } });
+  assert(current && current.payload.resources.rizq === 5 && current.migratedFrom === null, 'current schema passes through');
+  assert(migrateRecord(null) === null && migrateRecord({}) === null, 'garbage records return null');
+});
+
+test('save: memory-backend roundtrip preserves resources, entities and jobs', async () => {
+  const store = new SaveSystem({ backend: 'memory' });
+  const state = new GameState({ economy: economyData });
+  state.resources.rizq = 123;
+  state.createEntity({ type: 'farm', name: 'مزرعه', col: 2, row: 3, size: [3, 2], level: 4, status: 'ready', pending: 55.5, lastAccrualAt: 1_700_000_000_000 });
+  state.jobs.push({ id: 'job-1', kind: 'build', entityId: 1, type: 'farm', targetLevel: 1, durationMs: 30_000, startedAt: 1, endsAt: 2, status: 'active' });
+  await store.save(state.serialize());
+
+  const record = await store.load();
+  assert(record != null, 'record loads');
+  assert(record.payload.schemaVersion === undefined, 'payload is the state, schema lives on the record');
+  const restored = new GameState({ economy: economyData });
+  restored.hydrate(record.payload);
+  assert(restored.resources.rizq === 123, 'resources restored');
+  assert(restored.entities.size === 1, 'entities restored');
+  const farm = [...restored.entities.values()][0];
+  assert(farm.level === 4 && farm.pending === 55.5 && farm.lastAccrualAt === 1_700_000_000_000, 'entity production state restored');
+  assert(restored.jobs.length === 1 && restored.jobs[0].id === 'job-1', 'jobs restored');
+  await store.clear();
+  assert((await store.load()) == null, 'clear removes the save');
+});
+
+test('save: serialize contains no three.js roots', () => {
+  const state = new GameState({ economy: economyData });
+  const e = state.createEntity({ type: 'farm', name: 'x', col: 0, row: 0, size: [1, 1], level: 1, status: 'ready', root: { fake: 'three-object' } });
+  const json = JSON.stringify(state.serialize());
+  assert(!json.includes('three-object'), 'roots are stripped');
+  assert(e.root != null, 'root still lives on the in-memory entity');
+});
+
+test('data: strings carry phase-3 labels (queue, offline, save step)', () => {
+  assert(strings.app.phase.includes('۳'), 'phase label updated');
+  assert(typeof strings.loading.steps.save === 'string', 'loading save step');
+  assert(typeof strings.economy.queued === 'string' && typeof strings.economy.storageFull === 'string', 'economy strings');
+});
+
+
+
+await flushPending();
 
 const pad = (value, width) => String(value).padEnd(width, ' ');
-console.log('\n=== شهر نور — self checks (فاز ۱) ===\n');
+console.log('\n=== شهر نور — self checks (فاز ۱ و ۳) ===\n');
 for (const result of results) {
   console.log(`${result.ok ? '✓' : '✗'} ${pad(result.name, 62)}${result.ok ? '' : result.message}`);
 }

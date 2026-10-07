@@ -76,5 +76,7 @@ export const EVENTS = Object.freeze({
   ECONOMY_CHANGED: 'game:economy-changed',
   PLACEMENT_CHANGED: 'game:placement-changed',
   BUILDING_SELECTED: 'game:building-selected',
+  BUILD_QUEUE_CHANGED: 'game:build-queue-changed',
+  JOB_FINISHED: 'game:job-finished',
   UI_TOAST: 'ui:toast',
 });

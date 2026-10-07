@@ -1,8 +1,9 @@
 /**
- * شهر نور — entry point (phase 2: building placement & HUD)
+ * شهر نور — entry point (phase 3: economy, time & persistence)
  *
  * Boot order:
- *   config -> engine -> world -> input/camera -> game logic -> UI -> loop
+ *   config -> engine -> load save -> world -> input/camera -> game (hydrate +
+ *   offline catch-up) -> buildings -> UI -> loop
  * Each layer only talks to the others through the event bus or through explicit
  * references handed over here, so later phases can add systems without rewrites.
  */
@@ -10,12 +11,13 @@ import './ui/hud.css';
 
 import { Config } from './core/Config.js';
 import { Engine } from './core/Engine.js';
-import { EventBus } from './core/EventBus.js';
+import { EventBus, EVENTS } from './core/EventBus.js';
 import { InputManager } from './core/InputManager.js';
 import { OrbitCameraRig } from './core/OrbitCameraRig.js';
 import { World } from './world/World.js';
 import { Game } from './game/Game.js';
 import { BuildingSystem } from './game/BuildingSystem.js';
+import { SaveSystem } from './game/SaveSystem.js';
 import { PerfMonitor } from './ui/PerfMonitor.js';
 import { HUD } from './ui/HUD.js';
 import { DevPanel } from './ui/DevPanel.js';
@@ -45,7 +47,21 @@ async function boot() {
     throw error;
   }
 
-  loading.setStep('engine', 0.1);
+  loading.setStep('engine', 0.08);
+
+  // ----------------------------------------------------------- persistence
+  const saveSystem = new SaveSystem();
+  loading.setStep('save', 0.12);
+  let saveRecord = null;
+  try {
+    saveRecord = await saveSystem.load(); // {payload, migratedFrom, savedAt} | null
+    if (saveRecord?.migratedFrom) {
+      console.info(`[شهر نور] ذخیره از نسخهٔ ${saveRecord.migratedFrom} مهاجرت داده شد.`);
+    }
+  } catch (error) {
+    console.warn('[شهر نور] بارگذاری ذخیره ناموفق بود؛ بازی از نو شروع می‌شود.', error);
+    saveRecord = null;
+  }
 
   // ---------------------------------------------------------------- world
   const world = new World({ config, bus });
@@ -57,8 +73,35 @@ async function boot() {
   const rig = new OrbitCameraRig({ camera: engine.camera, config, input, bus });
 
   // ---------------------------------------------------------------- game
-  const game = new Game({ config, world, rig, input, bus });
-  const buildings = new BuildingSystem({ config, world, rig, input, bus, state: game.state });
+  const game = new Game({ config, world, rig, input, bus, record: saveRecord?.payload ?? null });
+  const bootInfo = game.bootstrap(); // hydrate + offline catch-up + seed if fresh
+
+  // ------------------------------------------------------------ save hooks
+  let saveTimer = 0;
+  const saveNow = () => {
+    window.clearTimeout(saveTimer);
+    saveSystem.save(game.serialize()).catch((error) => console.warn('[شهر نور] ذخیره ناموفق:', error));
+  };
+  /** Debounced (~1.5s) save after harvest / spend / enqueue. */
+  const requestSave = () => {
+    window.clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(saveNow, 1500);
+  };
+  const autosaveMs = (config.economy.save.autosaveSeconds || 15) * 1000;
+  const autosaveTimer = window.setInterval(saveNow, autosaveMs);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveNow();
+  });
+
+  const buildings = new BuildingSystem({
+    config, world, rig, input, bus,
+    state: game.state,
+    economy: game.economy,
+    queue: game.queue,
+    game,
+    persist: requestSave,
+  });
+  bus.on(EVENTS.JOB_FINISHED, requestSave);
 
   // ------------------------------------------------------------------ ui
   const monitor = new PerfMonitor({ windowSeconds: 1.5, sampleInterval: 0.25 });
@@ -70,12 +113,33 @@ async function boot() {
     monitor,
     rig,
     buildings,
+    economy: game.economy,
+    queue: game.queue,
     onOpenQuran: () => {
       quranPanel.show();
       engine.pause('modal');
     },
   });
-  const devPanel = new DevPanel({ config, engine, bus, monitor, rig, world });
+  const devPanel = new DevPanel({
+    config,
+    engine,
+    bus,
+    monitor,
+    rig,
+    world,
+    onSaveNow: () => {
+      saveNow();
+      hud.toast('بازی ذخیره شد.');
+    },
+    onSimulateOffline: () => {
+      const result = game.simulateOffline(60 * 60 * 1000);
+      const gainedText = Object.entries(result.gained)
+        .map(([key, value]) => `${config.t(`economy.${key}`, key)} ${value}`)
+        .join('، ');
+      hud.toast(`غیبت ۱ ساعته شبیه‌سازی شد${gainedText ? `: +${gainedText}` : ''}`);
+      saveNow();
+    },
+  });
 
   quranPanel.root.addEventListener('click', (event) => {
     if (event.target.classList.contains('ui-modal__backdrop') || event.target.classList.contains('ui-icon-btn')) {
@@ -83,10 +147,14 @@ async function boot() {
     }
   });
 
+  // Welcome-back toast (acceptance ⑤).
+  if (game.offlineReport) hud.showOfflineReport(game.offlineReport);
+
   // ---------------------------------------------------------------- loop
   engine.addUpdatable(world, 10);
   engine.addUpdatable(rig, 20);
   engine.addUpdatable(game, 30);
+  engine.addUpdatable(buildings, 35);
   engine.addUpdatable(hud, 100);
   engine.addUpdatable(devPanel, 110);
 
@@ -95,10 +163,16 @@ async function boot() {
   window.setTimeout(() => loading.hide(), 260);
 
   // --------------------------------------------------------- debug handle
-  window.__NUR__ = { config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel };
+  window.__NUR__ = {
+    config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel,
+    saveSystem, saveNow,
+  };
 
   window.addEventListener('pagehide', (event) => {
     if (event.persisted) return; // keep everything for the back/forward cache
+    window.clearInterval(autosaveTimer);
+    window.clearTimeout(saveTimer);
+    saveNow();
     devPanel.dispose();
     hud.dispose();
     quranPanel.dispose();
@@ -113,7 +187,9 @@ async function boot() {
   });
 
   console.info(
-    `[شهر نور] فاز ۲ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، اندازهٔ نقشه: ${config.cols}×${config.rows}`,
+    `[شهر نور] فاز ۳ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
+    `ذخیره: ${saveRecord ? `بازیابی (${bootInfo.secondsAway}s غیبت)` : 'جدید'}، ` +
+    `صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}`,
   );
   return window.__NUR__;
 }

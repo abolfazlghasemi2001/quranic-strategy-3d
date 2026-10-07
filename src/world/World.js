@@ -180,7 +180,9 @@ export class World {
   getCellAt(x, z) {
     if (!this.map.isInsideAt(x, z)) return null;
     const { col, row } = this.config.worldToTile(x, z);
-    return this.config.clampTile(col + 0.5, row + 0.5);
+    // clampTile = round(coord - 0.5) ≡ floor(coord): pass the continuous tile
+    // coordinate as-is (adding 0.5 here shifted every tap by half a tile).
+    return this.config.clampTile(col, row);
   }
 
   isInsideMap(x, z) {
