@@ -719,6 +719,121 @@
           "seconds": 415
         }
       ]
+    },
+    "dar-al-quran": {
+      "levels": [
+        {
+          "level": 1,
+          "cost": {
+            "rizq": 420,
+            "nur": 260,
+            "hekmat": 120
+          },
+          "seconds": 75,
+          "resource": "hekmat",
+          "ratePerHour": 820
+        },
+        {
+          "level": 2,
+          "cost": {
+            "rizq": 680,
+            "nur": 420,
+            "hekmat": 195
+          },
+          "seconds": 114,
+          "resource": "hekmat",
+          "ratePerHour": 1050
+        },
+        {
+          "level": 3,
+          "cost": {
+            "rizq": 1100,
+            "nur": 680,
+            "hekmat": 315
+          },
+          "seconds": 173,
+          "resource": "hekmat",
+          "ratePerHour": 1343
+        },
+        {
+          "level": 4,
+          "cost": {
+            "rizq": 1785,
+            "nur": 1105,
+            "hekmat": 510
+          },
+          "seconds": 263,
+          "resource": "hekmat",
+          "ratePerHour": 1720
+        },
+        {
+          "level": 5,
+          "cost": {
+            "rizq": 2895,
+            "nur": 1790,
+            "hekmat": 825
+          },
+          "seconds": 400,
+          "resource": "hekmat",
+          "ratePerHour": 2201
+        },
+        {
+          "level": 6,
+          "cost": {
+            "rizq": 4685,
+            "nur": 2900,
+            "hekmat": 1340
+          },
+          "seconds": 609,
+          "resource": "hekmat",
+          "ratePerHour": 2817
+        },
+        {
+          "level": 7,
+          "cost": {
+            "rizq": 7590,
+            "nur": 4700,
+            "hekmat": 2170
+          },
+          "seconds": 925,
+          "resource": "hekmat",
+          "ratePerHour": 3606
+        },
+        {
+          "level": 8,
+          "cost": {
+            "rizq": 12300,
+            "nur": 7615,
+            "hekmat": 3515
+          },
+          "seconds": 1406,
+          "resource": "hekmat",
+          "ratePerHour": 4616
+        },
+        {
+          "level": 9,
+          "cost": {
+            "rizq": 19925,
+            "nur": 12335,
+            "hekmat": 5690
+          },
+          "seconds": 2137,
+          "resource": "hekmat",
+          "ratePerHour": 5909
+        },
+        {
+          "level": 10,
+          "cost": {
+            "rizq": 32275,
+            "nur": 19980,
+            "hekmat": 9220
+          },
+          "seconds": 3248,
+          "resource": "hekmat",
+          "ratePerHour": 7563
+        }
+      ],
+      "note": "دارالقرآن: تولید حکمت + گذرگاه درس‌ها. نرخ تولید کمی کمتر از کتابخانه و هزینهٔ کمی بیشتر است تا مسیر اقتصاد متعادل بماند."
     }
   }
 }

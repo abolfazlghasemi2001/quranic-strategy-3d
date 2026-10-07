@@ -1,0 +1,210 @@
+{
+  "meta": {
+    "datasetId": "quran-sample",
+    "title": "نمونهٔ ساختاری دیتاست قرآن — جایگزین شود",
+    "status": "placeholder",
+    "placeholder": true,
+    "label": "نمونه — جایگزین شود",
+    "reviewed": false,
+    "script": "uthmani",
+    "version": "0.0.0-sample",
+    "source": "دادهٔ ساختاری داخلی پروژه (بدون هیچ متن قرآنی)",
+    "sourceUrl": null,
+    "license": null,
+    "translator": null,
+    "notice": "هیچ آیه، ترجمه یا صوت واقعی در این فایل نیست. همهٔ متن‌ها جای‌نگهدار و برچسب‌دار هستند و برای آزمون ساختار درس و رابط کاربری به کار می‌روند.",
+    "replacement": {
+      "expectedPath": "public/quran/quran.json",
+      "queryParam": "?quran=./quran/quran.json",
+      "hint": "برای جایگزینی با دیتاست معتبر (مثل Tanzil) فایل را با همین ساختار در مسیر بالا بگذارید؛ هیچ تغییری در کد لازم نیست. ساختار پذیرفته‌شده در public/quran/README.md توضیح داده شده است.",
+      "reviewFlagHint": "پس از بازبینی انسانی، در meta همان فایل «reviewed: true» بگذارید تا برچسب «در انتظار بازبینی» برداشته شود."
+    },
+    "audio": {
+      "note": "صوت اختیاری است و فقط در صورت داشتن مجوز مشخص پخش می‌شود: { url, reciter, license, licenseUrl }. در این نمونه صوتی ثبت نشده است.",
+      "defaultLicense": null
+    },
+    "fieldNotes": {
+      "textUthmani": "متن عثمانی با اعراب کامل (اجباری برای دیتاست بازبینی‌شده)",
+      "translationFa": "ترجمهٔ فارسی (اجباری)",
+      "audio": "صوت دارای مجوز (اختیاری؛ null = ندارد)",
+      "source": "منبع هر آیه: شناسهٔ دیتاست، نسخه و نشانی",
+      "reviewed": "وضعیت بازبینی انسانی: true = بازبینی‌شده، false = در انتظار بازبینی"
+    }
+  },
+  "surahs": [
+    {
+      "index": 1,
+      "name": "سورهٔ نمونهٔ ۱",
+      "namePlaceholder": true,
+      "ayahCount": 3,
+      "ayahs": [
+        {
+          "index": 1,
+          "textUthmani": "نَصُّ الآيَةِ الأُولَىٰ نَمُوذَجِيٌّ يُسْتَبْدَلُ بِنَصِّ الدِّيتَاسِتِ المُعْتَمَدِ",
+          "translationFa": "ترجمهٔ نمونه — جایگزین شود. این متن ترجمهٔ هیچ آیه‌ای نیست.",
+          "audio": null,
+          "source": { "datasetId": "quran-sample", "version": "0.0.0-sample", "url": null, "script": "uthmani" },
+          "reviewed": false,
+          "placeholder": true
+        },
+        {
+          "index": 2,
+          "textUthmani": "هٰذَا القَالَبُ الثَّانِي لِلْعَرْضِ لَا يَحْتَوِي عَلَىٰ آيَةٍ حَقِيقِيَّةٍ",
+          "translationFa": "ترجمهٔ نمونه — جایگزین شود. این خانه برای ترجمهٔ فارسی آیهٔ واقعی است.",
+          "audio": null,
+          "source": { "datasetId": "quran-sample", "version": "0.0.0-sample", "url": null, "script": "uthmani" },
+          "reviewed": false,
+          "placeholder": true
+        },
+        {
+          "index": 3,
+          "textUthmani": "مَكَانُ التَّرْجَمَةِ الفَارِسِيَّةِ نَصٌّ نَمُوذَجِيٌّ لِلِاخْتِبَارِ فَقَطْ",
+          "translationFa": "ترجمهٔ نمونه — جایگزین شود. این متن فقط برای آزمون نمایش رابط کاربری است.",
+          "audio": null,
+          "source": { "datasetId": "quran-sample", "version": "0.0.0-sample", "url": null, "script": "uthmani" },
+          "reviewed": false,
+          "placeholder": true
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "name": "سورهٔ نمونهٔ ۲",
+      "namePlaceholder": true,
+      "ayahCount": 3,
+      "ayahs": [
+        {
+          "index": 1,
+          "textUthmani": "النَّصُّ الرَّابِعُ نَمُوذَجِيٌّ يُضَافُ الدِّيتَاسِتُ المُعْتَمَدُ لَاحِقًا",
+          "translationFa": "ترجمهٔ نمونه — جایگزین شود. دیتاست معتبر بعداً در همین ساختار افزوده می‌شود.",
+          "audio": null,
+          "source": { "datasetId": "quran-sample", "version": "0.0.0-sample", "url": null, "script": "uthmani" },
+          "reviewed": false,
+          "placeholder": true
+        },
+        {
+          "index": 2,
+          "textUthmani": "قَالَبُ العَرْضِ الخَامِسُ بِلَا نَصٍّ حَقِيقِيٍّ فِي هٰذَا المِلَفِّ",
+          "translationFa": "ترجمهٔ نمونه — جایگزین شود؛ هیچ متن حقیقی در این پرونده نیست.",
+          "audio": null,
+          "source": { "datasetId": "quran-sample", "version": "0.0.0-sample", "url": null, "script": "uthmani" },
+          "reviewed": false,
+          "placeholder": true
+        },
+        {
+          "index": 3,
+          "textUthmani": "النَّصُّ السَّادِسُ نَمُوذَجِيٌّ يَنْتَظِرُ المُرَاجَعَةَ وَالِاسْتِبْدَالَ",
+          "translationFa": "ترجمهٔ نمونه — جایگزین شود. تا بازبینی، با نشان «در انتظار بازبینی» دیده می‌شود.",
+          "audio": null,
+          "source": { "datasetId": "quran-sample", "version": "0.0.0-sample", "url": null, "script": "uthmani" },
+          "reviewed": false,
+          "placeholder": true
+        }
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "lesson-basics",
+      "title": "درس ۱ — آشنایی با دارالقرآن",
+      "summary": "ساختار درس، نمایش آیه با اعراب کامل و معنی برچسب بازبینی.",
+      "theme": "آشنایی",
+      "order": 1,
+      "targetSeconds": 185,
+      "ayahIds": ["ayah:1:1", "ayah:1:2"],
+      "wordBank": [
+        { "term": "نَصُّ", "meaning": "متنِ نوشتاری" },
+        { "term": "نَمُوذَجِيٌّ", "meaning": "نمونه‌ای / جای‌نگهدار" },
+        { "term": "يُسْتَبْدَلُ", "meaning": "جایگزین می‌شود" },
+        { "term": "الدِّيتَاسِتِ", "meaning": "مجموعهٔ دادهٔ متنی" },
+        { "term": "آيَةٍ", "meaning": "آیه" }
+      ],
+      "steps": [
+        { "kind": "read", "title": "خواندن آیه با ترجمه", "ayahId": "ayah:1:1", "seconds": 35 },
+        { "kind": "quiz", "title": "تکمیل آیه", "game": "ayah-completion", "ayahId": "ayah:1:1", "rounds": 3, "seconds": 45 },
+        { "kind": "quiz", "title": "تطبیق واژه و معنی", "game": "word-match", "pairs": 4, "seconds": 40 },
+        { "kind": "read", "title": "خواندن آیهٔ دوم", "ayahId": "ayah:1:2", "seconds": 25 },
+        { "kind": "quiz", "title": "ترتیب بخش‌های آیه", "game": "ayah-order", "mode": "segments", "ayahId": "ayah:1:2", "chunks": 4, "seconds": 35 },
+        { "kind": "summary", "title": "جمع‌بندی و پاداش", "seconds": 5 }
+      ]
+    },
+    {
+      "id": "lesson-words",
+      "title": "درس ۲ — واژه‌ها و معنی‌ها",
+      "summary": "تقویت واژه‌خوانی و پیوند واژه با معنی فارسی؛ تمرکز روی تطبیق واژه.",
+      "theme": "واژه‌شناسی",
+      "order": 2,
+      "targetSeconds": 170,
+      "ayahIds": ["ayah:1:3", "ayah:2:2"],
+      "wordBank": [
+        { "term": "التَّرْجَمَةِ", "meaning": "ترجمه / برگردان" },
+        { "term": "الفَارِسِيَّةِ", "meaning": "فارسی" },
+        { "term": "المِلَفِّ", "meaning": "پرونده" },
+        { "term": "قَالَبُ", "meaning": "قالب / ساختار" },
+        { "term": "حَقِيقِيٍّ", "meaning": "واقعی" }
+      ],
+      "steps": [
+        { "kind": "read", "title": "خواندن آیه", "ayahId": "ayah:1:3", "seconds": 30 },
+        { "kind": "quiz", "title": "تطبیق واژه و معنی", "game": "word-match", "pairs": 5, "seconds": 55 },
+        { "kind": "quiz", "title": "تکمیل آیه", "game": "ayah-completion", "ayahId": "ayah:2:2", "rounds": 3, "seconds": 45 },
+        { "kind": "read", "title": "خواندن آیهٔ دوم", "ayahId": "ayah:2:2", "seconds": 25 },
+        { "kind": "quiz", "title": "ترتیب بخش‌های آیه", "game": "ayah-order", "mode": "segments", "ayahId": "ayah:1:3", "chunks": 4, "seconds": 30 },
+        { "kind": "summary", "title": "جمع‌بندی و پاداش", "seconds": 5 }
+      ]
+    },
+    {
+      "id": "lesson-order",
+      "title": "درس ۳ — ترتیب آیات",
+      "summary": "چیدن آیه‌های یک قطعه بر اساس ترتیب دیتاست و مرور نشانه‌های بازبینی.",
+      "theme": "ترتیب و پیوستگی",
+      "order": 3,
+      "targetSeconds": 165,
+      "ayahIds": ["ayah:2:1", "ayah:2:2", "ayah:2:3"],
+      "wordBank": [
+        { "term": "الرَّابِعُ", "meaning": "چهارم" },
+        { "term": "لَاحِقًا", "meaning": "بعداً" },
+        { "term": "السَّادِسُ", "meaning": "ششم" },
+        { "term": "يَنْتَظِرُ", "meaning": "منتظر می‌ماند" },
+        { "term": "المُرَاجَعَةَ", "meaning": "بازبینی" },
+        { "term": "الِاسْتِبْدَالَ", "meaning": "جایگزینی" }
+      ],
+      "steps": [
+        { "kind": "read", "title": "خواندن آیهٔ نخست قطعه", "ayahId": "ayah:2:1", "seconds": 30 },
+        {
+          "kind": "quiz",
+          "title": "ترتیب آیات",
+          "game": "ayah-order",
+          "mode": "verses",
+          "ayahIds": ["ayah:2:1", "ayah:2:2", "ayah:2:3"],
+          "seconds": 50
+        },
+        { "kind": "quiz", "title": "تطبیق واژه و معنی", "game": "word-match", "pairs": 4, "seconds": 35 },
+        { "kind": "quiz", "title": "تکمیل آیه", "game": "ayah-completion", "ayahId": "ayah:2:3", "rounds": 2, "seconds": 35 },
+        { "kind": "summary", "title": "جمع‌بندی و پاداش", "seconds": 15 }
+      ]
+    },
+    {
+      "id": "lesson-review",
+      "title": "درس ۴ — مرور حکمت",
+      "summary": "مرور آمیختهٔ سه مینی‌گیم روی آیه‌های درس‌های پیشین؛ مناسب حفظ تدریجی.",
+      "theme": "مرور",
+      "order": 4,
+      "targetSeconds": 175,
+      "ayahIds": ["ayah:1:1", "ayah:2:2", "ayah:2:3"],
+      "wordBank": [
+        { "term": "نَصُّ", "meaning": "متنِ نوشتاری" },
+        { "term": "حَقِيقِيٍّ", "meaning": "واقعی" },
+        { "term": "يَنْتَظِرُ", "meaning": "منتظر می‌ماند" },
+        { "term": "نَمُوذَجِيٌّ", "meaning": "نمونه‌ای / جای‌نگهدار" },
+        { "term": "المِلَفِّ", "meaning": "پرونده" }
+      ],
+      "steps": [
+        { "kind": "read", "title": "خواندن آیه", "ayahId": "ayah:2:3", "seconds": 30 },
+        { "kind": "quiz", "title": "تکمیل آیه", "game": "ayah-completion", "ayahId": "ayah:1:1", "rounds": 3, "seconds": 40 },
+        { "kind": "quiz", "title": "تطبیق واژه و معنی", "game": "word-match", "pairs": 5, "seconds": 45 },
+        { "kind": "quiz", "title": "ترتیب آیات", "game": "ayah-order", "mode": "verses", "ayahIds": ["ayah:2:3", "ayah:2:2", "ayah:2:1"], "seconds": 40 },
+        { "kind": "summary", "title": "جمع‌بندی و پاداش", "seconds": 20 }
+      ]
+    }
+  ]
+}

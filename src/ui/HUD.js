@@ -26,8 +26,9 @@ export class HUD {
    * @param {import('../game/EconomySystem.js').EconomySystem} options.economy
    * @param {import('../game/BuildQueue.js').BuildQueue} options.queue
    */
-  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, onOpenQuran }) {
-    Object.assign(this, { config, engine, bus, monitor, rig, buildings, economy, queue });
+  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, learning = null, onOpenQuran, onOpenStudy }) {
+    Object.assign(this, { config, engine, bus, monitor, rig, buildings, economy, queue, learning });
+    this.onOpenStudy = onOpenStudy;
     const t = (key, fallback) => config.t(key, fallback);
 
     this.levelValue = el('b', { text: '۱' });
@@ -92,6 +93,16 @@ export class HUD {
     });
     this.questButton.prepend(el('span', { text: '☼' }));
 
+    // Phase 4: دارالقرآن gateway + spaced-repetition badge (due count).
+    this.studyBadge = el('span', { className: 'game-corner-badge is-hidden', text: '۰' });
+    this.studyButton = button('دارالقرآن', {
+      className: 'game-corner-btn game-study-btn',
+      title: 'درس و مرور فاصله‌دار',
+      onClick: () => onOpenStudy?.(),
+    });
+    this.studyButton.prepend(el('span', { text: '۞' }));
+    this.studyButton.append(this.studyBadge);
+
     /* --------------------------------------------------- queue panel */
     this.queueList = el('div', { className: 'queue-list' });
     this.queueBadge = el('span', { className: 'queue-badge', text: '۰' });
@@ -136,6 +147,7 @@ export class HUD {
         this.resourcesView,
         this.shopButton,
         this.questButton,
+        this.studyButton,
         this.queuePanel,
         this.shop,
         this.placementBar,
@@ -157,6 +169,8 @@ export class HUD {
       bus.on(EVENTS.PLACEMENT_CHANGED, (v) => this.renderPlacement(v)),
       bus.on(EVENTS.BUILDING_SELECTED, (v) => this.renderSelection(v)),
       bus.on(EVENTS.UI_TOAST, (v) => this.toast(typeof v === 'string' ? v : v?.message || '')),
+      bus.on(EVENTS.QURAN_REVIEW_DUE, (v) => this.renderStudyBadge(v)),
+      bus.on(EVENTS.QURAN_LESSON_REQUESTED, () => this.toggleShop(false)),
     ];
   }
 
@@ -293,6 +307,13 @@ export class HUD {
       }
     }
 
+    // Phase 4: دارالقرآن opens the lesson hub straight from its menu.
+    if (def.lesson) {
+      this.selection.append(el('div', {
+        children: [button('۞ درس و مرور', { className: 'ui-btn ui-btn--primary', onClick: () => this.onOpenStudy?.() })],
+      }));
+    }
+
     // live job timer + speedup / waiting state
     if (job && job.status === 'active') {
       const timer = el('span', { className: 'building-timer', text: formatCountdown(job.endsAt - now) });
@@ -331,6 +352,16 @@ export class HUD {
         this.selection.append(el('div', { children: [upgradeBtn] }));
       }
     }
+  }
+
+  /** نشان سررسید مرور فاصله‌دار روی دکمهٔ دارالقرآن. */
+  renderStudyBadge({ dueCount = 0, learned = 0 } = {}) {
+    this.studyBadge.textContent = formatFa(dueCount);
+    this.studyBadge.classList.toggle('is-hidden', !dueCount);
+    this.studyButton.classList.toggle('is-alert', dueCount > 0);
+    this.studyButton.title = dueCount > 0
+      ? `${formatFa(dueCount)} مورد در نوبت مرور · آموخته‌شده: ${formatFa(learned)}`
+      : 'درس و مرور فاصله‌دار';
   }
 
   /* -------------------------------------------------------------- toast */

@@ -2,6 +2,7 @@ import { GameState } from './GameState.js';
 import { EconomySystem } from './EconomySystem.js';
 import { BuildQueue } from './BuildQueue.js';
 import { EVENTS } from '../core/EventBus.js';
+import { LearningSystem } from './quran/LearningSystem.js';
 import buildingData from '../data/buildings.json';
 
 /**
@@ -18,14 +19,17 @@ export class Game {
    * @param {import('../core/InputManager.js').InputManager} options.input
    * @param {import('../core/EventBus.js').EventBus} options.bus
    * @param {object|null} [options.record] — migrated save payload from SaveSystem
+   * @param {{dataset:object, validation:object, loadReport:object}|null} [options.quran]
+   *        — phase 4: the normalised Quran dataset (loaded by main.js, never by the world/render layers)
    */
-  constructor({ config, world, rig, input, bus, record = null }) {
+  constructor({ config, world, rig, input, bus, record = null, quran = null }) {
     this.config = config;
     this.world = world;
     this.rig = rig;
     this.input = input;
     this.bus = bus;
     this.record = record;
+    this.quran = quran;
 
     this.logicHz = config.gameplay?.logicHz || 15;
     this.maxSteps = config.gameplay?.maxStepsPerFrame || 5;
@@ -46,6 +50,23 @@ export class Game {
       state: this.state,
       onFinished: (job, at) => this._finishJob(job, at),
     });
+    // --- phase 4: Quran learning layer (lessons, spaced repetition, rewards) ---
+    this.learning = quran?.dataset
+      ? new LearningSystem({
+        dataset: quran.dataset,
+        learning: config.quranLearning,
+        state: this.state,
+        economy: this.economy,
+        queue: this.queue,
+        bus,
+        game: this,
+        seed: config.seed,
+      })
+      : null;
+
+    /** Injected by main.js once the save helpers exist (debounced autosave). */
+    this._persistFn = null;
+
     /** Summary of offline progress, consumed by the HUD toast after boot. */
     this.offlineReport = null;
 
@@ -164,6 +185,17 @@ export class Game {
     this.markQueueDirty();
     this.emitState(now, true);
     this.emitQueue();
+    // Phase 4: surface dataset + spaced-repetition status right after boot.
+    if (this.learning) {
+      this.learning.leitner.store = this.state.learning.reviews;
+      this.bus.emit(EVENTS.QURAN_DATASET_READY, {
+        dataset: this.quran.dataset.stats,
+        validation: this.quran.validation,
+        loadReport: this.quran.loadReport,
+        learning: this.learning.stats(now),
+      });
+      this.learning.tick(now);
+    }
     return { fresh, secondsAway, jobsDone, goharDaily };
   }
 
@@ -229,6 +261,12 @@ export class Game {
 
     const finished = this.queue.tick(now);
     if (finished.length) this.markQueueDirty();
+
+    // Spaced-repetition due counters (~1 Hz is plenty; the map is tiny).
+    if (this.learning && now - (this._lastLearningTick || 0) > 1000) {
+      this._lastLearningTick = now;
+      this.learning.tick(now);
+    }
   }
 
   /* --------------------------------------------------------------- events */
@@ -340,8 +378,29 @@ export class Game {
 
   /* ------------------------------------------------------------ serialize */
 
+  /** main.js injects the debounced save function (learning layer asks for saves). */
+  attachPersist(fn) {
+    this._persistFn = typeof fn === 'function' ? fn : null;
+  }
+
+  /** Debounced save request — used by systems that live in the logic layer. */
+  persist() {
+    if (this._persistFn) this._persistFn();
+  }
+
   serialize() {
     return this.state.serialize();
+  }
+
+  /** Convenience snapshot for HUD/panels (dataset + progress + speedup pool). */
+  quranStatus(now = Date.now()) {
+    if (!this.learning) return null;
+    return {
+      dataset: this.quran?.dataset?.stats || null,
+      validation: this.quran?.validation || null,
+      loadReport: this.quran?.loadReport || null,
+      progress: this.learning.stats(now),
+    };
   }
 
   dispose() {

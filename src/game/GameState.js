@@ -1,4 +1,5 @@
 import { clamp } from '../core/MathUtils.js';
+import { createLearningState, normalizeLearningState } from './quran/LearningState.js';
 
 /**
  * GameState — pure data model for the fixed-timestep logic layer.
@@ -6,7 +7,7 @@ import { clamp } from '../core/MathUtils.js';
  */
 export class GameState {
   constructor(config) {
-    this.version = 3; // logic schema (save schema handled by SaveSystem)
+    this.version = 4; // logic schema (save schema handled by SaveSystem)
     this.tick = 0;
     this.elapsed = 0;
     this.paused = false;
@@ -22,6 +23,9 @@ export class GameState {
     this.dailyGranted = false; // starting gohar covers day one
     this.nextEntityId = 1;
     this.nextJobId = 1;
+
+    // --- quran learning layer (phase 4) ---
+    this.learning = createLearningState();
 
     this.entities = new Map();
     this.entitySeq = 1;
@@ -93,6 +97,7 @@ export class GameState {
       lastAccrualAt: this.lastAccrualAt,
       lastDailyAt: this.lastDailyAt,
       dailyGranted: this.dailyGranted,
+      learning: JSON.parse(JSON.stringify(this.learning)),
       nextEntityId: this.nextEntityId,
       nextJobId: this.nextJobId,
       entitySeq: this.entitySeq,
@@ -129,6 +134,7 @@ export class GameState {
     this.nextEntityId = payload.nextEntityId ?? 1;
     this.nextJobId = payload.nextJobId ?? 1;
 
+    this.learning = normalizeLearningState(payload.learning);
     this.entities = new Map();
     this.entitySeq = payload.entitySeq ?? 1;
     for (const data of payload.entities || []) {

@@ -1,12 +1,14 @@
 /**
  * SaveSystem — IndexedDB persistence with schema versioning + migrations.
  *
- * Record shape (schemaVersion 2):
+ * Record shape (schemaVersion 3):
  *   { id:'main', schemaVersion:2, savedAt:number, payload:{...GameState} }
  *
  * Migrations are pure functions keyed by the version they upgrade FROM:
  *   1 → 2 : legacy {gold,wood,stone} resources → {rizq,nur,hekmat,gohar},
  *           adds pending/status/jobs/dailyGoharAt/nextEntityId/nextJobId.
+ *   2 → 3 : adds the quran learning layer (Leitner boxes, lesson records,
+ *           reward totals). Old saves keep working with empty progress.
  *
  * A record with a NEWER schemaVersion than we understand is preserved as a
  * backup (`main-backup-v{n}`) and the game starts fresh — never crashes.
@@ -15,12 +17,14 @@
  * store is used so the game logic remains fully functional and testable.
  */
 
-export const SAVE_SCHEMA_VERSION = 2;
+export const SAVE_SCHEMA_VERSION = 3;
 export const SAVE_DB_NAME = 'shahr-nur';
 export const SAVE_STORE = 'saves';
 export const SAVE_KEY = 'main';
 
 /** Pure migrations: version → (payload) => payload of version+1. */
+import { normalizeLearningState } from './quran/LearningState.js';
+
 export const MIGRATIONS = {
   1(payload) {
     const next = { ...payload };
@@ -47,6 +51,13 @@ export const MIGRATIONS = {
     next.nextEntityId = payload.nextEntityId ?? 1;
     next.nextJobId = payload.nextJobId ?? 1;
     delete next.savedAt;
+    return next;
+  },
+  // Phase 4: the learning layer. Any save from phase 3 simply gets an empty
+  // (but fully shaped) progress block — no player data is lost.
+  2(payload) {
+    const next = { ...payload };
+    next.learning = normalizeLearningState(payload.learning);
     return next;
   },
 };

@@ -1,0 +1,67 @@
+{
+  "note": "تنظیمات عددی لایهٔ قرآنی-آموزشی (فاز ۴). هیچ متن قرآنی در این فایل نیست؛ همهٔ متن‌ها فقط در quran-sample.json یا در دیتاست معتبر بیرونی قرار می‌گیرند.",
+  "dataset": {
+    "expectedPath": "./quran/quran.json",
+    "queryParam": "quran",
+    "cacheBust": true,
+    "rejectPlaceholderFromRemote": false
+  },
+  "lesson": {
+    "targetSecondsMin": 120,
+    "targetSecondsMax": 180,
+    "softTimeLimit": true,
+    "keepSessionOnExit": true,
+    "pauseWorldWhileReading": false
+  },
+  "leitner": {
+    "maxBox": 5,
+    "lapseBox": 1,
+    "requeueAfter": 3,
+    "boxes": [
+      { "box": 1, "minutes": 10, "label": "۱۰ دقیقه" },
+      { "box": 2, "minutes": 720, "label": "۱۲ ساعت" },
+      { "box": 3, "minutes": 4320, "label": "۳ روز" },
+      { "box": 4, "minutes": 10080, "label": "۷ روز" },
+      { "box": 5, "minutes": 30240, "label": "۲۱ روز" }
+    ],
+    "newItemBox": 1
+  },
+  "minigames": {
+    "ayah-completion": {
+      "rounds": 3,
+      "blankRatio": 0.34,
+      "minBlanks": 1,
+      "maxBlanks": 2,
+      "optionCount": 4,
+      "hintAfterMistakes": 2
+    },
+    "word-match": {
+      "pairsPerRound": 4,
+      "minPairs": 3,
+      "fallbackMode": "ayah-translation"
+    },
+    "ayah-order": {
+      "chunks": 4,
+      "minChunks": 3,
+      "maxChunks": 5,
+      "defaultMode": "segments",
+      "hintMoves": 1
+    }
+  },
+  "review": {
+    "sessionLimit": 6,
+    "minItems": 3,
+    "includeNewItemsWhenEmpty": true,
+    "shuffleWithSeed": true
+  },
+  "rewards": {
+    "lessonComplete": { "nur": 45, "hekmat": 30, "speedupSeconds": 90 },
+    "firstCompletion": { "nur": 60, "hekmat": 40, "speedupSeconds": 120 },
+    "reviewSession": { "nur": 12, "hekmat": 8, "speedupSeconds": 0 },
+    "perfectLessonBonus": { "nur": 15, "hekmat": 10, "speedupSeconds": 0 },
+    "respectStorageCapacity": true,
+    "speedupPoolMaxSeconds": 300,
+    "note": "پاداش‌ها اختیاری و فقط تسریع‌کننده‌اند؛ هیچ خطا یا ترک درسی جریمه ندارد و پاداش هرگز از منابع کم نمی‌کند."
+  },
+  "economyNote": "درس‌ها اقتصاد را سریع‌تر می‌کنند ولی برای پیشرفت اجباری نیستند؛ بازیکن می‌تواند کل بازی را بدون هیچ درسی کامل کند."
+}

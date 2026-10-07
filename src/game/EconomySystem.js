@@ -213,6 +213,30 @@ export class EconomySystem {
     return true;
   }
 
+  /**
+   * افزودن منبع از مسیرهای غیرتولیدی (پاداش درس/مرور).
+   * هرگز از ظرفیت انبار رد نمی‌شود؛ سرریز برگردانده می‌شود تا رابط کاربری
+   * بتواند پیام «انبار پر است» بدهد. هیچ‌گاه مقدار منفی اعمال نمی‌کند.
+   *
+   * @param {string} resource — rizq | nur | hekmat | gohar
+   * @param {number} amount
+   * @param {{clampToCapacity?: boolean}} [options]
+   * @returns {{moved:number, overflow:number, resource:string}}
+   */
+  grant(resource, amount, { clampToCapacity = true } = {}) {
+    const value = Math.max(0, Number(amount) || 0);
+    if (!resource || value <= 0) return { moved: 0, overflow: 0, resource };
+    if (!this.data.resources[resource]) return { moved: 0, overflow: value, resource };
+    if (this.data.resources[resource].stored === false) {
+      this.resources[resource] = (this.resources[resource] || 0) + value;
+      return { moved: value, overflow: 0, resource };
+    }
+    const free = clampToCapacity ? this.freeCapacity(resource) : Infinity;
+    const moved = Math.min(value, free);
+    this.resources[resource] = (this.resources[resource] || 0) + moved;
+    return { moved, overflow: value - moved, resource };
+  }
+
   earnGohar(amount) {
     const before = this.resources.gohar || 0;
     this.resources.gohar = before + amount;

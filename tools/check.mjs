@@ -8,7 +8,7 @@
  * data files, deterministic generation, the terrain map, the decor scatter and
  * the camera clamp rules (the "camera never leaves the map" acceptance item).
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import * as THREE from 'three';
@@ -31,6 +31,21 @@ import { GameState } from '../src/game/GameState.js';
 import { EconomySystem } from '../src/game/EconomySystem.js';
 import { BuildQueue } from '../src/game/BuildQueue.js';
 import { SaveSystem, migrateRecord, SAVE_SCHEMA_VERSION } from '../src/game/SaveSystem.js';
+import { LearningSystem } from '../src/game/quran/LearningSystem.js';
+import { Leitner } from '../src/game/quran/Leitner.js';
+import {
+  QuranDatasetLoader,
+  hasDiacritics,
+  normalizeDataset,
+  PLACEHOLDER_LABEL,
+  REVIEW_PENDING_LABEL,
+  validateDataset,
+  verseBadges,
+} from '../src/game/quran/QuranDataset.js';
+import { wordMatchPairsFor, tokensPool } from '../src/game/quran/content.js';
+import { AyahCompletionGame } from '../src/game/quran/minigames/AyahCompletion.js';
+import { WordMatchGame } from '../src/game/quran/minigames/WordMatch.js';
+import { AyahOrderGame } from '../src/game/quran/minigames/AyahOrder.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
@@ -804,18 +819,586 @@ test('save: serialize contains no three.js roots', () => {
   assert(e.root != null, 'root still lives on the in-memory entity');
 });
 
-test('data: strings carry phase-3 labels (queue, offline, save step)', () => {
-  assert(strings.app.phase.includes('۳'), 'phase label updated');
+test('data: strings carry phase-3 and phase-4 labels (queue, offline, lesson)', () => {
+  assert(strings.app.phase.includes('۳') || strings.app.phase.includes('۴'), 'phase label updated');
   assert(typeof strings.loading.steps.save === 'string', 'loading save step');
   assert(typeof strings.economy.queued === 'string' && typeof strings.economy.storageFull === 'string', 'economy strings');
+  assert(typeof strings.loading.steps.quran === 'string', 'phase-4 loading step');
+  assert(typeof strings.lesson?.start === 'string' && typeof strings.lesson?.noPenalty === 'string', 'lesson strings');
+  assert(strings.quran.unreviewedBadge === REVIEW_PENDING_LABEL, 'the pending badge string matches the dataset label');
 });
 
+
+
+/* ================================================================ فاز ۴ — لایهٔ قرآنی-آموزشی */
+
+const learningData = readJson('src/data/quran-learning.json');
+const quranSample = readJson('src/data/quran-sample.json');
+
+/** یک آیهٔ ساختگی با اعراب (از escape ساخته می‌شود؛ هیچ متن قرآنی نیست). */
+function syntheticVerse(surahIndex, ayahIndex, extra = {}) {
+  // ن + فتحه، ص + تنوین ... ساخته‌شده از کدهای یونیکد، نه از حافظه.
+  const text = '\u0646\u064E\u0635\u064C \u0645\u064F\u0631\u064E\u0627\u062C\u064E\u0639\u064E\u0629\u064D \u0627\u0644\u062F\u0651\u064E\u064A\u0652\u062A\u064E\u0627\u0633\u0650\u062A';
+  return {
+    id: `ayah:${surahIndex}:${ayahIndex}`,
+    surahIndex,
+    surahName: `سورهٔ آزمون ${surahIndex}`,
+    ayahIndex,
+    textUthmani: text,
+    translationFa: 'ترجمهٔ آزمون (متن واقعی نیست)',
+    audio: null,
+    source: { datasetId: 'test', version: '0', url: null, license: null, script: 'uthmani' },
+    reviewed: true,
+    placeholder: false,
+    tokens: text.split(/\s+/),
+    ...extra,
+  };
+}
+
+const bundled = normalizeDataset(quranSample, { origin: 'bundled' });
+
+/* --------------------------------------------------------------- دیتاست */
+
+test('quran: the bundled sample carries no Quranic text and is fully labelled', () => {
+  assert(bundled.meta.placeholder === true, 'sample meta is flagged placeholder');
+  assert(bundled.meta.reviewed === false, 'sample meta is flagged unreviewed');
+  assert(bundled.verseList.length >= 6, `sample has verses (${bundled.verseList.length})`);
+  for (const verse of bundled.verseList) {
+    assert(verse.placeholder === true, `${verse.id} flagged placeholder`);
+    assert(verse.reviewed === false, `${verse.id} is unreviewed`);
+    assert(verse.translationFa.includes('نمونه') && verse.translationFa.includes('جایگزین شود'),
+      `${verse.id} translation carries the placeholder label`);
+    assert(verse.textUthmani.length > 10 && !verse.source.datasetId.startsWith('tanzil'),
+      `${verse.id} text comes from the placeholder sample, not from a verified dataset`);
+    assert(hasDiacritics(verse.textUthmani), `${verse.id} placeholder keeps full diacritics for the font test`);
+    assert(verse.source && verse.source.datasetId === 'quran-sample', `${verse.id} carries a source`);
+    assert(verse.audio === null, `${verse.id} has no unlicensed audio`);
+  }
+  const badges = verseBadges(bundled.verseList[0]).map((b) => b.label);
+  assert(badges.includes(PLACEHOLDER_LABEL), 'placeholder badge');
+  assert(badges.includes(REVIEW_PENDING_LABEL), 'review-pending badge (acceptance: unreviewed verses are flagged)');
+});
+
+test('quran: validator catches empty text, missing diacritics and empty lessons', () => {
+  const broken = normalizeDataset({
+    meta: { datasetId: 'broken', reviewed: true },
+    surahs: [{ index: 1, name: 'x', ayahs: [
+      { index: 1, textUthmani: '', translationFa: 'x' },
+      { index: 2, textUthmani: 'بدون اعراب', translationFa: 'y' },
+    ] }],
+    lessons: [{ id: 'l', title: 'l', steps: [] }],
+  }, { origin: 'remote' });
+  const report = validateDataset(broken);
+  const codes = report.issues.map((i) => i.code);
+  assert(codes.includes('missing-textUthmani'), 'empty text detected');
+  assert(codes.includes('no-diacritics'), 'missing diacritics detected');
+  assert(codes.includes('lesson-without-steps'), 'empty lesson detected');
+  assert(report.ok === false, 'errors ⇒ not ok');
+  assert(validateDataset(bundled).errors === 0, 'the bundled sample has no hard errors (placeholders stay warnings/info)');
+});
+
+test('quran: sample lessons are 2–3 minutes and cover all three minigames', () => {
+  const games = new Set();
+  for (const lesson of bundled.lessons) {
+    const total = lesson.steps.reduce((sum, step) => sum + (step.seconds || 0), 0);
+    assert(total >= 110 && total <= 190, `${lesson.id} lasts ${total}s (2–3 min)`);
+    assert(lesson.wordBank.length >= 3, `${lesson.id} has a word bank`);
+    for (const step of lesson.steps) if (step.game) games.add(step.game);
+    const steps = lesson.steps.map((s) => s.kind);
+    assert(steps.includes('read') && steps.includes('quiz') && steps.includes('summary'), `${lesson.id} has read/quiz/summary`);
+  }
+  assert(['ayah-completion', 'word-match', 'ayah-order'].every((id) => games.has(id)), 'all three minigames appear in the curriculum');
+});
+
+test('quran: a Tanzil-style dataset swaps in without code changes (verse text from remote, lessons kept)', async () => {
+  const remote = {
+    source: 'دیتاست بیرونی آزمون',
+    sourceUrl: 'https://example.invalid/',
+    license: 'CC-BY-TEST',
+    version: '1.0',
+    script: 'uthmani',
+    reviewed: true,
+    surahs: [{ index: 1, name: 'سورهٔ آزمون', ayahCount: 2, ayahs: [
+      { index: 1, text: syntheticVerse(1, 1).textUthmani, translation: 'ترجمهٔ بیرونی ۱' },
+      { index: 2, text: syntheticVerse(1, 2).textUthmani, translation: 'ترجمهٔ بیرونی ۲' },
+    ] }],
+  };
+  const loader = new QuranDatasetLoader({
+    sample: quranSample,
+    learning: learningData,
+    search: '',
+    fetchImpl: async () => ({ ok: true, status: 200, json: async () => remote }),
+  });
+  const { dataset, validation, loadReport } = await loader.load();
+  assert(loadReport.remoteLoaded === true, 'remote dataset loaded');
+  assert(dataset.meta.origin === 'remote', 'meta marked remote');
+  assert(dataset.meta.reviewed === true && dataset.meta.placeholder === false, 'review flag comes from the dataset');
+  assert(dataset.verses.get('ayah:1:1').translationFa === 'ترجمهٔ بیرونی ۱', 'verse text/translation replaced by the remote dataset');
+  assert(dataset.verses.get('ayah:1:1').reviewed === true, 'reviewed flag applied per verse');
+  assert(verseBadges(dataset.verses.get('ayah:1:1')).every((b) => b.kind === 'reviewed'), 'no placeholder badge for a reviewed dataset');
+  assert(dataset.lessons.length === bundled.lessons.length, 'curriculum reused from the bundled file');
+  assert(validation.errors === 0, `remote validation clean (${validation.issues.map((i) => i.code).join(',')})`);
+  assert(dataset.verseList.length >= 6, 'verses are merged, not dropped');
+});
+
+test('quran: a broken remote dataset falls back to the placeholder sample (no crash)', async () => {
+  const loader = new QuranDatasetLoader({
+    sample: quranSample,
+    learning: learningData,
+    search: '',
+    fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ surahs: [{ index: 1, ayahs: [{ index: 1, text: '', translation: '' }] }] }) }),
+  });
+  const { dataset, loadReport } = await loader.load();
+  assert(loadReport.remoteLoaded === false, 'invalid remote rejected');
+  assert(dataset.meta.origin === 'bundled' && dataset.stats.placeholder === true, 'placeholder sample used instead');
+  assert(dataset.verseList.length >= 6, 'sample verses intact');
+});
+
+test('quran: query param ?quran=… overrides the dataset path', () => {
+  const loader = new QuranDatasetLoader({ sample: quranSample, learning: learningData, search: '?quran=./alt/my.json' });
+  assert(loader.resolveUrl() === './alt/my.json', 'override honoured');
+  const fallback = new QuranDatasetLoader({ sample: quranSample, learning: learningData, search: '' });
+  assert(fallback.resolveUrl() === './quran/quran.json', 'default path is public/quran/quran.json');
+});
+
+/* -------------------------------------------------------------- مینی‌گیم‌ها */
+
+function playAyahCompletion(game, { wrongAttempts = 1 } = {}) {
+  let guard = 0;
+  while (!game.done && guard < 200) {
+    guard += 1;
+    const round = game.current;
+    if (!round) break;
+    const wrong = round.options.filter((o) => !o.correct && !round.disabled.includes(o.id));
+    for (let i = 0; i < wrongAttempts && i < wrong.length; i += 1) game.answer(wrong[i].id);
+    game.answer(round.options.find((o) => o.correct).id);
+  }
+  return guard;
+}
+
+function playWordMatch(game, { wrongAttempts = 1 } = {}) {
+  let guard = 0;
+  while (!game.done && guard < 200) {
+    guard += 1;
+    const pair = game.pairs.find((p) => !game.matched.has(p.id));
+    if (!pair) break;
+    const others = game.pairs.filter((p) => p.id !== pair.id && !game.matched.has(p.id));
+    for (let i = 0; i < wrongAttempts && i < others.length; i += 1) {
+      game.selectTerm(pair.id);
+      game.selectMeaning(others[i].id);
+    }
+    game.selectTerm(pair.id);
+    game.selectMeaning(pair.id);
+  }
+  return guard;
+}
+
+function playAyahOrder(game) {
+  let guard = 0;
+  game.check(); // ترتیب به‌هم‌ریخته ⇒ نادرست، بدون جریمه
+  while (!game.done && guard < 100) {
+    guard += 1;
+    game.hint();
+    if (game.check().correct) break;
+  }
+  return guard;
+}
+
+test('minigame ①/۳: ayah completion is playable, marks mistakes and has no penalty path', () => {
+  const verse = normalizeDataset(quranSample).verseList[0];
+  const game = new AyahCompletionGame({
+    verse,
+    rounds: 3,
+    config: learningData.minigames['ayah-completion'],
+    seed: 7,
+    distractorPool: tokensPool(bundled, { excludeVerseId: verse.id }),
+  });
+  assert(game.total === 3, `three rounds (got ${game.total})`);
+  const snap = game.snapshot();
+  assert(snap.options.length >= 2 && snap.parts.some((p) => p.type === 'blank'), 'board has a blank and options');
+  assert(snap.options.filter((o) => !o.disabled).length >= 2, 'multiple options offered');
+
+  const firstWrong = game.current.options.find((o) => !o.correct);
+  const wrongResult = game.answer(firstWrong.id);
+  assert(wrongResult.correct === false && game.mistakes.length === 1, 'wrong answer recorded as a mistake');
+  assert(game.current.disabled.includes(firstWrong.id), 'wrong option is switched off (retry allowed)');
+  assert(!game.done, 'game continues — a mistake never ends the round');
+  assert(game.hint() === true, 'a hint is available and costs nothing');
+
+  playAyahCompletion(game, { wrongAttempts: 1 });
+  assert(game.done === true, 'all rounds completed');
+  const report = game.report();
+  assert(report.mistakes >= 1, 'mistakes reported for spaced repetition');
+  assert(report.items.length === 3 && report.items.some((i) => i.correct === false), 'per-item outcome recorded');
+});
+
+test('minigame ۲/۳: word match pairs come from the lesson word bank and wrong picks never match', () => {
+  const lesson = bundled.lessons.find((l) => l.wordBank.length >= 4);
+  const { pairs, mode } = wordMatchPairsFor({ lesson, dataset: bundled, config: learningData.minigames['word-match'] });
+  assert(mode === 'word-bank' && pairs.length >= 4, 'word bank used');
+  assert(pairs.every((p) => lesson.wordBank.some((w) => w.term === p.term && w.meaning === p.meaning)), 'pairs are dataset content');
+  assert(pairs.every((p) => p.id.startsWith(`word:${lesson.id}:`)), 'pair ids match the Leitner item ids');
+
+  const game = new WordMatchGame({ pairs, pairsPerRound: pairs.length, config: learningData.minigames['word-match'], seed: 3 });
+  const target = game.pairs[0];
+  const other = game.pairs[1];
+  game.selectTerm(target.id);
+  const bad = game.selectMeaning(other.id);
+  assert(bad.correct === false && game.matched.size === 0, 'a wrong pair is never accepted');
+  assert(game.mistakes.length === 1, 'wrong pick recorded');
+  const good = (() => { game.selectTerm(target.id); return game.selectMeaning(target.id); })();
+  assert(good.correct === true && game.matched.has(target.id), 'correct pair locks in');
+  playWordMatch(game, { wrongAttempts: 1 });
+  assert(game.done === true, 'all pairs matched');
+  assert(game.report().items.length === game.total, 'per-pair outcome recorded');
+});
+
+test('minigame ۳/۳: ayah order locks correct cards, supports hints and completes', () => {
+  const verses = bundled.verseList.slice(0, 3);
+  const game = new AyahOrderGame({ verses, mode: 'verses', config: learningData.minigames['ayah-order'], seed: 11 });
+  assert(game.mode === 'verses' && game.total === 3, 'three ayah cards');
+  assert(game.order.some((id, index) => id !== game.targetOrder[index]), 'cards start scrambled');
+  assert(game.swap(game.order[0], game.order[1]) === true, 'cards can be swapped before any check');
+  assert(game.nudge(game.order[0], 1) === true, 'cards can be nudged one step');
+  const first = game.check();
+  assert(first.correct === false && game.mistakes.length >= 1, 'a scrambled check is wrong — but never punished');
+  assert(game.check().correct === false || true, 'repeated checks never throw');
+  playAyahOrder(game);
+  assert(game.done === true, 'ordering completed with hints only');
+  assert(game.report().items.length === 1, 'per-verse outcome recorded');
+
+  const segments = new AyahOrderGame({ verse: bundled.verseList[3], mode: 'segments', chunks: 4, config: learningData.minigames['ayah-order'], seed: 5 });
+  assert(segments.mode === 'segments' && segments.total >= 3, 'segment mode builds 3–5 cards');
+  playAyahOrder(segments);
+  assert(segments.done === true, 'segment ordering completes too');
+});
+
+/* ------------------------------------------------------------- Leitner */
+
+test('leitner: correct answers climb boxes, wrong answers drop to box 1 and come back soon', () => {
+  const leit = new Leitner({ config: learningData.leitner, store: {} });
+  const t0 = 1_700_000_000_000;
+  leit.register('ayah:1:1', { now: t0, kind: 'ayah', ref: 'ayah:1:1' });
+  const boxes = [];
+  let at = t0;
+  for (let i = 0; i < 3; i += 1) {
+    at += leit.intervalMs(leit.entry('ayah:1:1').box);
+    const res = leit.answer('ayah:1:1', { correct: true, now: at });
+    boxes.push(res.box);
+  }
+  assert(boxes.join(',') === '2,3,4', `boxes climb (got ${boxes.join(',')})`);
+  assert(leit.intervalMs(4) > leit.intervalMs(2), 'later boxes wait longer');
+
+  const lapsed = leit.answer('ayah:1:1', { correct: false, now: at });
+  assert(lapsed.lapsed === true && lapsed.box === 1, 'a mistake returns the item to box 1');
+  assert(lapsed.due - at === leit.intervalMs(1), 'due date shortened to the box-1 interval');
+  assert(leit.entry('ayah:1:1').wrong === 1, 'mistake counted for later re-showing');
+
+  leit.register('ayah:1:2', { now: t0 });
+  leit.register('ayah:1:3', { now: t0 });
+  leit.answer('ayah:1:3', { correct: false, now: t0 + 1 });
+  const soon = leit.sessionQueue(t0 + 1 + leit.intervalMs(1) + 1, { limit: 6, minItems: 3, includeNew: true });
+  assert(soon.includes('ayah:1:3'), `a mistaken item comes back after the short box-1 interval (${soon.join(' ')})`);
+  const late = leit.sessionQueue(leit.entry('ayah:1:1').due + 1, { limit: 6, minItems: 3, includeNew: true });
+  assert(late.includes('ayah:1:1'), 'the lapsed item is offered again later');
+  const stats = leit.stats(t0 + 1);
+  assert(stats.total === 3, 'stats count every registered item');
+  assert(typeof stats.nextDueAt === 'number', 'next due time known');
+  assert(Object.values(stats.byBox).reduce((a, b) => a + b, 0) === 3, 'box histogram covers all items');
+});
+
+/* -------------------------------------------------- سیستم آموزش + اقتصاد */
+
+function makeLearning({ state, economy, queue, bus = null }) {
+  return new LearningSystem({
+    dataset: bundled,
+    learning: learningData,
+    state,
+    economy,
+    queue,
+    bus,
+    seed: 20261007,
+  });
+}
+
+function bootEconomy({ rizq = 300, nur = 200, hekmat = 120, gohar = 20 } = {}) {
+  const state = new GameState({ economy: economyData });
+  state.resources = { rizq, nur, hekmat, gohar };
+  const economy = new EconomySystem({ economy: economyData, balance: balanceData, defs: buildingsData.buildings, state });
+  const queue = new BuildQueue({ economyData: economyData, economy, state });
+  return { state, economy, queue };
+}
+
+test('learning: a full lesson session completes all three games and grants nur/hekmat/speedup', () => {
+  const { state, economy, queue } = bootEconomy();
+  const before = { ...state.resources };
+  const learning = makeLearning({ state, economy, queue });
+  const started = learning.startLesson('lesson-basics', 1_700_000_000_000);
+  assert(started && started.session, 'lesson session created');
+  const session = started.session;
+
+  const quizGames = new Set();
+  let guard = 0;
+  while (!session.closed && guard < 40) {
+    guard += 1;
+    const step = session.current;
+    if (!step) break;
+    step.startedAt = Date.now();
+    if (step.kind === 'quiz') {
+      quizGames.add(step.game.gameId);
+      if (step.game.gameId === 'ayah-completion') playAyahCompletion(step.game, { wrongAttempts: 1 });
+      else if (step.game.gameId === 'word-match') playWordMatch(step.game, { wrongAttempts: 1 });
+      else playAyahOrder(step.game);
+      step.game.items.forEach((item) => session.registerAnswer(item));
+    }
+    session.advance(1_700_000_000_000 + guard * 1000);
+  }
+  assert(session.steps.every((s) => s.done), 'every step finished');
+  assert(quizGames.size === 3, `all three minigames ran (${[...quizGames].join(',')})`);
+
+  const payload = learning.finishSession(session, 1_700_000_120_000);
+  assert(payload.report.completed === true, 'report marked completed');
+  assert(payload.report.elapsedSeconds === 120, 'elapsed time reported (2 minutes)');
+  assert(payload.granted.nur > 0 && payload.granted.hekmat > 0, `rewards granted (${JSON.stringify(payload.granted)})`);
+  assert(state.resources.nur === before.nur + payload.granted.nur, 'nur actually added to the game economy');
+  assert(state.resources.hekmat === before.hekmat + payload.granted.hekmat, 'hekmat actually added');
+  assert(state.resources.rizq === before.rizq && state.resources.gohar === before.gohar, 'the other resources are untouched');
+  assert(payload.report.mistakes > 0, 'mistakes were recorded during the lesson');
+  assert(learning.progress.lessons['lesson-basics'].completions === 1, 'lesson record stored');
+  assert(learning.progress.totals.nurEarned > 0, 'totals updated');
+  assert(learning.leitner.stats().total >= 6, 'lesson items registered in the spaced-repetition deck');
+  assert(learning.speedupPoolSeconds() > 0, 'speedup reward pooled while no builder is busy (no job to speed up)');
+});
+
+test('learning: wrong answers never cost resources and never block a reward', () => {
+  const { state, economy, queue } = bootEconomy();
+  const learning = makeLearning({ state, economy, queue });
+  const started = learning.startLesson('lesson-words', Date.now());
+  const session = started.session;
+  const step = session.steps.find((s) => s.kind === 'quiz');
+  const game = step.game;
+  // پاسخ نادرست کامل: همهٔ گزینه‌های اشتباه انتخاب می‌شوند
+  if (game.gameId === 'ayah-completion') {
+    let guard = 0;
+    while (!game.done && guard < 100) {
+      guard += 1;
+      const round = game.current;
+      if (!round) break;
+      const wrong = round.options.filter((o) => !o.correct && !round.disabled.includes(o.id));
+      if (wrong.length) game.answer(wrong[0].id);
+      else game.answer(round.options.find((o) => o.correct).id);
+      game.items.forEach((item) => session.registerAnswer(item));
+    }
+  } else if (game.gameId === 'word-match') {
+    playWordMatch(game, { wrongAttempts: 2 });
+    game.items.forEach((item) => session.registerAnswer(item));
+  } else {
+    playAyahOrder(game);
+    game.items.forEach((item) => session.registerAnswer(item));
+  }
+  const before = { ...state.resources };
+  const payload = learning.finishSession(session, Date.now() + 90_000);
+  assert(payload.report.mistakes >= 1, `mistakes recorded (${payload.report.mistakes})`);
+  for (const key of ['rizq', 'nur', 'hekmat', 'gohar']) {
+    assert(state.resources[key] >= before[key], `${key} never decreases because of a mistake`);
+  }
+  assert(payload.granted.nur > 0 || payload.granted.hekmat > 0, 'the reward is still granted');
+  assert(payload.report.requeuedMistakes.length === 0 || payload.report.kind === 'lesson', 'lesson sessions keep working after mistakes');
+});
+
+test('learning: spaced repetition re-shows mistakes — in-session requeue and next-session due items', () => {
+  const { state, economy, queue } = bootEconomy();
+  const learning = makeLearning({ state, economy, queue });
+  const lesson = learning.lessonById('lesson-order');
+  learning.registerLessonItems(lesson, 1000);
+  assert(learning.leitner.stats(1000).dueCount >= 3, 'items start due (nothing learned yet)');
+
+  const review = learning.startReview(1000);
+  assert(review && review.session, 'review session started from due items');
+  const session = review.session;
+  assert(session.kind === 'review' && session.steps.length >= 1, 'review queue produced steps');
+
+  // اولین مرحله را عمداً غلط پاسخ می‌دهیم
+  const step = session.current;
+  const game = step.game;
+  let wrongItem = step.itemId || session.queue[0];
+  if (game.gameId === 'ayah-completion') {
+    const wrong = game.current.options.find((o) => !o.correct);
+    const res = game.answer(wrong.id);
+    wrongItem = res.itemId;
+    session.registerAnswer({ itemId: res.itemId, correct: false });
+  } else {
+    const pair = game.pairs.find((p) => p.id === step.itemId) || game.pairs[0];
+    const other = game.pairs.find((p) => p.id !== pair.id);
+    game.selectTerm(pair.id);
+    game.selectMeaning(other.id);
+    session.registerAnswer({ itemId: pair.id, correct: false });
+    wrongItem = pair.id;
+  }
+  assert(session.mistakeItems.includes(wrongItem), 'mistake remembered for requeue');
+
+  // مرحله را تمام کن و جلو برو تا خطاها دوباره در صف بیایند
+  if (game.gameId === 'ayah-completion') playAyahCompletion(game, { wrongAttempts: 0 });
+  else playWordMatch(game, { wrongAttempts: 0 });
+  const before = session.steps.length;
+  session.advance(2000);
+  const requeued = session.steps.length > before;
+  assert(requeued || session.queue.includes(wrongItem) || session.steps.some((s) => s.repeat),
+    'wrong item is re-queued inside the session (دوباره نشان داده می‌شود)');
+
+  const payload = learning.finishSession(session, 3000);
+  const entry = learning.leitner.entry(wrongItem);
+  assert(entry && entry.lapses >= 1, 'Leitner recorded the lapse');
+  assert(entry.due <= 3000 + learning.leitner.intervalMs(1) + 1, 'wrong item becomes due soon again');
+  const nextQueue = learning.leitner.dueItems(entry.due + 1, 100).map((i) => i.id);
+  assert(nextQueue.includes(wrongItem), 'the mistaken item becomes due again for a later session');
+  assert(learning.reviewQueue(entry.due + 1).length > 0, 'a later review session has material to show');
+  assert(payload.granted.nur > 0, 'review sessions also grant a (smaller) reward');
+});
+
+test('learning: rewards respect the storage ceiling and only inform about overflow', () => {
+  const { state, economy, queue } = bootEconomy({ nur: 0, hekmat: 0 });
+  const capacity = economy.capacity();
+  state.resources.nur = capacity.nur;
+  state.resources.hekmat = capacity.hekmat;
+  const learning = makeLearning({ state, economy, queue });
+  const started = learning.startLesson('lesson-basics', 1000);
+  const session = started.session;
+  session.steps.forEach((s) => { s.done = true; });
+  const payload = learning.finishSession(session, 2000);
+  assert(payload.granted.nur === 0 && payload.granted.hekmat === 0, 'nothing moved into a full warehouse');
+  assert(payload.granted.overflow.nur > 0, 'overflow reported instead of silently dropped');
+  assert(state.resources.nur === capacity.nur, 'storage never exceeds its ceiling');
+  assert(state.resources.nur >= 0 && state.resources.hekmat >= 0, 'no negative resources from a lesson');
+});
+
+test('learning: speedup shortens an active builder timer and never lengthens it', () => {
+  const { state, economy, queue } = bootEconomy();
+  const learning = makeLearning({ state, economy, queue });
+  const now = 1_700_000_000_000;
+  const def = buildingsData.buildings.find((b) => b.id === 'farm');
+  const entity = state.createEntity({ type: def.id, name: def.name, col: 2, row: 2, size: def.size, level: 1, status: 'building' });
+  queue.enqueue({ kind: 'build', entityId: entity.id, type: def.id, targetLevel: 1, durationMs: 600_000 }, now);
+  const job = queue.jobs[0];
+  const before = job.endsAt;
+  const result = learning.applySpeedup(90, now);
+  assert(result.appliedSeconds === 90, `90 seconds applied (got ${result.appliedSeconds})`);
+  assert(job.endsAt === before - 90_000, 'the active builder timer moved 90s earlier');
+  assert(job.endsAt >= now, 'the timer never sweeps past "now"');
+  learning.applySpeedup(10_000, now);
+  assert(queue.jobs.length === 0, 'a huge speedup finishes the job immediately (via queue.tick)');
+  assert(entity.level === 1 && state.resources.grizq === undefined, 'no phantom state created');
+  assert(learning.speedupPoolSeconds() <= learningData.rewards.speedupPoolMaxSeconds, 'pool is capped');
+});
+
+test('content policy: no Quran text is hard-coded anywhere in the code', () => {
+  // Signature of fully-vocalised Arabic: a single word carrying TWO OR MORE marks.
+  // Everyday Persian spelling marks («معمولاً»، «پُری»، «کارتِ») or the shadda in
+  // «بنّا» never reach two marks in one token, so this isolates copied Quran text.
+  const marks = /[\u064B-\u0652\u0670\u06D6-\u06ED]/g; // global ⇒ match() returns every mark
+  const vocalisedTokens = (content) =>
+    content.split(/\s+/).filter((token) => (token.match(marks) || []).length >= 2).length;
+  const allowlist = new Set(['src/data/quran-sample.json']);
+  const walk = (dir) => {
+    const out = [];
+    for (const entry of readdirSync(resolve(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) out.push(...walk(rel));
+      else out.push(rel);
+    }
+    return out;
+  };
+  const files = [...walk('src'), ...walk('tools')].filter((f) => /\.(js|mjs|json|css|html)$/.test(f));
+  const offenders = [];
+  for (const file of files) {
+    if (allowlist.has(file)) continue;
+    const content = readFileSync(resolve(root, file), 'utf8');
+    const hits = vocalisedTokens(content);
+    if (hits > 0) offenders.push(`${file} (${hits})`);
+  }
+  assert(offenders.length === 0, `files containing vocalised Arabic (i.e. copied Quran text): ${offenders.join(', ')}`);
+  assert(vocalisedTokens(readFileSync(resolve(root, 'src/data/quran-sample.json'), 'utf8')) > 0,
+    'the placeholder dataset is the one allowed source of vocalised Arabic');
+
+  // and the placeholder file itself must keep its labels on every verse
+  const sample = readJson('src/data/quran-sample.json');
+  const plain = JSON.stringify(sample);
+  assert(plain.includes('نمونه — جایگزین شود'), 'the sample dataset declares the placeholder label');
+  assert(sample.meta.placeholder === true && sample.meta.reviewed === false, 'sample meta is placeholder + unreviewed');
+  assert(!/reviewed":\s*true/.test(plain), 'no verse in the sample claims to be reviewed');
+});
+
+test('content policy: the render layers never import the Quran dataset or text', () => {
+  const banned = [/quran-sample/, /game\/quran/, /ui\/quran/, /QuranDataset/];
+  const scan = (dir) => {
+    const out = [];
+    for (const entry of readdirSync(resolve(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) out.push(...scan(rel));
+      else out.push(rel);
+    }
+    return out;
+  };
+  const offenders = [];
+  for (const file of [...scan('src/core'), ...scan('src/world')]) {
+    if (!file.endsWith('.js')) continue;
+    const content = readFileSync(resolve(root, file), 'utf8');
+    if (banned.some((re) => re.test(content))) offenders.push(file);
+  }
+  assert(offenders.length === 0, `render-layer files referencing Quran content: ${offenders.join(', ')}`);
+
+  // The 3D factory only knows the `lesson` flag, never any verse text.
+  const factory = readFileSync(resolve(root, 'src/world/BuildingFactory.js'), 'utf8');
+  assert(!/\b(verse|verses|ayah|ayahs|surah|surahs)\b|quran-text/i.test(factory), 'BuildingFactory knows nothing about verses');
+  assert(factory.includes("def.id === 'dar-al-quran'"), 'the دارالقرآن model exists');
+});
+
+test('content policy: neither the save file nor a lesson report carries Quran text', () => {
+  const { state, economy, queue } = bootEconomy();
+  const learning = makeLearning({ state, economy, queue });
+  const started = learning.startLesson('lesson-basics', 1000);
+  const session = started.session;
+  session.steps.forEach((s) => { s.done = true; });
+  const payload = learning.finishSession(session, 2000);
+  const serialized = JSON.stringify(state.serialize());
+  for (const verse of bundled.verseList) {
+    assert(!serialized.includes(verse.textUthmani), `verse ${verse.id} text is not persisted`);
+    assert(!serialized.includes(verse.translationFa), `verse ${verse.id} translation is not persisted`);
+  }
+  assert(!JSON.stringify(payload).includes(bundled.verseList[0].textUthmani), 'reports do not embed verse text either');
+  assert(Object.keys(state.serialize().learning.reviews).length > 0, 'learning progress is persisted as ids only');
+});
+
+test('learning: the save roundtrip keeps Leitner boxes, lesson records and totals', () => {
+  const { state, economy, queue } = bootEconomy();
+  const learning = makeLearning({ state, economy, queue });
+  const started = learning.startLesson('lesson-basics', 1000);
+  const session = started.session;
+  session.steps.forEach((s) => { s.done = true; });
+  learning.finishSession(session, 60_000);
+  const record = JSON.parse(JSON.stringify(state.serialize()));
+
+  const restored = new GameState({ economy: economyData });
+  restored.hydrate(record);
+  assert(restored.learning.lessons['lesson-basics'].completions === 1, 'lesson record survives the save');
+  assert(Object.keys(restored.learning.reviews).length > 0, 'Leitner items survive the save');
+  assert(restored.learning.totals.nurEarned > 0, 'reward totals survive the save');
+
+  const again = new LearningSystem({ dataset: bundled, learning: learningData, state: restored, economy, queue });
+  const stats = again.stats(2000);
+  assert(stats.total === Object.keys(restored.learning.reviews).length, 'the scheduler is re-seeded from the save');
+  const savedId = Object.keys(restored.learning.reviews)[0];
+  assert(again.leitner.entry(savedId).box === learning.leitner.entry(savedId).box, 'box levels survive the roundtrip');
+  assert(again.leitner.intervalMs(again.leitner.entry(savedId).box) === learning.leitner.intervalMs(learning.leitner.entry(savedId).box),
+    'intervals are recomputed from the restored box');
+  assert(again.lessonStatus('lesson-basics').bestAccuracy > 0, 'lesson accuracy survives the save');
+});
 
 
 await flushPending();
 
 const pad = (value, width) => String(value).padEnd(width, ' ');
-console.log('\n=== شهر نور — self checks (فاز ۱ و ۳) ===\n');
+console.log('\n=== شهر نور — self checks (فازهای ۱، ۳ و ۴) ===\n');
 for (const result of results) {
   console.log(`${result.ok ? '✓' : '✗'} ${pad(result.name, 62)}${result.ok ? '' : result.message}`);
 }
