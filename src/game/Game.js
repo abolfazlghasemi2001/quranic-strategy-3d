@@ -3,7 +3,13 @@ import { EconomySystem } from './EconomySystem.js';
 import { BuildQueue } from './BuildQueue.js';
 import { EVENTS } from '../core/EventBus.js';
 import { LearningSystem } from './quran/LearningSystem.js';
+import { BarracksSystem } from './barracks/BarracksSystem.js';
+import { BattleSystem } from './battle/BattleSystem.js';
+import { createStructureStats } from './battle/StructureStats.js';
 import buildingData from '../data/buildings.json';
+import unitsData from '../data/units.json';
+import defensesData from '../data/defenses.json';
+import battleData from '../data/battle.json';
 
 /**
  * Game — fixed-timestep logic layer. Owns GameState and the pure game
@@ -64,6 +70,29 @@ export class Game {
       })
       : null;
 
+    // --- phase 5: army, defence and the deterministic battle simulator ---
+    /** Single source of truth for structure health (defenses.json). */
+    this.structureStats = createStructureStats({ defenses: defensesData, config });
+    this.barracks = new BarracksSystem({
+      config,
+      state: this.state,
+      economy: this.economy,
+      unitsData,
+      battleData,
+      bus,
+    });
+    this.battle = new BattleSystem({
+      config,
+      state: this.state,
+      economy: this.economy,
+      barracks: this.barracks,
+      battleData,
+      unitsData,
+      defensesData,
+      structureStats: this.structureStats,
+      bus,
+    });
+
     /** Injected by main.js once the save helpers exist (debounced autosave). */
     this._persistFn = null;
 
@@ -102,6 +131,22 @@ export class Game {
     const now = Date.now();
     this.state.lastTap = { x: point.x, z: point.z, cell, inside, time: this.state.elapsed };
     this.state.tapCount += 1;
+
+    // در میانهٔ نبرد، تپ روی نقشه یعنی «استقرار نیرو»؛ انتخاب و ساخت‌وساز
+    // کنار می‌رود تا انگشت بازیکن هم‌زمان دو کار نکند.
+    const battlefield = inside && this.battle && this.battle.active && this.battle.mode === 'live';
+    if (inside && battlefield) {
+      this._haptic();
+      this.bus.emit(EVENTS.BATTLE_TAP, {
+        x: point.x,
+        z: point.z,
+        col: cell ? cell.col : null,
+        row: cell ? cell.row : null,
+        at: now,
+        source: payload.pointerType || 'unknown',
+      });
+      return this.state.lastTap;
+    }
 
     if (inside) {
       this._haptic();
@@ -181,6 +226,8 @@ export class Game {
       this.offlineReport = { secondsAway, jobsDone, goharDaily, gained, pending };
     }
 
+    this.syncStructureHealth();
+    this.barracks.emitChanged();
     this.markEconomyDirty();
     this.markQueueDirty();
     this.emitState(now, true);
@@ -222,6 +269,9 @@ export class Game {
 
   update(realDt) {
     if (this.state.paused) return;
+    // شبیه‌ساز نبرد با زمان واقعی گام می‌خورد، ولی منطقش فقط با گام‌های ثابت
+    // جلو می‌رود؛ بنابراین نتیجهٔ نبرد به نرخ فریم وابسته نیست.
+    this.battle.update(realDt);
     this.accumulator += realDt;
     let steps = 0;
     const now = Date.now();
@@ -261,6 +311,17 @@ export class Game {
 
     const finished = this.queue.tick(now);
     if (finished.length) this.markQueueDirty();
+
+    // آموزش سپاه (تایم‌استمپ‌محور، مثل بنّاها).
+    const trained = this.barracks.tick(now);
+    if (trained.length) {
+      this.barracks.emitChanged();
+      const last = trained[trained.length - 1];
+      const name = unitsData.units.find((unit) => unit.id === last.unit)?.name || last.unit;
+      this.bus.emit(EVENTS.UI_TOAST, `${name} آموزش دید.`);
+      this.markEconomyDirty();
+      this.persist();
+    }
 
     // Spaced-repetition due counters (~1 Hz is plenty; the map is tiny).
     if (this.learning && now - (this._lastLearningTick || 0) > 1000) {
@@ -403,7 +464,39 @@ export class Game {
     };
   }
 
+  /**
+   * همهٔ سازه‌ها باید جان داشته باشند. برای ذخیره‌های قدیمی (فاز ۳ و ۴) جان را
+   * از defenses.json می‌سازیم؛ ساختمان‌های تازه هم هنگام ساخت مقدار می‌گیرند.
+   */
+  syncStructureHealth() {
+    for (const entity of this.state.entities.values()) {
+      const maxHp = this.structureStats.maxHpFor(entity);
+      if (entity.maxHp !== maxHp) entity.maxHp = maxHp;
+      if (entity.hp == null || entity.hp > maxHp) entity.hp = maxHp;
+      if (entity.hp < 0) entity.hp = 0;
+      entity.damaged = entity.hp < maxHp;
+    }
+    return this.state.entities.size;
+  }
+
+  /** تعمیر سازهٔ آسیب‌دیده (هزینه از defenses.json، انجام فوری). */
+  repairEntity(entity) {
+    const result = this.battle.repair(entity);
+    if (result.ok) {
+      this.bus.emit(EVENTS.UI_TOAST, `${this.config.t('defense.repaired', 'سازه تعمیر شد.')}`);
+      this.markEconomyDirty();
+      this.persist();
+    }
+    return result;
+  }
+
+  /** استقرار یک واحد از سپاه روی نقشه (پل رابط کاربری → شبیه‌ساز). */
+  deployUnit(unitType, x, z) {
+    return this.battle.deploy(unitType, x, z);
+  }
+
   dispose() {
+    this.battle.dispose();
     for (const [ev, fn] of this._on) this.bus.off(ev, fn);
     this._on.length = 0;
     if (this.input) this.input.onTap = null;

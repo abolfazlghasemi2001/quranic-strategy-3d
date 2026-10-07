@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "note": "فاز ۵ — تنظیمات نبرد PvE. شبیه‌ساز قطعی است: گام زمانی ثابت، بذر ثابت و هیچ Math.random مستقیمی در منطق نیست. ورودی‌ها فقط دستورهای شماره‌دار (tick) هستند تا بعداً سرور بتواند همان (بذر + دستورها) را بازپخش و اعتبارسنجی کند.",
+  "content": {
+    "blood": false,
+    "gore": false,
+    "quranTextInScene": false,
+    "note": "بدون خون و بدون خشونت گرافیکی؛ واحد شکست‌خورده فقط عقب‌نشینی می‌کند و محو می‌شود. هیچ متن قرآنی در صحنه، افکت یا رابط نبرد نمایش داده نمی‌شود."
+  },
+  "sim": {
+    "stepHz": 20,
+    "maxTicks": 6000,
+    "maxStepsPerFrame": 10,
+    "pathBudgetPerTick": 5,
+    "pathCacheLimit": 320,
+    "pathMaxNodes": 2600,
+    "hashEveryTicks": 20,
+    "checkpointLimit": 140,
+    "separationIterations": 2,
+    "damageSpread": 0,
+    "note": "stepHz گام ثابت شبیه‌ساز؛ damageSpread صفر ⇒ هیچ تیر تصادفی در نبرد نیست (اگر مقدار بدهید، از Rng بذردار استفاده می‌شود).",
+    "lineOfSight": true,
+    "lineOfSightNote": "واحدهای زمینی از پشت دیوار شلیک نمی‌کنند: اگر خط دید بسته باشد، نخست مسیر را دور دیوار می‌گردند و اگر راهی نبود، دیوار را می‌شکنند. سازه‌های دفاعی (برج/فانوس) بلندترند و از روی دیوار شلیک می‌کنند."
+  },
+  "deploy": {
+    "maxPerBattle": 40,
+    "cooldownTicks": 10,
+    "minEnemyDistanceTiles": 2.5,
+    "onlyOnFreeTiles": true,
+    "note": "استقرار نیرو فقط داخل نقشه و روی خانهٔ آزاد؛ در فاصلهٔ امن از مهاجم."
+  },
+  "army": {
+    "baseCapacity": 6,
+    "capacityPerBarracksLevel": 5,
+    "trainingQueueMax": 5,
+    "maxPerType": 30,
+    "note": "ظرفیت پادگان = baseCapacity + capacityPerBarracksLevel × سطح پادگان."
+  },
+  "retaliation": {
+  "seconds": 3,
+  "note": "هر واحدی که از یک واحد دشمن آسیب ببیند، چند ثانیه او را بالاتر از جدول اولویت هدف می‌گیرد؛ وگرنه مهاجم‌ها فقط سازه می‌زدند و مدافعان هیچ آسیبی نمی‌دیدند (و ترمیم‌گر بی‌کار می‌ماند)."
+},
+"attacker": {
+    "modifiers": {
+      "hp": 0.9,
+      "damage": 0.8,
+      "speed": 1.0
+    },
+    "spawnSpreadTiles": 1.3,
+    "spawnIntervalTicks": 2,
+    "note": "مهاجم‌ها با همان چهار گونهٔ واحد ولی با ضریب و اولویت هدف داده‌محور می‌آیند: ستون مهاجم سراغ سازه‌ها و دیوار می‌رود و مدافعان باید سد راهش شوند.",
+    "priorityOverride": {
+      "guard": "structures-first",
+      "archer": "defense-first",
+      "breaker": "walls-first",
+      "healer": "support"
+    },
+    "supportRetreatsWhenColumnBroken": true,
+    "supportRetreatsNote": "اگر هیچ رزمندهٔ مهاجمی نماند، ترمیم‌گر مهاجم هم عقب می‌کشد تا نبرد قطعی تمام شود."
+  },
+  "defender": {
+    "autoDeploy": {
+      "enabled": true,
+      "units": 6,
+      "spreadTiles": 2.6,
+      "nearDefenseTiles": 3
+    },
+    "backlineTiles": 3.4,
+    "note": "مدافع در شهر خودش می‌جنگد: بخشی از پادگان خودکار در خط دفاعی مستقر می‌شود و ضریب داده‌محور جان/آسیب دارد؛ بقیهٔ سپاه با دستور بازیکن می‌آید.",
+    "modifiers": {
+      "hp": 1.3,
+      "damage": 1.15,
+      "speed": 1.0
+    }
+  },
+  "edges": {
+    "north": {
+      "start": {
+        "col": 12,
+        "row": 0
+      },
+      "end": {
+        "col": 27,
+        "row": 0
+      },
+      "inward": {
+        "x": 0,
+        "z": 1
+      }
+    },
+    "south": {
+      "start": {
+        "col": 27,
+        "row": 39
+      },
+      "end": {
+        "col": 12,
+        "row": 39
+      },
+      "inward": {
+        "x": 0,
+        "z": -1
+      }
+    },
+    "east": {
+      "start": {
+        "col": 39,
+        "row": 12
+      },
+      "end": {
+        "col": 39,
+        "row": 27
+      },
+      "inward": {
+        "x": -1,
+        "z": 0
+      }
+    },
+    "west": {
+      "start": {
+        "col": 0,
+        "row": 27
+      },
+      "end": {
+        "col": 0,
+        "row": 12
+      },
+      "inward": {
+        "x": 1,
+        "z": 0
+      }
+    }
+  },
+  "encounters": [
+    {
+      "id": "raid-scouts",
+      "name": "یورش پیش‌قراولان",
+      "threat": 1,
+      "seedOffset": 131,
+      "waves": [
+        {
+          "atSeconds": 0,
+          "unit": "guard",
+          "count": 4,
+          "edge": "north"
+        },
+        {
+          "atSeconds": 10,
+          "unit": "archer",
+          "count": 2,
+          "edge": "north"
+        }
+      ]
+    },
+    {
+      "id": "raid-column",
+      "name": "ستون مهاجم",
+      "threat": 2,
+      "seedOffset": 577,
+      "waves": [
+        {
+          "atSeconds": 0,
+          "unit": "guard",
+          "count": 6,
+          "edge": "north"
+        },
+        {
+          "atSeconds": 8,
+          "unit": "archer",
+          "count": 4,
+          "edge": "north"
+        },
+        {
+          "atSeconds": 22,
+          "unit": "breaker",
+          "count": 2,
+          "edge": "north"
+        }
+      ]
+    },
+    {
+      "id": "raid-siege",
+      "name": "یورش سنگین دیوارشکن",
+      "threat": 3,
+      "seedOffset": 1543,
+      "waves": [
+        {
+          "atSeconds": 0,
+          "unit": "guard",
+          "count": 8,
+          "edge": "north"
+        },
+        {
+          "atSeconds": 6,
+          "unit": "breaker",
+          "count": 3,
+          "edge": "north"
+        },
+        {
+          "atSeconds": 14,
+          "unit": "archer",
+          "count": 6,
+          "edge": "north"
+        },
+        {
+          "atSeconds": 30,
+          "unit": "healer",
+          "count": 2,
+          "edge": "north"
+        },
+        {
+          "atSeconds": 44,
+          "unit": "guard",
+          "count": 6,
+          "edge": "north"
+        }
+      ]
+    }
+  ],
+  "end": {
+    "timeoutSeconds": 150,
+    "defeatDamagedStructures": 3,
+    "defeatOnTownCenterDown": true,
+    "withdrawResult": "withdrawn",
+    "defeatDamagedStructures_note": "تعداد سازه‌هایی که باید «از کار بیفتند» تا دفاع شکست‌خورده اعلام شود؛ هیچ ساختمانی پاک نمی‌شود.",
+    "retreatReturnsHome": true,
+    "note": "پایان نبرد: بیرون‌رفتن همهٔ مهاجمان = پیروزی دفاعی؛ از کار افتادن سازه‌های اصلی یا سقوط مرکز شهر = شکست؛ پایان زمان = عقب‌نشینی مهاجمان. واحد مدافعِ زخمی که عقب می‌کشد به پادگان برمی‌گردد و تنها واحد رانده‌شده از میدان از دست می‌رود."
+  },
+  "rewards": {
+    "victory": {
+      "nur": 140,
+      "hekmat": 70
+    },
+    "timeout": {
+      "nur": 45,
+      "hekmat": 20
+    },
+    "defeat": {
+      "nur": 15,
+      "hekmat": 8
+    },
+    "withdrawn": {
+      "nur": 0,
+      "hekmat": 0
+    },
+    "note": "پاداش همیشه داده می‌شود (بدون جریمه و بدون قفل)؛ شکست فقط آسیب سازه و هزینهٔ تعمیر دارد، نه از دست دادن ساختمان."
+  },
+  "camera": {
+    "battleDistance": 92,
+    "zoomStepRatio": 0.86,
+    "focusLeadTiles": 4
+  },
+  "particles": {
+    "maxParticles": 260,
+    "projectileSpeeds": {
+      "arrow": 34,
+      "light-bolt": 26,
+      "spark-burst": 30,
+      "light-ring": 14
+    },
+    "dust": {
+      "max": 150,
+      "size": 1.05,
+      "color": "#cfc2a4",
+      "lifeSeconds": [
+        0.5,
+        1.15
+      ],
+      "riseSpeed": 0.5,
+      "spreadUnits": 0.9,
+      "opacity": 0.55
+    },
+    "spark": {
+      "max": 120,
+      "size": 0.42,
+      "color": "#ffe6a8",
+      "lifeSeconds": [
+        0.18,
+        0.5
+      ],
+      "riseSpeed": 1.6,
+      "spreadUnits": 0.5,
+      "opacity": 0.9
+    },
+    "bursts": {
+      "unitHit": {
+        "dust": 4,
+        "spark": 5
+      },
+      "unitDown": {
+        "dust": 10,
+        "spark": 6
+      },
+      "structureHit": {
+        "dust": 5,
+        "spark": 3
+      },
+      "structureDown": {
+        "dust": 16,
+        "spark": 8
+      },
+      "spawn": {
+        "dust": 3,
+        "spark": 0
+      },
+      "attack": {
+        "dust": 0,
+        "spark": 3
+      }
+    }
+  },
+  "history": {
+    "keep": 3,
+    "note": "سه نبرد آخر با کل بازپخش (بذر + دستورها + چک‌سام) نگه داشته می‌شود تا بازپخش و اعتبارسنجی ممکن باشد."
+  }
+}

@@ -74,8 +74,26 @@ export class BuildingSystem {
     }
   }
 
+  /**
+   * هر سازه باید جان داشته باشد؛ مقدار از defenses.json (StructureStats) می‌آید.
+   * سازهٔ نوساز با جان کامل شروع می‌کند و ارتقا سقف جان را بالا می‌برد.
+   */
+  _ensureHealth(entity) {
+    const stats = this.game?.structureStats;
+    if (!stats) return null;
+    const maxHp = stats.maxHpFor(entity);
+    const previous = entity.maxHp;
+    entity.maxHp = maxHp;
+    if (entity.hp == null) entity.hp = maxHp;
+    if (previous != null && maxHp > previous && entity.hp > previous) entity.hp = maxHp; // ارتقا: جان کامل
+    if (entity.hp > maxHp) entity.hp = maxHp;
+    entity.damaged = entity.hp < maxHp;
+    return maxHp;
+  }
+
   _attachVisual(entity) {
     const def = this.byId.get(entity.type);
+    this._ensureHealth(entity);
     if (!def || entity.root) return;
     const ready = entity.status === 'ready';
     const root = ready ? this.factory.create(def) : this.factory.createScaffold(def);
@@ -285,6 +303,7 @@ export class BuildingSystem {
       pending: 0,
       lastAccrualAt: null,
     });
+    this._ensureHealth(entity);
     const scaffold = this.factory.createScaffold(def);
     this._placeRoot(scaffold, entity, 1);
     entity.root = scaffold;
@@ -453,6 +472,7 @@ export class BuildingSystem {
     const def = this.byId.get(entity.type);
     if (!def) return;
 
+    this._ensureHealth(entity);
     if (job.kind === 'build') {
       // Swap the scaffold for the finished model.
       this.group.remove(entity.root);
