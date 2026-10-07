@@ -10,13 +10,15 @@ import { EVENTS } from '../core/EventBus.js';
 const TIER_LABEL = { low: 'پایین (low)', medium: 'متوسط (medium)', high: 'بالا (high)' };
 
 export class DevPanel {
-  constructor({ config, engine, bus, monitor, rig, world }) {
+  constructor({ config, engine, bus, monitor, rig, world, onSaveNow, onSimulateOffline }) {
     this.config = config;
     this.engine = engine;
     this.bus = bus;
     this.monitor = monitor;
     this.rig = rig;
     this.world = world;
+    this.onSaveNow = onSaveNow || null;
+    this.onSimulateOffline = onSimulateOffline || null;
 
     const t = (key, fallback) => config.t(key, fallback);
 
@@ -61,6 +63,18 @@ export class DevPanel {
 
     this.tierValue = TIER_LABEL[config.quality.tier] || config.quality.tier;
 
+    this.saveButton = button(t('hud.saveNow', 'ذخیرهٔ فوری'), {
+      className: 'ui-btn',
+      dataset: { action: 'save' },
+      onClick: () => this.saveNow(),
+    });
+    this.offlineButton = button(t('hud.simulateOffline', 'شبیه‌سازی ۱ ساعت غیبت'), {
+      className: 'ui-btn',
+      dataset: { action: 'offline' },
+      onClick: () => this.simulateOffline(),
+    });
+    panel.append(el('div', { className: 'ui-dev-extra', children: [this.saveButton, this.offlineButton] }));
+
     this.gridButton = button(t('hud.gridOn', 'گرید: روشن'), {
       className: 'ui-btn',
       dataset: { action: 'grid' },
@@ -81,7 +95,6 @@ export class DevPanel {
       dataset: { action: 'pause' },
       onClick: () => this.togglePause(),
     });
-
     this.statsButton = statsButton;
     this.pauseButton = pauseButton;
 
@@ -144,6 +157,14 @@ export class DevPanel {
   resetCamera() {
     this.rig.reset();
     this.bus.emit(EVENTS.CAMERA_RESET, {});
+  }
+
+  saveNow() {
+    if (this.onSaveNow) this.onSaveNow();
+  }
+
+  simulateOffline() {
+    if (this.onSimulateOffline) this.onSimulateOffline();
   }
 
   togglePause() {

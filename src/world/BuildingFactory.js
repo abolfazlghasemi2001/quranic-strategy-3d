@@ -88,10 +88,55 @@ export class BuildingFactory {
       for (let i = 0; i < 8; i += 1) {
         const a = i * Math.PI / 4; g.add(mesh(new THREE.BoxGeometry(.34, .5, .34), m.brick, Math.sin(a) * w * .38, 4.2, Math.cos(a) * w * .38));
       }
+    } else if (def.id === 'library') {
+      base(1.35, m.plaster);
+      // twin bookshelf walls
+      for (const side of [-1, 1]) {
+        g.add(mesh(new THREE.BoxGeometry(w * .12, 1.15, d * .8), m.wood, side * w * .34, 1.9, 0));
+        for (let i = 0; i < 3; i += 1) g.add(mesh(new THREE.BoxGeometry(w * .14, .1, d * .72), m.dark, side * w * .34, 1.5 + i * .38, 0));
+      }
+      arch(g, w * .5, 1.4, d * .42, m.tile);
+      g.add(mesh(new THREE.BoxGeometry(w * .96, .16, d * .96), m.tile, 0, 2.7, 0));
+      g.add(mesh(new THREE.CylinderGeometry(.05, .05, .8, 6), m.gold, 0, 3.15, 0));
+      g.add(mesh(new THREE.BoxGeometry(w * .5, .06, d * .3), m.crop, 0, 3.0, 0)); // open book
     } else {
       base(1.05, m.brick);
       g.add(mesh(new THREE.BoxGeometry(w * .92, .18, d * 1.04), m.tile, 0, 1.12, 0));
     }
+    g.traverse((o) => { if (o.isMesh) o.userData.buildingRoot = g; });
+    return g;
+  }
+
+  /**
+   * Construction scaffold shown while a build/upgrade job is running.
+   * Low-poly wooden frame + partial foundation — code only, no external assets.
+   */
+  createScaffold(def) {
+    const g = new THREE.Group();
+    g.name = `scaffold:${def.id}`;
+    const s = this.tileSize, w = def.size[0] * s * .86, d = def.size[1] * s * .86;
+    const m = this.materials;
+
+    // half-built foundation
+    g.add(mesh(new THREE.BoxGeometry(w, .5, d), m.brick, 0, .25, 0));
+    // corner posts
+    const px = w * .42, pz = d * .42, h = 1.9;
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        g.add(mesh(new THREE.BoxGeometry(.14, h, .14), m.wood, sx * px, h / 2 + .4, sz * pz));
+      }
+    }
+    // cross beams
+    for (const sz of [-1, 1]) g.add(mesh(new THREE.BoxGeometry(w * .94, .12, .12), m.wood, 0, h * .55 + .4, sz * pz));
+    for (const sx of [-1, 1]) g.add(mesh(new THREE.BoxGeometry(.12, .12, d * .94), m.wood, sx * px, h * .55 + .4, 0));
+    g.add(mesh(new THREE.BoxGeometry(w * .94, .12, .12), m.wood, 0, h + .4, 0));
+    // diagonal brace (visual "work in progress" cue)
+    const brace = mesh(new THREE.BoxGeometry(.1, h * 1.1, .1), m.wood, 0, h * .55 + .4, pz);
+    brace.rotation.z = Math.PI / 5;
+    g.add(brace);
+    // plank pile
+    g.add(mesh(new THREE.BoxGeometry(w * .4, .12, d * .22), m.wood, w * .18, .6, -d * .28));
+
     g.traverse((o) => { if (o.isMesh) o.userData.buildingRoot = g; });
     return g;
   }

@@ -1,0 +1,33 @@
+{
+  "resources": {
+    "rizq": { "id": "rizq", "name": "رزق", "icon": "❖", "color": "#9ed67a", "stored": true },
+    "nur": { "id": "nur", "name": "نور", "icon": "✦", "color": "#7fd0c3", "stored": true },
+    "hekmat": { "id": "hekmat", "name": "حکمت", "icon": "◆", "color": "#c9a6ff", "stored": true },
+    "gohar": { "id": "gohar", "name": "گوهر", "icon": "💎", "color": "#ffd77a", "stored": false }
+  },
+  "starting": { "rizq": 600, "nur": 400, "hekmat": 250, "gohar": 20 },
+  "storage": {
+    "base": { "rizq": 800, "nur": 600, "hekmat": 400 },
+    "perWarehouseLevel": { "rizq": 800, "nur": 600, "hekmat": 400 }
+  },
+  "production": {
+    "bufferHours": 8,
+    "readySeconds": 60
+  },
+  "offline": { "maxHours": 72 },
+  "builders": { "total": 2 },
+  "queue": { "maxJobs": 6 },
+  "speedup": { "goharPerMinute": 1, "minGohar": 1 },
+  "goharSources": {
+    "dailyBonus": 5,
+    "townCenterLevelReward": 3,
+    "note": "گوهر فقط از مسیرهای درون‌بازی (پاداش روزانه و ارتقای مرکز شهر) به دست می‌آید؛ بدون خرید پولی، قمار یا جعبهٔ شانسی."
+  },
+  "save": {
+    "dbName": "shahr-nur",
+    "storeName": "saves",
+    "slot": "main",
+    "autosaveSeconds": 15,
+    "schemaVersion": 2
+  }
+}

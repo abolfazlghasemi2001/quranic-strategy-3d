@@ -7,6 +7,8 @@ import terrainData from '../data/terrain.json';
 import qualityData from '../data/quality.json';
 import gameplayData from '../data/gameplay.json';
 import stringsFa from '../data/strings.fa.json';
+import economyData from '../data/economy.json';
+import balanceData from '../data/balance.json';
 import { hash2i } from './RNG.js';
 import { clamp } from './MathUtils.js';
 
@@ -65,12 +67,22 @@ export class Config {
    * @param {object} [options.env] - overrides for tests ({ cores, memory, coarsePointer })
    */
   constructor({ search = '', env = {} } = {}) {
-    this.sources = { world: worldData, terrain: terrainData, quality: qualityData, gameplay: gameplayData, strings: stringsFa };
+    this.sources = {
+      world: worldData,
+      terrain: terrainData,
+      quality: qualityData,
+      gameplay: gameplayData,
+      strings: stringsFa,
+      economy: economyData,
+      balance: balanceData,
+    };
 
     this.world = deepFreeze(clone(worldData));
     this.terrain = deepFreeze(clone(terrainData));
     this.gameplay = deepFreeze(clone(gameplayData));
     this.strings = deepFreeze(clone(stringsFa));
+    this.economy = deepFreeze(clone(economyData));
+    this.balance = deepFreeze(clone(balanceData));
 
     const requested = new URLSearchParams(search).get('quality');
     this.tier = QUALITY_TIERS.includes(requested) ? requested : detectQualityTier(env);
