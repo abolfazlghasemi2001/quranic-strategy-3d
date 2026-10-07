@@ -1,5 +1,5 @@
 /**
- * شهر نور — entry point (phase 1: foundation & 3D world)
+ * شهر نور — entry point (phase 2: building placement & HUD)
  *
  * Boot order:
  *   config -> engine -> world -> input/camera -> game logic -> UI -> loop
@@ -15,6 +15,7 @@ import { InputManager } from './core/InputManager.js';
 import { OrbitCameraRig } from './core/OrbitCameraRig.js';
 import { World } from './world/World.js';
 import { Game } from './game/Game.js';
+import { BuildingSystem } from './game/BuildingSystem.js';
 import { PerfMonitor } from './ui/PerfMonitor.js';
 import { HUD } from './ui/HUD.js';
 import { DevPanel } from './ui/DevPanel.js';
@@ -57,6 +58,7 @@ async function boot() {
 
   // ---------------------------------------------------------------- game
   const game = new Game({ config, world, rig, input, bus });
+  const buildings = new BuildingSystem({ config, world, rig, input, bus, state: game.state });
 
   // ------------------------------------------------------------------ ui
   const monitor = new PerfMonitor({ windowSeconds: 1.5, sampleInterval: 0.25 });
@@ -67,6 +69,7 @@ async function boot() {
     bus,
     monitor,
     rig,
+    buildings,
     onOpenQuran: () => {
       quranPanel.show();
       engine.pause('modal');
@@ -92,13 +95,14 @@ async function boot() {
   window.setTimeout(() => loading.hide(), 260);
 
   // --------------------------------------------------------- debug handle
-  window.__NUR__ = { config, engine, world, game, rig, input, bus, monitor, hud, devPanel, quranPanel };
+  window.__NUR__ = { config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel };
 
   window.addEventListener('pagehide', (event) => {
     if (event.persisted) return; // keep everything for the back/forward cache
     devPanel.dispose();
     hud.dispose();
     quranPanel.dispose();
+    buildings.dispose();
     game.dispose();
     input.dispose();
     rig.dispose();
@@ -109,7 +113,7 @@ async function boot() {
   });
 
   console.info(
-    `[شهر نور] فاز ۱ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، اندازهٔ نقشه: ${config.cols}×${config.rows}`,
+    `[شهر نور] فاز ۲ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، اندازهٔ نقشه: ${config.cols}×${config.rows}`,
   );
   return window.__NUR__;
 }

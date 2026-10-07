@@ -21,6 +21,8 @@ export class InputManager {
     this.config = config;
     this.onAction = onAction;
     this.onTap = onTap;
+    this.interactionMode = 'camera';
+    this.onWorldPointer = null;
 
     this.pan = { x: 0, y: 0 };
     this.zoom = 0;
@@ -128,6 +130,9 @@ export class InputManager {
       /* pointer capture is best effort (Safari occasionally throws) */
     }
     this._rebaseline();
+    if (this.interactionMode === 'placement' && this.onWorldPointer) {
+      this.onWorldPointer('down', event);
+    }
   }
 
   _onPointerMove(event) {
@@ -143,6 +148,12 @@ export class InputManager {
     }
 
     const state = this._collect();
+    if (this.interactionMode === 'placement') {
+      if (this.onWorldPointer) this.onWorldPointer('move', event);
+      this._base = state;
+      this.pointerCount = state.count;
+      return;
+    }
     const dx = state.cx - this._base.cx;
     const dy = state.cy - this._base.cy;
 
@@ -173,13 +184,14 @@ export class InputManager {
     const pointer = this._pointers.get(event.pointerId);
     if (!pointer) return;
     this._pointers.delete(event.pointerId);
+    if (this.interactionMode === 'placement' && this.onWorldPointer) this.onWorldPointer('up', event);
 
     const duration = performance.now() - pointer.startTime;
     const wasTap = !pointer.moved && duration <= this.tapDuration && pointer.pointerType !== undefined;
     this._rebaseline();
     this.isPanning = this.pointerCount > 0;
 
-    if (wasTap && this._pointers.size === 0) {
+    if (wasTap && this._pointers.size === 0 && this.interactionMode !== 'placement') {
       const payload = {
         type: 'tap',
         x: pointer.x,

@@ -73,4 +73,8 @@ export const EVENTS = Object.freeze({
   PERF_SAMPLE: 'perf:sample',
   CONTEXT_LOST: 'renderer:context-lost',
   CONTEXT_RESTORED: 'renderer:context-restored',
+  ECONOMY_CHANGED: 'game:economy-changed',
+  PLACEMENT_CHANGED: 'game:placement-changed',
+  BUILDING_SELECTED: 'game:building-selected',
+  UI_TOAST: 'ui:toast',
 });
