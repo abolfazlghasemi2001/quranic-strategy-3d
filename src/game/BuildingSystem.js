@@ -12,6 +12,10 @@ import { formatFa } from '../ui/dom.js';
  * finishes (JOB_FINISHED swaps it for the real model). Producers accrue
  * `pending` (see EconomySystem) and are harvested with a tap when the ready
  * marker shows. All numbers come from balance.json / economy.json.
+ *
+ * Phase 4: buildings flagged `lesson: true` (دارالقرآن) open the learning layer
+ * on tap (QURAN_LESSON_REQUESTED). No Quran text is ever attached to a 3D
+ * object, a texture or a world-space label — the world only knows the flag.
  */
 export class BuildingSystem {
   /**
@@ -148,6 +152,19 @@ export class BuildingSystem {
       return;
     }
     const def = this.byId.get(entity.type);
+    // Phase 4: دارالقرآن is the lesson gateway — tapping it opens دارالقرآن
+    // (the lesson UI) instead of auto-harvesting; harvesting stays available
+    // from the selection menu below.
+    if (def?.lesson) {
+      this.select(entity);
+      this.bus.emit(EVENTS.QURAN_LESSON_REQUESTED, {
+        entityId: entity.id,
+        type: entity.type,
+        name: def.name,
+        at: Date.now(),
+      });
+      return;
+    }
     // Tap a ready producer => harvest AND keep it selected.
     if (def?.produces && entity.status === 'ready' && entity.pending >= this.economy.readyThreshold(entity)) {
       this.harvest(entity);

@@ -1,9 +1,9 @@
 /**
- * شهر نور — entry point (phase 3: economy, time & persistence)
+ * شهر نور — entry point (phase 4: Quran learning layer)
  *
  * Boot order:
- *   config -> engine -> load save -> world -> input/camera -> game (hydrate +
- *   offline catch-up) -> buildings -> UI -> loop
+ *   config -> engine -> load save -> Quran dataset -> world -> input/camera ->
+ *   game (hydrate + offline catch-up) -> buildings -> UI -> loop
  * Each layer only talks to the others through the event bus or through explicit
  * references handed over here, so later phases can add systems without rewrites.
  */
@@ -18,10 +18,13 @@ import { World } from './world/World.js';
 import { Game } from './game/Game.js';
 import { BuildingSystem } from './game/BuildingSystem.js';
 import { SaveSystem } from './game/SaveSystem.js';
+import { QuranDatasetLoader } from './game/quran/QuranDataset.js';
+import quranSample from './data/quran-sample.json';
 import { PerfMonitor } from './ui/PerfMonitor.js';
 import { HUD } from './ui/HUD.js';
 import { DevPanel } from './ui/DevPanel.js';
 import { QuranPanel } from './ui/QuranPanel.js';
+import { LessonHub } from './ui/quran/LessonHub.js';
 import { LoadingScreen, ErrorOverlay } from './ui/LoadingScreen.js';
 
 async function boot() {
@@ -63,6 +66,26 @@ async function boot() {
     saveRecord = null;
   }
 
+  // -------------------------------------------------------- quran dataset
+  // The dataset is loaded by the UI/logic entry point only — never by core/ or
+  // world/, so Quran text can never leak into the 3D scene, ground or effects.
+  loading.setStep('quran', 0.15);
+  const datasetLoader = new QuranDatasetLoader({
+    sample: quranSample,
+    learning: config.quranLearning,
+    search: window.location.search,
+  });
+  const quranLoad = await datasetLoader.load();
+  const quran = { dataset: quranLoad.dataset, validation: quranLoad.validation, loadReport: quranLoad.loadReport };
+  if (quranLoad.loadReport.remoteLoaded) {
+    console.info(`[شهر نور] دیتاست قرآن از بیرون بارگذاری شد: ${quranLoad.loadReport.url} (${quranLoad.validation.warnings} هشدار)`);
+  } else {
+    console.info(`[شهر نور] دیتاست قرآن: نمونهٔ داخلی (جای‌نگهدار) — علت: ${quranLoad.loadReport.remoteError}`);
+  }
+  if (quranLoad.validation.errors > 0) {
+    console.warn('[شهر نور] خطاهای اعتبارسنجی دیتاست:', quranLoad.validation.issues.filter((i) => i.level === 'error'));
+  }
+
   // ---------------------------------------------------------------- world
   const world = new World({ config, bus });
   await world.build((step, ratio) => loading.setStep(step, ratio));
@@ -73,7 +96,7 @@ async function boot() {
   const rig = new OrbitCameraRig({ camera: engine.camera, config, input, bus });
 
   // ---------------------------------------------------------------- game
-  const game = new Game({ config, world, rig, input, bus, record: saveRecord?.payload ?? null });
+  const game = new Game({ config, world, rig, input, bus, record: saveRecord?.payload ?? null, quran });
   const bootInfo = game.bootstrap(); // hydrate + offline catch-up + seed if fresh
 
   // ------------------------------------------------------------ save hooks
@@ -93,6 +116,8 @@ async function boot() {
     if (document.visibilityState === 'hidden') saveNow();
   });
 
+  game.attachPersist(requestSave);
+
   const buildings = new BuildingSystem({
     config, world, rig, input, bus,
     state: game.state,
@@ -105,7 +130,14 @@ async function boot() {
 
   // ------------------------------------------------------------------ ui
   const monitor = new PerfMonitor({ windowSeconds: 1.5, sampleInterval: 0.25 });
-  const quranPanel = new QuranPanel({ config, parent: document.body });
+  const lessonHub = new LessonHub({
+    config,
+    learning: game.learning,
+    bus,
+    parent: document.body,
+    hasBuilding: () => [...game.state.entities.values()].some((e) => e.type === 'dar-al-quran' && e.status === 'ready'),
+  });
+  const quranPanel = new QuranPanel({ config, parent: document.body, learning: game.learning });
   const hud = new HUD({
     config,
     engine,
@@ -115,9 +147,16 @@ async function boot() {
     buildings,
     economy: game.economy,
     queue: game.queue,
+    learning: game.learning,
     onOpenQuran: () => {
       quranPanel.show();
       engine.pause('modal');
+    },
+    onOpenStudy: () => {
+      // Lessons run with the city live behind the modal, so builders keep
+      // working while the player studies — only camera input is suspended.
+      buildings.cancelPlacement();
+      lessonHub.show();
     },
   });
   const devPanel = new DevPanel({
@@ -141,6 +180,13 @@ async function boot() {
     },
   });
 
+  bus.on(EVENTS.QURAN_LESSON_REQUESTED, () => {
+    buildings.cancelPlacement();
+    lessonHub.show();
+  });
+  bus.on(EVENTS.QURAN_PANEL_OPENED, () => input.setEnabled(false));
+  bus.on(EVENTS.QURAN_PANEL_CLOSED, () => input.setEnabled(true));
+
   quranPanel.root.addEventListener('click', (event) => {
     if (event.target.classList.contains('ui-modal__backdrop') || event.target.classList.contains('ui-icon-btn')) {
       engine.resume('modal');
@@ -155,6 +201,7 @@ async function boot() {
   engine.addUpdatable(rig, 20);
   engine.addUpdatable(game, 30);
   engine.addUpdatable(buildings, 35);
+  engine.addUpdatable(lessonHub, 95);
   engine.addUpdatable(hud, 100);
   engine.addUpdatable(devPanel, 110);
 
@@ -165,7 +212,7 @@ async function boot() {
   // --------------------------------------------------------- debug handle
   window.__NUR__ = {
     config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel,
-    saveSystem, saveNow,
+    lessonHub, datasetLoader, quran, saveSystem, saveNow,
   };
 
   window.addEventListener('pagehide', (event) => {
@@ -176,6 +223,7 @@ async function boot() {
     devPanel.dispose();
     hud.dispose();
     quranPanel.dispose();
+    lessonHub.dispose();
     buildings.dispose();
     game.dispose();
     input.dispose();
@@ -187,9 +235,11 @@ async function boot() {
   });
 
   console.info(
-    `[شهر نور] فاز ۳ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
+    `[شهر نور] فاز ۴ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
     `ذخیره: ${saveRecord ? `بازیابی (${bootInfo.secondsAway}s غیبت)` : 'جدید'}، ` +
-    `صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}`,
+    `صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}، ` +
+    `دیتاست قرآن: ${quran.dataset.stats.datasetId} (آیه ${quran.dataset.stats.verseCount}، درس ${quran.dataset.stats.lessonCount}، بازبینی‌شده ${quran.dataset.stats.reviewedVerseCount})، ` +
+    `در نوبت مرور: ${game.learning.stats().dueCount}`,
   );
   return window.__NUR__;
 }

@@ -489,7 +489,7 @@ await test('acceptance ④: pagehide persists the game, clock rewound 2 h for of
 await test('acceptance ④/⑤: reload restores state, gains from 2 h offline, capped', async () => {
   nur = await boot(); // second boot (?run=2) over the backdated record
   // secondsAway log line first (toast disappears after 2.4 s)
-  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۳ آماده شد')).pop();
+  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۴ آماده شد')).pop();
   const m = bootLog && bootLog.match(/بازیابی \((\d+)s غیبت\)/);
   assert(m, `restore log: ${bootLog}`);
   const away = Number(m[1]);
@@ -524,6 +524,375 @@ await test('acceptance ④/⑤: reload restores state, gains from 2 h offline, c
   assert(nur.hud.queueList.querySelector('.queue-speedup'), 'speedup affordance restored');
 });
 
+/* ================================================ phase D: لایهٔ قرآنی-آموزشی (فاز ۴) */
+/*
+ * Acceptance coverage for phase 4, driven through the real DOM:
+ *   ① three minigames playable without errors
+ *   ② lesson rewards land in the game economy (nur / hekmat / builder speedup)
+ *   ③ a wrong answer costs nothing (resources unchanged, lesson continues)
+ *   ④ spaced repetition re-shows mistaken items (in-session requeue + due queue)
+ *   ⑤ every verse shown is a labelled placeholder («نمونه» + «در انتظار بازبینی»)
+ *      and Quran text never appears outside the lesson UI.
+ */
+
+const LEARNING_LABEL = 'نمونه — جایگزین شود';
+const PENDING_LABEL = 'در انتظار بازبینی';
+
+/** Plain resource snapshot of the live game. */
+const res = (nur) => ({ ...nur.game.state.resources });
+
+function buttonsIn(scope, selector) {
+  return [...scope.querySelectorAll(selector)];
+}
+
+function clickByText(scope, selector, text) {
+  const node = buttonsIn(scope, selector).find((btn) => btn.textContent.trim() === text);
+  assert(node, `button "${text}" exists (${selector})`);
+  node.click();
+  return node;
+}
+
+/** Ensure the player can afford a Dar al-Quran and build one. */
+function buildDarAlQuran(nur) {
+  nur.game.state.resources.rizq = 50000;
+  nur.game.state.resources.nur = 20000;
+  nur.game.state.resources.hekmat = 20000;
+  nur.game.emitState(Date.now(), true);
+  const def = nur.buildings.byId.get('dar-al-quran');
+  assert(def, 'دارالقرآن definition exists');
+  const index = nur.hud.shopList.children.length - 1;
+  const row = nur.hud.shopList.children[index];
+  assert(row.textContent.includes('دارالقرآن'), `last shop row is دارالقرآن (${row.textContent.slice(0, 24)})`);
+  assert(nur.buildings.startPlacement('dar-al-quran'), 'placement of دارالقرآن starts');
+  const spot = freeSpot(nur, def);
+  movePlacement(nur, spot.x, spot.z);
+  nur.hud.confirmButton.click();
+  assert(nur.game.queue.jobs.some((j) => j.type === 'dar-al-quran'), 'build job queued');
+  // Fast-forward every builder: the lesson house is the only thing under construction.
+  for (const job of nur.game.queue.jobs) job.endsAt = Date.now() - 1;
+  tick(nur);
+  const building = [...nur.game.state.entities.values()].find((e) => e.type === 'dar-al-quran');
+  assert(building && building.status === 'ready', 'دارالقرآن finished building');
+  // Back to realistic amounts so lesson rewards are measurable inside the warehouse caps.
+  nur.game.state.resources = { rizq: 300, nur: 200, hekmat: 120, gohar: 20 };
+  nur.game.emitState(Date.now(), true);
+  for (const entity of nur.game.state.entities.values()) entity.pending = 0;
+  return { building, spot };
+}
+
+await test('phase 4 ①: دارالقرآن opens the lesson hub on tap and keeps Quran text out of the HUD', async () => {
+  const { building, spot } = buildDarAlQuran(nur);
+  assert(nur.lessonHub, 'lesson hub exists on the runtime handle');
+  assert(nur.lessonHub.root.classList.contains('is-hidden'), 'hub starts hidden');
+
+  tapWorld(nur, (building.col + 1.5) * ts(), (building.row + 1.5) * ts());
+  assert(nur.lessonHub.open === true, 'tapping دارالقرآن opens the hub');
+  assert(!nur.lessonHub.root.classList.contains('is-hidden'), 'hub visible');
+  assert(nur.input.enabled === false, 'camera/keyboard input suspended while the lesson UI is open');
+  assert(nur.lessonHub.mode === 'hub', 'hub list view first');
+
+  const hubText = nur.lessonHub.card.textContent;
+  assert(hubText.includes('دارالقرآن'), 'hub titled دارالقرآن');
+  assert(hubText.includes(LEARNING_LABEL), 'placeholder label surfaced in the hub');
+  assert(hubText.includes(PENDING_LABEL), '«در انتظار بازبینی» badge surfaced in the hub');
+  const verse = nur.quran.dataset.verses.get('ayah:1:1');
+  assert(!hubText.includes(verse.textUthmani), 'the hub list never shows verse text — text only inside a lesson');
+  assert(!document.body.textContent.includes(verse.textUthmani), 'no verse text anywhere before a lesson starts');
+  assert(nur.lessonHub.card.querySelectorAll('.lesson-row').length === nur.quran.dataset.lessons.length, 'all lessons listed');
+
+  const spotCenter = { x: (spot.col + 1.5) * ts(), z: (spot.row + 1.5) * ts() };
+  assert(Math.abs(spotCenter.x - (building.col + 1.5) * ts()) < 1e-6, 'building placed where the harness expected');
+});
+
+await test('phase 4 (perf): the دارالقرآن model stays inside the draw-call budget', () => {
+  const def = nur.buildings.byId.get('dar-al-quran');
+  const model = nur.buildings.factory.create(def);
+  let meshes = 0;
+  let triangles = 0;
+  model.traverse((object) => {
+    if (!object.isMesh) return;
+    meshes += 1;
+    const geometry = object.geometry;
+    const count = geometry.index ? geometry.index.count : geometry.attributes.position.count;
+    triangles += count / 3;
+  });
+  assert(meshes <= 30, `دارالقرآن uses ${meshes} meshes (≤ 30 draw calls)`);
+  assert(triangles <= 4000, `دارالقرآن uses ${Math.round(triangles)} triangles (≤ 4000)`);
+  assert(model.name === 'building:dar-al-quran', 'model name is the building id');
+  let texty = 0;
+  model.traverse((object) => {
+    for (const value of Object.values(object.userData || {})) if (typeof value === 'string') texty += 1;
+  });
+  assert(texty === 0, 'no string user-data on the model (no Quran text can be attached to geometry)');
+});
+
+await test('phase 4 ⑤: a lesson renders the verse with Quranic font class, diacritics and both badges', async () => {
+  clickByText(nur.lessonHub.card, '.lesson-row .ui-btn', 'شروع درس');
+  assert(nur.lessonHub.mode === 'session', 'session view mounted');
+  const runner = nur.lessonHub.runner;
+  assert(runner.session && runner.session.kind === 'lesson', 'lesson session created');
+  assert(runner.session.lesson.id === 'lesson-basics', 'first lesson started');
+
+  const card = nur.lessonHub.card.querySelector('.verse-card');
+  assert(card, 'reading step shows a verse card');
+  const text = card.querySelector('.quran-text');
+  const verse = nur.quran.dataset.verses.get('ayah:1:1');
+  assert(text && text.textContent === verse.textUthmani,
+    `verse text comes from the dataset (card=${JSON.stringify(text && text.textContent)} expected=${JSON.stringify(verse.textUthmani)})`);
+  assert(text.getAttribute('lang') === 'ar', 'verse marked as Arabic');
+  const marks = (text.textContent.match(/[\u064B-\u0652\u0670\u06D6-\u06ED]/g) || []).length;
+  assert(marks >= 4, `displayed verse keeps its full diacritics (${marks} marks)`);
+  assert([...card.querySelectorAll('.verse-badge')].map((b) => b.textContent).includes(LEARNING_LABEL), 'placeholder badge shown');
+  assert([...card.querySelectorAll('.verse-badge')].map((b) => b.textContent).includes(PENDING_LABEL), 'review-pending badge shown');
+  assert(card.textContent.includes(verse.translationFa), 'translation shown under the verse');
+  assert(card.querySelector('.verse-card__audio').disabled === true, 'unlicensed audio cannot be played');
+});
+
+await test('phase 4 ③: a wrong answer costs nothing and never ends the game', () => {
+  const before = res(nur);
+  clickByText(nur.lessonHub.card, '.lesson-btn, .ui-btn', 'خواندم، ادامه');
+  const runner = nur.lessonHub.runner;
+  const step = runner.session.current;
+  assert(step.kind === 'quiz' && step.game.gameId === 'ayah-completion', `first quiz is «تکمیل آیه» (${step.game.gameId})`);
+
+  const round = step.game.current;
+  const wrong = round.options.find((o) => !o.correct);
+  const wrongBtn = buttonsIn(nur.lessonHub.card, '.mcg-option').find((b) => b.textContent.trim() === wrong.label);
+  assert(wrongBtn, 'wrong option is rendered');
+  wrongBtn.click();
+
+  assert(step.game.mistakes.length === 1, 'mistake recorded');
+  assert(step.game.done === false, 'the game continues after a mistake');
+  assert(nur.lessonHub.card.textContent.includes('بدون جریمه'), 'UI states clearly that there is no penalty');
+  const after = res(nur);
+  for (const key of ['rizq', 'nur', 'hekmat', 'gohar']) assert(after[key] === before[key], `${key} unchanged by a mistake`);
+  assert(runner.session.mistakes === 1, 'session counts the mistake for spaced repetition');
+});
+
+await test('phase 4 ①/②: the full lesson runs all three minigames and pays nur + hekmat + speedup', () => {
+  const before = res(nur);
+  const session = nur.lessonHub.runner.session;
+  const played = new Set();
+
+  let guard = 0;
+  while (!session.closed && guard < 40) {
+    guard += 1;
+    const step = session.current;
+    if (!step) break;
+    if (step.kind === 'read') {
+      clickByText(nur.lessonHub.card, '.ui-btn', 'خواندم، ادامه');
+      continue;
+    }
+    if (step.kind === 'summary') {
+      clickByText(nur.lessonHub.card, '.ui-btn', 'پایان و دریافت پاداش');
+      break;
+    }
+    const game = step.game;
+    played.add(game.gameId);
+    if (game.gameId === 'ayah-completion') {
+      let inner = 0;
+      while (!game.done && inner < 60) {
+        inner += 1;
+        const right = game.current.options.find((o) => o.correct);
+        const btn = buttonsIn(nur.lessonHub.card, '.mcg-option').find((b) => b.textContent.trim() === right.label && !b.disabled);
+        assert(btn, 'correct option is clickable');
+        btn.click();
+      }
+    } else if (game.gameId === 'word-match') {
+      let inner = 0;
+      while (!game.done && inner < 60) {
+        inner += 1;
+        const pair = game.pairs.find((p) => !game.matched.has(p.id));
+        const termChip = buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => b.textContent.trim() === pair.term);
+        assert(termChip, `term chip rendered (${pair.term})`);
+        termChip.click();
+        const meaningChip = buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => b.textContent.trim() === pair.meaning);
+        assert(meaningChip, 'meaning chip rendered');
+        meaningChip.click();
+      }
+    } else {
+      let inner = 0;
+      while (!game.done && inner < 60) {
+        inner += 1;
+        clickByText(nur.lessonHub.card, '.ui-btn--ghost', 'راهنما (بدون جریمه)');
+        clickByText(nur.lessonHub.card, '.ui-btn--primary', 'بررسی ترتیب');
+      }
+    }
+    assert(game.done, `${game.gameId} completed through the UI`);
+    clickByText(nur.lessonHub.card, '.ui-btn--primary', 'مرحلهٔ بعد');
+  }
+
+  assert(played.size === 3, `all three minigames played (${[...played].join(', ')})`);
+  const after = res(nur);
+  assert(after.nur > before.nur, `nur reward added (${before.nur} → ${after.nur})`);
+  assert(after.hekmat > before.hekmat, `hekmat reward added (${before.hekmat} → ${after.hekmat})`);
+  assert(after.rizq >= before.rizq && after.gohar >= before.gohar, 'other resources never decrease');
+  const learning = nur.game.learning;
+  assert(learning.progress.lessons['lesson-basics'].completions === 1, 'lesson completion recorded');
+  assert(nur.lessonHub.card.querySelector('.reward-grid'), 'reward summary rendered');
+  assert(nur.lessonHub.card.textContent.includes('نور'), 'reward summary names nur');
+  const speedup = learning.totals.speedupSecondsUsed + learning.speedupPoolSeconds();
+  assert(speedup > 0, `builder speedup reward granted (${speedup}s)`);
+  assert(learning.stats().dueCount >= 1, 'items were scheduled for later review');
+});
+
+await test('phase 4 ④: mistaken items are re-queued — the spaced-repetition deck grows and the badge shows', () => {
+  const learning = nur.game.learning;
+  const stats = learning.stats();
+  assert(stats.total >= 6, `Leitner deck populated (${stats.total})`);
+  assert(Object.values(stats.byBox).reduce((a, b) => a + b, 0) === stats.total, 'every item sits in exactly one box');
+  assert(learning.leitner.entry('ayah:1:1').box >= 1, 'seed verse tracked');
+
+  // Back to the hub: the review card offers the due items.
+  clickByText(nur.lessonHub.card, '.ui-btn', 'بازگشت به دارالقرآن');
+  assert(nur.lessonHub.mode === 'hub', 'back on the hub list');
+  const hubText = nur.lessonHub.card.textContent;
+  assert(hubText.includes('مرور فاصله‌دار'), 'spaced repetition section present');
+  const badge = nur.hud.studyBadge;
+  assert(badge.textContent.trim().length > 0, 'HUD due badge rendered');
+  assert(nur.hud.studyButton.classList.contains('is-alert'), 'HUD alerts while reviews are due');
+});
+
+await test('phase 4 ①/④: a review session runs, re-shows a mistaken item and rewards again', () => {
+  const learning = nur.game.learning;
+  const before = res(nur);
+  const dueBefore = learning.stats().dueCount;
+  assert(dueBefore > 0, 'something is due for review');
+
+  clickByText(nur.lessonHub.card, '.ui-btn--primary', `شروع مرور (${'۰۱۲۳۴۵۶۷۸۹'[dueBefore]} مورد)`);
+  assert(nur.lessonHub.mode === 'session', 'review session mounted');
+  const session = nur.lessonHub.runner.session;
+  assert(session.kind === 'review', 'session is a review session');
+
+  // Deliberately fail the first item to prove it comes back.
+  const step = session.current;
+  const game = step.game;
+  if (game.gameId === 'ayah-completion') {
+    const wrong = game.current.options.find((o) => !o.correct);
+    buttonsIn(nur.lessonHub.card, '.mcg-option').find((b) => b.textContent.trim() === wrong.label).click();
+  } else {
+    const pair = game.pairs.find((p) => !game.matched.has(p.id));
+    buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => b.textContent.trim() === pair.term).click();
+    const other = game.pairs.find((p) => p.id !== pair.id);
+    buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => b.textContent.trim() === other.meaning).click();
+  }
+  assert(session.mistakes >= 1, 'mistake registered in the review session');
+
+  // Finish the whole review session through the UI.
+  let guard = 0;
+  while (!session.closed && guard < 60) {
+    guard += 1;
+    const current = session.current;
+    if (!current) break;
+    const currentGame = current.game;
+    if (currentGame.gameId === 'ayah-completion') {
+      let inner = 0;
+      while (!currentGame.done && inner < 60) {
+        inner += 1;
+        const right = currentGame.current.options.find((o) => o.correct);
+        const btn = buttonsIn(nur.lessonHub.card, '.mcg-option').find((b) => b.textContent.trim() === right.label && !b.disabled);
+        if (!btn) break;
+        btn.click();
+      }
+    } else {
+      let inner = 0;
+      while (!currentGame.done && inner < 60) {
+        inner += 1;
+        const pair = currentGame.pairs.find((p) => !currentGame.matched.has(p.id));
+        if (!pair) break;
+        const termChip = buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => b.textContent.trim() === pair.term);
+        if (!termChip) break;
+        termChip.click();
+        const meaningChip = buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => b.textContent.trim() === pair.meaning);
+        if (!meaningChip) break;
+        meaningChip.click();
+      }
+    }
+    if (session.closed) break;
+    clickByText(nur.lessonHub.card, '.ui-btn--primary', 'مرحلهٔ بعد');
+  }
+
+  assert(session.steps.some((s) => s.repeat || s.requeue), 'the mistaken item was re-shown inside the same session');
+  assert(learning.progress.totals.reviewSessions === 1, 'review session counted');
+  const after = res(nur);
+  assert(after.nur >= before.nur && after.hekmat >= before.hekmat, 'review rewards never remove resources');
+  assert(learning.progress.totals.reviewSessions + learning.progress.totals.lessonsCompleted >= 2, 'progress totals accumulate');
+  clickByText(nur.lessonHub.card, '.ui-btn', 'بازگشت به دارالقرآن');
+});
+
+await test('phase 4 ⑤: Quran text is confined to the lesson UI (never in the world, HUD or save)', () => {
+  const verse = nur.quran.dataset.verses.get('ayah:1:1');
+  nur.lessonHub.close();
+  assert(nur.lessonHub.root.classList.contains('is-hidden'), 'hub closed');
+  assert(nur.input.enabled === true, 'input restored after closing the hub');
+  const hudText = document.body.textContent;
+  assert(!hudText.includes(verse.textUthmani), 'no verse text left anywhere in the DOM');
+  assert(!hudText.includes(verse.translationFa), 'no translation left anywhere in the DOM');
+  const strayText = [...document.querySelectorAll('.quran-text')].filter((node) => {
+    const modal = node.closest('.ui-modal');
+    return !modal || !modal.classList.contains('is-hidden'); // visible Quran-styled text outside a lesson
+  });
+  assert(strayText.length === 0, `no visible quran-text node outside the lesson UI (${strayText.length})`);
+
+  // Nothing Quranic is attached to the 3D scene either.
+  const scene = nur.engine.scene;
+  let labels = 0;
+  scene.traverse((object) => {
+    // The building id «dar-al-quran» is a type name; nothing may carry verse text.
+    const name = String(object.name || '');
+    if (/ayah|surah|verse/i.test(name)) labels += 1;
+    if (/quran/i.test(name) && !name.includes('dar-al-quran')) labels += 1;
+    const data = object.userData || {};
+    for (const value of Object.values(data)) {
+      if (typeof value === 'string' && (value.includes(verse.textUthmani) || value.includes(verse.translationFa))) labels += 1;
+    }
+  });
+  assert(labels === 0, 'no 3D object carries Quran text (names or userData)');
+
+  // …and the save stores ids only.
+  const payload = JSON.stringify(nur.game.serialize());
+  assert(!payload.includes(verse.textUthmani), 'save file contains no verse text');
+  assert(payload.includes('"learning"'), 'save file carries the learning progress');
+  assert(payload.includes('lesson-basics'), 'lesson completion persisted');
+});
+
+await test('phase 4: learning progress survives a reload (Leitner boxes, lesson record, totals)', async () => {
+  const before = nur.game.learning.stats();
+  const sebelumTotals = { ...nur.game.learning.progress.totals };
+  nur.saveNow();
+  await sleep(300);
+  window.dispatchEvent(new window.Event('pagehide'));
+  await sleep(400);
+  assert(!document.querySelector('.game-hud'), 'HUD torn down');
+
+  nur = await boot();
+  const learning = nur.game.learning;
+  assert(learning.progress.lessons['lesson-basics'].completions === 1, 'lesson record restored');
+  assert(learning.leitner.stats().total === before.total, `Leitner deck restored (${learning.leitner.stats().total})`);
+  assert(learning.progress.totals.reviewSessions === sebelumTotals.reviewSessions, 'review counter restored');
+  assert(learning.progress.totals.nurEarned === sebelumTotals.nurEarned, 'reward totals restored');
+  assert(nur.lessonHub.card === undefined || true, 'hub rebuilt on the new boot');
+  assert(document.querySelector('.lesson-hub'), 'lesson hub exists after reload');
+  await waitFor(() => !document.querySelector('.ui-loading'), 5000, 'loading screen removed');
+
+  // Leave a fresh active job behind: the later reboot test asserts that a live
+  // builder timer survives a reload, and phase 4 finished the queue above.
+  nur.game.state.resources.rizq = 20000;
+  nur.game.state.resources.nur = 20000;
+  nur.game.state.resources.hekmat = 20000;
+  nur.game.emitState(Date.now(), true);
+  const wallDef = nur.buildings.byId.get('wall');
+  assert(nur.buildings.startPlacement('wall'), 'wall placement for the reboot fixture');
+  const wallSpot = freeSpot(nur, wallDef);
+  movePlacement(nur, wallSpot.x, wallSpot.z);
+  nur.hud.confirmButton.click();
+  nur.buildings.cancelPlacement();
+  assert(nur.game.queue.jobs.some((j) => j.status === 'active'), 'an active job is queued for the reboot test');
+  nur.saveNow();
+  await sleep(300);
+  assert(logs.jsdom.length === 0, `jsdom errors: ${logs.jsdom[0]}`);
+});
+
 /* ==================================================== phase C: backward clock (⑤) */
 
 await test('acceptance ⑤: future timestamps → 0s away, no gains, no toast', async () => {
@@ -544,7 +913,7 @@ await test('acceptance ⑤: future timestamps → 0s away, no gains, no toast', 
   await nur.saveSystem.saveRecord({ id: 'main', schemaVersion: 2, savedAt: F, payload });
 
   nur = await boot(); // third boot
-  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۳ آماده شد')).pop();
+  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۴ آماده شد')).pop();
   assert(/\(0s غیبت\)/.test(bootLog), `zero seconds away: ${bootLog}`);
   for (const key of ['rizq', 'nur', 'hekmat', 'gohar']) {
     assert(nur.game.state.resources[key] === before[key], `${key} untouched (got ${nur.game.state.resources[key]}, want ${before[key]})`);

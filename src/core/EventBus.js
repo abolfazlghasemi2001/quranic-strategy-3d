@@ -79,4 +79,16 @@ export const EVENTS = Object.freeze({
   BUILD_QUEUE_CHANGED: 'game:build-queue-changed',
   JOB_FINISHED: 'game:job-finished',
   UI_TOAST: 'ui:toast',
+  // --- phase 4: Quran learning layer ---
+  QURAN_DATASET_READY: 'quran:dataset-ready',
+  QURAN_LESSON_REQUESTED: 'quran:lesson-requested',
+  QURAN_LESSON_STARTED: 'quran:lesson-started',
+  QURAN_LESSON_STEP: 'quran:lesson-step',
+  QURAN_LESSON_COMPLETED: 'quran:lesson-completed',
+  QURAN_REVIEW_STARTED: 'quran:review-started',
+  QURAN_REVIEW_COMPLETED: 'quran:review-completed',
+  QURAN_REVIEW_DUE: 'quran:review-due',
+  QURAN_REWARD_GRANTED: 'quran:reward-granted',
+  QURAN_PANEL_OPENED: 'quran:panel-opened',
+  QURAN_PANEL_CLOSED: 'quran:panel-closed',
 });

@@ -9,6 +9,7 @@ import gameplayData from '../data/gameplay.json';
 import stringsFa from '../data/strings.fa.json';
 import economyData from '../data/economy.json';
 import balanceData from '../data/balance.json';
+import quranLearningData from '../data/quran-learning.json';
 import { hash2i } from './RNG.js';
 import { clamp } from './MathUtils.js';
 
@@ -75,6 +76,7 @@ export class Config {
       strings: stringsFa,
       economy: economyData,
       balance: balanceData,
+      quranLearning: quranLearningData,
     };
 
     this.world = deepFreeze(clone(worldData));
@@ -83,6 +85,8 @@ export class Config {
     this.strings = deepFreeze(clone(stringsFa));
     this.economy = deepFreeze(clone(economyData));
     this.balance = deepFreeze(clone(balanceData));
+    /** Phase 4 tuning — numbers only; no Quran text ever lives in code. */
+    this.quranLearning = deepFreeze(clone(quranLearningData));
 
     const requested = new URLSearchParams(search).get('quality');
     this.tier = QUALITY_TIERS.includes(requested) ? requested : detectQualityTier(env);

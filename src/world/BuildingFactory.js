@@ -30,6 +30,39 @@ function canvasTexture(kind) {
   return texture;
 }
 
+/**
+ * Geometric girih/star pattern for دارالقرآن surfaces.
+ * Code-drawn ornament only: this canvas never receives letters or Quran text,
+ * and the 3D world never shows Quran text at all (project content rule).
+ */
+function starTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 128;
+  const c = canvas.getContext('2d');
+  c.fillStyle = '#1b5f68';
+  c.fillRect(0, 0, 128, 128);
+  c.strokeStyle = 'rgba(255,225,163,.72)';
+  c.lineWidth = 2;
+  const star = (cx, cy, r) => {
+    c.beginPath();
+    for (let i = 0; i < 8; i += 1) {
+      const a = (i * Math.PI) / 4;
+      const rr = i % 2 === 0 ? r : r * 0.52;
+      c.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+    }
+    c.closePath();
+    c.stroke();
+  };
+  for (let y = 16; y < 128; y += 32) {
+    for (let x = 16; x < 128; x += 32) star(x, y, 11);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 2);
+  return texture;
+}
+
 function mesh(geometry, material, x = 0, y = 0, z = 0) {
   const value = new THREE.Mesh(geometry, material);
   value.position.set(x, y, z);
@@ -47,11 +80,14 @@ function arch(group, width, height, z, material) {
 export class BuildingFactory {
   constructor(tileSize) {
     this.tileSize = tileSize;
-    this.textures = [canvasTexture('brick'), canvasTexture('tile')];
+    this.textures = [canvasTexture('brick'), canvasTexture('tile'), starTexture()];
     this.materials = {
       brick: mat(0xffffff, this.textures[0]), tile: mat(0xffffff, this.textures[1]),
       plaster: mat(0xe9d2a4), wood: mat(0x694329), water: new THREE.MeshStandardMaterial({ color: 0x61d3dc, emissive: 0x17636b, emissiveIntensity: .45, roughness: .18 }),
       crop: mat(0xb5a83c), dark: mat(0x53392b), gold: mat(0xe7bd57),
+      star: mat(0xffffff, this.textures[2]),
+      paper: mat(0xf3ead4),
+      lantern: new THREE.MeshStandardMaterial({ color: 0xffe6a8, emissive: 0xffb761, emissiveIntensity: 0.55, roughness: 0.4 }),
     };
   }
 
@@ -99,6 +135,35 @@ export class BuildingFactory {
       g.add(mesh(new THREE.BoxGeometry(w * .96, .16, d * .96), m.tile, 0, 2.7, 0));
       g.add(mesh(new THREE.CylinderGeometry(.05, .05, .8, 6), m.gold, 0, 3.15, 0));
       g.add(mesh(new THREE.BoxGeometry(w * .5, .06, d * .3), m.crop, 0, 3.0, 0)); // open book
+    } else if (def.id === 'dar-al-quran') {
+      // دارالقرآن: ایوان با سه طاق، گنبد فیروزه‌ای روی پایه، حوض کاشی و
+      // میز خوانش — همه با هندسهٔ low-poly و بدون هیچ متن یا تصویر بر سطح.
+      base(1.55, m.plaster);
+      arch(g, w * .3, 1.05, d / 2 + .18, m.tile); // طاق اصلی ورودی
+      // دو طاق کناری کوچک‌تر روی همان نمای ورودی
+      for (const side of [-1, 1]) {
+        g.add(mesh(new THREE.BoxGeometry(w * .07, .95, .32), m.tile, side * w * .27, .47, d / 2 + .18));
+        g.add(mesh(new THREE.TorusGeometry(w * .1, .035, 6, 14, Math.PI), m.tile, side * w * .27, .95, d / 2 + .18));
+      }
+      g.add(mesh(new THREE.BoxGeometry(w * 1.02, .2, d * 1.02), m.tile, 0, 1.62, 0));
+      // پایهٔ گنبد + گنبد کاشی‌کاری‌شده
+      g.add(mesh(new THREE.CylinderGeometry(w * .29, w * .33, .85, 12), m.plaster, 0, 2.05, 0));
+      g.add(mesh(new THREE.SphereGeometry(w * .34, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), m.tile, 0, 2.45, 0));
+      g.add(mesh(new THREE.CylinderGeometry(.05, .05, .55, 8), m.gold, 0, 3.42, 0));
+      g.add(mesh(new THREE.SphereGeometry(.14, 8, 6), m.gold, 0, 3.72, 0));
+      // ایوان کناری
+      for (const side of [-1, 1]) {
+        g.add(mesh(new THREE.BoxGeometry(w * .18, 1.8, d * .3), m.brick, side * w * .42, 1.6, d * .28));
+        g.add(mesh(new THREE.SphereGeometry(w * .1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), m.tile, side * w * .42, 1.78, d * .28));
+      }
+      // حوض کاشی جلو
+      g.add(mesh(new THREE.CylinderGeometry(w * .2, w * .22, .28, 12), m.star, 0, .14, d * .42 + .55));
+      g.add(mesh(new THREE.CylinderGeometry(w * .16, w * .16, .06, 12), m.water, 0, .3, d * .42 + .55));
+      // میز خوانش (ریحل) و برگ‌های باز
+      g.add(mesh(new THREE.BoxGeometry(w * .3, .12, d * .22), m.wood, -w * .28, .62, d * .42 + .35));
+      g.add(mesh(new THREE.BoxGeometry(w * .26, .04, d * .18), m.paper, -w * .28, .71, d * .42 + .35));
+      // فانوس ایوان
+      g.add(mesh(new THREE.CylinderGeometry(.12, .12, .3, 8), m.lantern, w * .3, 2.0, d * .42 + .3));
     } else {
       base(1.05, m.brick);
       g.add(mesh(new THREE.BoxGeometry(w * .92, .18, d * 1.04), m.tile, 0, 1.12, 0));
