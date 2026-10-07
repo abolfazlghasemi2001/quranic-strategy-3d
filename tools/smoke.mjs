@@ -489,7 +489,7 @@ await test('acceptance ④: pagehide persists the game, clock rewound 2 h for of
 await test('acceptance ④/⑤: reload restores state, gains from 2 h offline, capped', async () => {
   nur = await boot(); // second boot (?run=2) over the backdated record
   // secondsAway log line first (toast disappears after 2.4 s)
-  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۴ آماده شد')).pop();
+  const bootLog = logs.info.filter((l) => /\[شهر نور\] فاز [\d۰-۹]+ آماده شد/.test(l)).pop();
   const m = bootLog && bootLog.match(/بازیابی \((\d+)s غیبت\)/);
   assert(m, `restore log: ${bootLog}`);
   const away = Number(m[1]);
@@ -913,7 +913,7 @@ await test('acceptance ⑤: future timestamps → 0s away, no gains, no toast', 
   await nur.saveSystem.saveRecord({ id: 'main', schemaVersion: 2, savedAt: F, payload });
 
   nur = await boot(); // third boot
-  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۴ آماده شد')).pop();
+  const bootLog = logs.info.filter((l) => /\[شهر نور\] فاز [\d۰-۹]+ آماده شد/.test(l)).pop();
   assert(/\(0s غیبت\)/.test(bootLog), `zero seconds away: ${bootLog}`);
   for (const key of ['rizq', 'nur', 'hekmat', 'gohar']) {
     assert(nur.game.state.resources[key] === before[key], `${key} untouched (got ${nur.game.state.resources[key]}, want ${before[key]})`);

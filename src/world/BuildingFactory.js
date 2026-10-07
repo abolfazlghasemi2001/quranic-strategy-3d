@@ -88,6 +88,8 @@ export class BuildingFactory {
       star: mat(0xffffff, this.textures[2]),
       paper: mat(0xf3ead4),
       lantern: new THREE.MeshStandardMaterial({ color: 0xffe6a8, emissive: 0xffb761, emissiveIntensity: 0.55, roughness: 0.4 }),
+      signal: new THREE.MeshStandardMaterial({ color: 0xd8fbff, emissive: 0x6fd8e6, emissiveIntensity: 0.9, roughness: 0.25, transparent: true, opacity: 0.92 }),
+      banner: mat(0x2f8f96),
     };
   }
 
@@ -118,12 +120,67 @@ export class BuildingFactory {
       base(1.7, m.brick);
       g.add(mesh(new THREE.CylinderGeometry(w * .5, w * .5, d, 12, 1, false, 0, Math.PI), m.plaster, 0, 1.7, -d / 2).rotateX(Math.PI / 2));
       arch(g, w * .48, 1.05, d / 2 + .2, m.dark);
+    } else if (def.id === 'wall') {
+      // قطعهٔ دیوار: بدنهٔ آجری کوتاه با کنگره‌های بالا (خانه‌به‌خانه کنار هم می‌نشیند).
+      base(1.15, m.brick);
+      for (let i = -1; i <= 1; i += 1) {
+        g.add(mesh(new THREE.BoxGeometry(w * .22, .26, d * .34), m.tile, i * w * .3, 1.28, -d * .28));
+      }
+      g.add(mesh(new THREE.BoxGeometry(w * .99, .12, d * .99), m.tile, 0, 1.2, 0));
     } else if (def.id === 'watchtower') {
       g.add(mesh(new THREE.CylinderGeometry(w * .28, w * .38, 3.6, 8), m.brick, 0, 1.8, 0));
       g.add(mesh(new THREE.CylinderGeometry(w * .43, w * .36, .55, 8), m.tile, 0, 3.75, 0));
       for (let i = 0; i < 8; i += 1) {
         const a = i * Math.PI / 4; g.add(mesh(new THREE.BoxGeometry(.34, .5, .34), m.brick, Math.sin(a) * w * .38, 4.2, Math.cos(a) * w * .38));
       }
+    } else if (def.id === 'barracks') {
+      // پادگان: ساختمان سنگی با حیاط آموزش، سردر و پرچم — بدون هیچ نشانی روی سطح.
+      base(1.5, m.brick);
+      arch(g, w * .46, 1.15, d / 2 + .18, m.dark);
+      g.add(mesh(new THREE.BoxGeometry(w * .98, .18, d * .98), m.tile, 0, 1.6, 0));
+      // حیاط و نردهٔ چوبی
+      g.add(mesh(new THREE.BoxGeometry(w * .5, .1, d * .34), m.crop, w * .18, 1.72, -d * .26));
+      for (let i = 0; i < 5; i += 1) {
+        g.add(mesh(new THREE.BoxGeometry(.1, .5, .1), m.wood, w * .38, 1.95, -d * .12 + i * d * .12));
+      }
+      g.add(mesh(new THREE.BoxGeometry(w * .02, .12, d * .55), m.wood, w * .38, 2.1, -d * .12 + d * .24));
+      // نیزه‌دان کنار در
+      g.add(mesh(new THREE.CylinderGeometry(.05, .05, 1.5, 6), m.wood, -w * .34, 2.35, d * .34));
+      for (let i = -1; i <= 1; i += 1) {
+        g.add(mesh(new THREE.CylinderGeometry(.04, .04, 1.1, 5), m.dark, -w * .34 + i * .12, 2.3, d * .34 - .06));
+      }
+      // پرچم روی بام
+      g.add(mesh(new THREE.CylinderGeometry(.06, .06, 1.5, 6), m.gold, w * .28, 2.35, -d * .3));
+      const flag = mesh(new THREE.BoxGeometry(w * .3, .42, .05), m.banner, w * .28 + w * .15, 2.75, -d * .3);
+      flag.rotation.y = Math.PI / 12;
+      g.add(flag);
+    } else if (def.id === 'sentry-post') {
+      // سنگر نگهبان: سکوی کم‌ارتفاع با جان‌پناه و روزنه‌های نور (شلیک تند، برد کوتاه).
+      g.add(mesh(new THREE.CylinderGeometry(w * .46, w * .52, 1.05, 8), m.brick, 0, .52, 0));
+      g.add(mesh(new THREE.CylinderGeometry(w * .5, w * .46, .32, 8), m.tile, 0, 1.2, 0));
+      for (let i = 0; i < 6; i += 1) {
+        const a = (i * Math.PI) / 3;
+        g.add(mesh(new THREE.BoxGeometry(.22, .34, .22), m.plaster, Math.sin(a) * w * .4, 1.5, Math.cos(a) * w * .4));
+      }
+      for (const side of [-1, 1]) {
+        g.add(mesh(new THREE.BoxGeometry(.14, .2, .14), m.lantern, side * w * .3, 1.62, d * .3));
+      }
+      g.add(mesh(new THREE.CylinderGeometry(.05, .05, .6, 6), m.dark, 0, 1.75, 0));
+      g.add(mesh(new THREE.SphereGeometry(.15, 10, 6), m.signal, 0, 2.1, 0));
+    } else if (def.id === 'light-beacon') {
+      // فانوس دفاعی: پایهٔ باریک + گوی نوری بلند (شلیک گسترده به گروه مهاجمان).
+      for (const size of [{ r: w * .34, h: .5, y: .25 }, { r: w * .24, h: 1.5, y: 1.25 }, { r: w * .16, h: .9, y: 2.45 }]) {
+        g.add(mesh(new THREE.CylinderGeometry(size.r, size.r * 1.12, size.h, 8), m.plaster, 0, size.y, 0));
+      }
+      g.add(mesh(new THREE.CylinderGeometry(w * .3, w * .22, .16, 8), m.tile, 0, 2.95, 0));
+      g.add(mesh(new THREE.SphereGeometry(w * .22, 14, 10), m.signal, 0, 3.2, 0));
+      for (let i = 0; i < 4; i += 1) {
+        const a = (i * Math.PI) / 2 + Math.PI / 4;
+        const arm = mesh(new THREE.BoxGeometry(.6, .06, .06), m.gold, Math.sin(a) * w * .26, 3.2, Math.cos(a) * w * .26);
+        arm.rotation.y = a;
+        g.add(arm);
+      }
+      g.add(mesh(new THREE.ConeGeometry(w * .18, .35, 8), m.gold, 0, 3.55, 0));
     } else if (def.id === 'library') {
       base(1.35, m.plaster);
       // twin bookshelf walls

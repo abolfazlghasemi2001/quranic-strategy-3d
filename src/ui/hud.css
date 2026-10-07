@@ -894,3 +894,131 @@ body {
 }
 
 .hub-card--build { background:rgba(255,215,122,.09); border-color:rgba(255,215,122,.35); }
+
+/* ========================================================= Phase 5 — سپاه، دفاع و نبرد
+   همهٔ پنل‌های این بخش فقط رابط کاربری‌اند: هیچ متنی روی صحنهٔ سه‌بعدی نمی‌رود. */
+
+/* ---- دکمه‌های گوشه: نبرد و پادگان ---- */
+.game-battle-btn { right:calc(var(--safe-right) + 15px); bottom:calc(var(--safe-bottom) + 85px); position:relative; }
+.game-army-btn { left:calc(var(--safe-left) + 15px); bottom:calc(var(--safe-bottom) + 155px); position:relative; }
+.game-battle-btn.is-alert { border-color:rgba(255,138,96,.95); box-shadow:0 0 0 2px rgba(255,138,96,.22); }
+.game-army-btn.is-alert { border-color:rgba(127,208,195,.95); box-shadow:0 0 0 2px rgba(127,208,195,.22); }
+.game-corner-badge--army { background:linear-gradient(#bfe9e0,#5fb6a8); border-color:#e8fffa; color:#0f2b2b; }
+.game-corner-badge--battle { background:linear-gradient(#ffd0a8,#e07a3c); border-color:#fff0dd; color:#2a1508; }
+
+/* ---- کارت‌های پنل نبرد و پادگان ---- */
+.battle-ui, .barracks-ui { z-index:38; display:flex; align-items:flex-end; justify-content:center; padding:calc(var(--safe-bottom) + 8px) 8px calc(var(--safe-bottom) + 96px); }
+.battle-ui.is-hidden, .barracks-ui.is-hidden { display:none; }
+.battle-card {
+  pointer-events:auto; width:min(96vw,560px); max-height:80vh; overflow-y:auto;
+  background:var(--panel-strong); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:12px; backdrop-filter:blur(6px);
+}
+.battle-card > header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.battle-card > header b { font-size:14px; color:var(--accent); }
+.battle-note { display:block; margin-top:8px; font-size:10px; color:var(--text-dim); line-height:1.8; }
+.battle-hint { display:block; margin-top:6px; font-size:10.5px; color:var(--accent-2); }
+
+.battle-encounters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-bottom:8px; }
+.battle-encounter {
+  display:flex; flex-direction:column; gap:3px; align-items:center; padding:8px 6px; cursor:pointer;
+  border-radius:12px; background:rgba(255,255,255,.05); border:1px solid var(--line); color:var(--text);
+  font-family:inherit; text-align:center;
+}
+.battle-encounter b { font-size:11.5px; }
+.battle-encounter small { font-size:9.5px; color:var(--text-dim); }
+.battle-encounter.is-selected { border-color:var(--accent); background:rgba(255,215,122,.14); }
+.battle-encounter.is-selected small { color:var(--accent); }
+
+.battle-readiness { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; margin:8px 0; }
+.battle-readiness-chip { display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 3px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid var(--line); }
+.battle-readiness-chip b { font-size:13px; color:var(--accent-2); }
+.battle-readiness-chip small { font-size:9px; color:var(--text-dim); }
+.battle-start-row { display:flex; justify-content:center; margin-top:6px; }
+.battle-start { min-width:60%; }
+
+.battle-topbar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+.battle-topbar b { font-size:13.5px; color:var(--accent); }
+.battle-timer { font-size:15px; font-weight:800; color:var(--text); font-variant-numeric:tabular-nums; direction:ltr; }
+.battle-badge { font-size:10px; padding:2px 7px; border-radius:999px; background:rgba(127,208,195,.18); border:1px solid rgba(127,208,195,.5); color:var(--accent-2); }
+.battle-badge.is-hidden { display:none; }
+.battle-progress { --progress:0%; height:6px; border-radius:4px; background:rgba(255,255,255,.09); overflow:hidden; margin-bottom:8px; }
+.battle-progress > i { display:block; height:100%; width:var(--progress); background:linear-gradient(90deg,rgba(127,208,195,.9),rgba(255,215,122,.9)); transition:width .2s linear; }
+.battle-chips { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin-bottom:8px; }
+.battle-chip { display:flex; flex-direction:column; align-items:center; padding:6px 3px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid var(--line); }
+.battle-chip b { font-size:13px; }
+.battle-chip small { font-size:9px; color:var(--text-dim); }
+
+.battle-deploy-bar { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; }
+.battle-unit {
+  display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 3px; cursor:pointer;
+  border-radius:11px; background:rgba(255,255,255,.05); border:1px solid var(--line); color:var(--text); font-family:inherit;
+}
+.battle-unit__icon { font-size:16px; }
+.battle-unit b { font-size:13px; color:var(--accent-2); }
+.battle-unit small { font-size:9.5px; }
+.battle-unit em { font-size:9px; color:var(--text-dim); font-style:normal; }
+.battle-unit.is-active { border-color:var(--accent); background:rgba(255,215,122,.16); }
+.battle-unit.is-empty { opacity:.45; }
+.battle-unit.is-training::after { content:'⏳'; position:absolute; }
+.battle-deploy-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
+.battle-deploy-hint { font-size:10px; color:var(--text-dim); }
+.battle-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-top:8px; }
+.battle-withdraw { border-color:rgba(255,138,96,.6); }
+
+.battle-result-title { font-size:14px; color:var(--accent); }
+.battle-result-body { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin:8px 0; }
+.battle-stat { display:flex; flex-direction:column; gap:1px; padding:7px 8px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid var(--line); }
+.battle-stat small { font-size:9.5px; color:var(--text-dim); }
+.battle-stat b { font-size:12.5px; }
+.battle-rewards { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:6px; }
+.battle-rewards small { font-size:10px; color:var(--text-dim); }
+.battle-reward { font-size:11px; padding:3px 8px; border-radius:999px; background:rgba(255,215,122,.16); border:1px solid rgba(255,215,122,.45); color:var(--accent); }
+.battle-verify { display:block; margin:6px 0; font-size:10.5px; color:var(--accent-2); }
+.battle-verify.is-bad { color:#ff9c7a; }
+.battle-verify.is-hidden { display:none; }
+.battle-result-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:6px; }
+.battle-result { margin-bottom:8px; }
+
+/* ---- پادگان ---- */
+.barracks-card { width:min(96vw,600px); }
+.barracks-capacity { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.barracks-capacity small { font-size:10px; color:var(--text-dim); white-space:nowrap; }
+.barracks-capacity b { font-size:12px; color:var(--accent-2); font-variant-numeric:tabular-nums; }
+.barracks-capacity-bar { flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,.09); overflow:hidden; }
+.barracks-capacity-bar > i { display:block; height:100%; width:var(--progress); background:linear-gradient(90deg,rgba(127,208,195,.9),rgba(255,215,122,.9)); }
+.barracks-capacity-bar > i.is-full { background:linear-gradient(90deg,#e07a3c,#ffcf9c); }
+.barracks-units { display:grid; gap:6px; }
+.barracks-unit { padding:8px; border-radius:12px; background:rgba(255,255,255,.045); border:1px solid var(--line); }
+.barracks-unit.is-locked { opacity:.6; }
+.barracks-unit__head { display:flex; align-items:center; gap:7px; }
+.barracks-unit__head > div { flex:1; min-width:0; display:flex; flex-direction:column; }
+.barracks-unit__head b { font-size:12px; }
+.barracks-unit__head small { font-size:9.5px; color:var(--text-dim); }
+.barracks-unit__icon { font-size:20px; }
+.barracks-unit__count { font-size:11px; color:var(--accent-2); font-variant-numeric:tabular-nums; }
+.barracks-unit__stats { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0; font-size:10px; color:var(--accent-2); }
+.barracks-unit__actions { display:flex; align-items:center; gap:8px; }
+.barracks-unit__actions .ui-btn { flex:1; font-size:11px; }
+.barracks-unit__job { font-size:10px; color:var(--accent); font-variant-numeric:tabular-nums; direction:ltr; }
+.barracks-queue-head { margin:10px 0 4px; }
+.barracks-queue-head b { font-size:12px; color:var(--accent-2); }
+.barracks-queue { display:grid; gap:5px; }
+.barracks-empty { font-size:10.5px; color:var(--text-dim); }
+.barracks-cancel { min-height:26px; padding:2px 8px; font-size:11px; border-radius:8px; }
+.barracks-hint { display:block; margin-top:8px; font-size:10.5px; color:var(--text-dim); }
+
+/* ---- وضعیت آسیب سازه‌ها در منوی انتخاب ---- */
+.building-health { display:flex; align-items:center; gap:6px; margin-top:5px; }
+.building-health__bar { --progress:100%; flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,.09); overflow:hidden; }
+.building-health__bar > i { display:block; height:100%; width:var(--progress); background:linear-gradient(90deg,#6fbf73,#ffd77a); }
+.building-health__bar.is-damaged > i { background:linear-gradient(90deg,#e07a3c,#ffcf9c); }
+.building-health small { font-size:9.5px; color:var(--text-dim); white-space:nowrap; }
+
+@media (max-width:560px) {
+  .battle-encounters { grid-template-columns:1fr; }
+  .battle-readiness { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .battle-result-body { grid-template-columns:1fr; }
+  .battle-deploy-bar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .game-battle-btn { min-width:82px; }
+}
