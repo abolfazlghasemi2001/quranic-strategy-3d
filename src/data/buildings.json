@@ -1,0 +1,15 @@
+{
+  "economy": {
+    "level": 7,
+    "builders": { "available": 2, "total": 3 },
+    "resources": { "gold": 6500, "wood": 4200, "stone": 3600 }
+  },
+  "buildings": [
+    { "id": "town-center", "name": "مرکز شهر", "icon": "◆", "size": [3, 3], "cost": { "gold": 900, "wood": 500, "stone": 650 }, "description": "قلب مدیریت و آبادانی شهر نور؛ با گنبد فیروزه‌ای و ایوان مرکزی." },
+    { "id": "farm", "name": "مزرعه", "icon": "🌾", "size": [3, 2], "cost": { "gold": 180, "wood": 260, "stone": 40 }, "description": "کشتزار منظم برای پشتیبانی از رشد شهر." },
+    { "id": "light-spring", "name": "چشمهٔ نور", "icon": "✦", "size": [2, 2], "cost": { "gold": 420, "wood": 80, "stone": 300 }, "description": "آب‌نمای آرام شهری با نور ملایم و کاشی‌کاری ایرانی." },
+    { "id": "warehouse", "name": "انبار", "icon": "▣", "size": [2, 2], "cost": { "gold": 280, "wood": 480, "stone": 220 }, "description": "محل نگهداری امن منابع شهر با طاق آجری." },
+    { "id": "watchtower", "name": "برج دیده‌بانی", "icon": "♜", "size": [2, 2], "cost": { "gold": 350, "wood": 240, "stone": 500 }, "description": "برج دفاعی غیرتهاجمی برای دیده‌بانی مرزهای شهر." },
+    { "id": "wall", "name": "دیوار", "icon": "▥", "size": [1, 1], "cost": { "gold": 20, "wood": 0, "stone": 55 }, "description": "قطعهٔ دیوار آجری؛ برای ساخت ردیف پیوسته پس از قرارگیری فعال می‌ماند." }
+  ]
+}
