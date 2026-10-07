@@ -1,0 +1,93 @@
+{
+  "tileSize": 2,
+  "grid": { "cols": 40, "rows": 40 },
+  "margin": 7,
+  "colors": {
+    "grass": "#7ba05b",
+    "apron": "#bda172",
+    "gridLine": "#f7f2e6",
+    "gridBorder": "#ffe6a8",
+    "rock": "#8e8b84",
+    "rockDark": "#6c6a66",
+    "trunk": "#6d4c33",
+    "trunkDark": "#5a3d28",
+    "foliage": "#4f7f3a",
+    "foliageAlt": "#6b8f3c",
+    "foliageDark": "#3c6630",
+    "shrub": "#5b8a44",
+    "marker": "#ffd77a"
+  },
+  "textures": {
+    "size": 256,
+    "grassRepeatUnits": 7,
+    "dirtRepeatUnits": 5,
+    "sandRepeatUnits": 9,
+    "grass": {
+      "base": "#7ba05b",
+      "variants": ["#8bb067", "#6b9150", "#95b874", "#63884a", "#a8b46a"],
+      "speckleCount": 2600,
+      "bladeCount": 900
+    },
+    "dirt": {
+      "base": "#b08a5c",
+      "variants": ["#a07c50", "#c09a6c", "#8f6e46", "#caa87a"],
+      "speckleCount": 2200,
+      "pebbleCount": 90
+    },
+    "sand": {
+      "base": "#bda172",
+      "variants": ["#c9ad7e", "#b0956a", "#d3ba8c", "#a68f66"],
+      "speckleCount": 1800,
+      "pebbleCount": 40
+    }
+  },
+  "paths": [
+    { "from": { "col": 18, "row": 0 }, "to": { "col": 21, "row": 39 } },
+    { "from": { "col": 0, "row": 18 }, "to": { "col": 39, "row": 21 } },
+    { "from": { "col": 2, "row": 2 }, "to": { "col": 37, "row": 3 } },
+    { "from": { "col": 2, "row": 36 }, "to": { "col": 37, "row": 37 } },
+    { "from": { "col": 2, "row": 2 }, "to": { "col": 3, "row": 37 } },
+    { "from": { "col": 36, "row": 2 }, "to": { "col": 37, "row": 37 } }
+  ],
+  "soilPatches": [
+    { "center": { "col": 8, "row": 8 }, "radiusTiles": 3.4, "blobs": 11, "seed": 911 },
+    { "center": { "col": 31, "row": 10 }, "radiusTiles": 2.6, "blobs": 9, "seed": 1471 },
+    { "center": { "col": 12, "row": 31 }, "radiusTiles": 3.0, "blobs": 10, "seed": 2213 },
+    { "center": { "col": 30, "row": 29 }, "radiusTiles": 2.2, "blobs": 7, "seed": 3301 },
+    { "center": { "col": 22, "row": 6 }, "radiusTiles": 2.0, "blobs": 7, "seed": 4217 }
+  ],
+  "decor": {
+    "tree": {
+      "baseCount": 170,
+      "density": { "scale": 0.075, "threshold": 0.44, "octaves": 3 },
+      "spacingTiles": 2.2,
+      "keepOffPathsTiles": 2.0,
+      "scaleRange": [0.85, 1.45],
+      "colorJitter": 0.12,
+      "variantChance": 0.22,
+      "tiltDeg": 3.5
+    },
+    "rock": {
+      "baseCount": 95,
+      "density": { "scale": 0.13, "threshold": 0.5, "octaves": 2 },
+      "spacingTiles": 1.6,
+      "keepOffPathsTiles": 1.2,
+      "scaleRange": [0.5, 1.5],
+      "clusterChance": 0.45,
+      "clusterSize": [2, 5]
+    },
+    "shrub": {
+      "baseCount": 140,
+      "density": { "scale": 0.16, "threshold": 0.3, "octaves": 3 },
+      "spacingTiles": 1.1,
+      "keepOffPathsTiles": 1.0,
+      "scaleRange": [0.5, 1.15]
+    },
+    "placement": {
+      "seedOffset": 7717,
+      "gridJitter": 0.92,
+      "maxAttemptsPerItem": 40,
+      "skirtFadeTiles": 1.5
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "shahr-nur",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "شهر نور — بازی شهرسازی و استراتژی سه‌بعدی با الهام از قصه‌های قرآنی (فاز ۱: پایه و دنیای سه‌بعدی)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "node tools/check.mjs"
+  },
+  "keywords": [
+    "threejs",
+    "webgl",
+    "strategy",
+    "city-builder",
+    "persian"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.7"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "logicHz": 15,
+  "maxStepsPerFrame": 5,
+  "tap": {
+    "maxDistancePx": 16,
+    "maxDurationMs": 450
+  },
+  "tapMarker": {
+    "lifetimeSec": 0.9,
+    "maxMarkers": 6,
+    "radiusUnits": 1.7
+  },
+  "haptics": {
+    "enabled": true,
+    "tapMs": 8
+  }
+}

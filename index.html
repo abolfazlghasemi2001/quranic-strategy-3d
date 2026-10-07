@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1a20" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="شهر نور — بازی شهرسازی و استراتژی سه‌بعدی با الهام از قصه‌های قرآنی" />
+    <title>شهر نور — شهرسازی سه‌بعدی</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #0a1418;
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        font-family: 'Vazirmatn', 'IRANSans', 'Noto Sans Arabic', Tahoma, system-ui, sans-serif;
+        color: #f7f2e6;
+      }
+      #app {
+        position: fixed;
+        inset: 0;
+      }
+      #scene {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        outline: none;
+      }
+      .no-script {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        text-align: center;
+        line-height: 2;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" tabindex="0" aria-label="نمای سه‌بعدی شهر"></canvas>
+    </div>
+    <noscript>
+      <div class="no-script">
+        برای اجرای «شهر نور» باید جاوااسکریپت مرورگر فعال باشد.
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

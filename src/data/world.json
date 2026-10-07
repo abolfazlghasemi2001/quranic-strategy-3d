@@ -1,0 +1,80 @@
+{
+  "name": "شهر نور",
+  "phase": 1,
+  "seed": 20261007,
+  "chunk": {
+    "sizeTiles": 40
+  },
+  "centerReserveTiles": 9,
+  "lod": {
+    "enabled": false,
+    "note": "Phase 1 renders a single chunk of 40x40 tiles; the Chunk API is already LOD/streaming ready."
+  },
+  "camera": {
+    "fov": 52,
+    "near": 0.5,
+    "far": 900,
+    "yawDeg": -38,
+    "pitchDeg": 50,
+    "distance": 74,
+    "minDistance": 26,
+    "maxDistance": 152,
+    "focusPadding": 2,
+    "startFocus": { "x": null, "z": null },
+    "rotateDegPerPixel": 0.34,
+    "panSmoothing": 18,
+    "zoomSmoothing": 14,
+    "wheelZoomStep": 0.0016,
+    "pinchZoomSensitivity": 1.0,
+    "keyboardPanSpeed": 26,
+    "inertia": {
+      "decay": 5.5,
+      "minSpeed": 45,
+      "maxSpeed": 3200,
+      "smoothing": 0.25
+    }
+  },
+  "lighting": {
+    "sun": {
+      "elevationDeg": 47,
+      "azimuthDeg": 122,
+      "color": "#fff0cd",
+      "intensity": 2.25,
+      "distance": 300,
+      "shadowBias": -0.0007,
+      "shadowNormalBias": 0.35,
+      "shadowPadding": 14
+    },
+    "hemisphere": {
+      "skyColor": "#bcd8ff",
+      "groundColor": "#8b7a58",
+      "intensity": 0.72
+    },
+    "ambient": {
+      "color": "#fff4e2",
+      "intensity": 0.12
+    }
+  },
+  "sky": {
+    "zenith": "#2b6cc4",
+    "horizon": "#ffe8bd",
+    "below": "#cdb894",
+    "glow": "#fff3d0",
+    "gradientPower": 0.5,
+    "glowFalloff": 7.0,
+    "glowStrength": 0.85,
+    "radius": 620
+  },
+  "fog": {
+    "enabled": true,
+    "color": "#d8d3bd",
+    "near": 120,
+    "far": 420
+  },
+  "renderer": {
+    "clearColor": "#cfe0ef",
+    "toneMapping": "neutral",
+    "toneMappingExposure": 1.0,
+    "shadowType": "pcfsoft"
+  }
+}
