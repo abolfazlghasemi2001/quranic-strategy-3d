@@ -1,0 +1,55 @@
+{
+  "defaults": {
+    "shadows": true,
+    "shadowMapSize": 1024,
+    "antialias": true,
+    "maxPixelRatio": 2,
+    "decorScale": 1,
+    "fog": true,
+    "textureSize": 256,
+    "maskSize": 1024,
+    "textureAnisotropy": 4,
+    "groundDetailBlend": true
+  },
+  "tiers": {
+    "low": {
+      "shadows": false,
+      "antialias": false,
+      "maxPixelRatio": 1.25,
+      "decorScale": 0.5,
+      "fog": false,
+      "textureSize": 128,
+      "maskSize": 512,
+      "textureAnisotropy": 1,
+      "groundDetailBlend": false
+    },
+    "medium": {
+      "shadows": true,
+      "antialias": false,
+      "maxPixelRatio": 1.5,
+      "decorScale": 0.8,
+      "shadowMapSize": 1024,
+      "textureSize": 256,
+      "textureAnisotropy": 2
+    },
+    "high": {
+      "shadows": true,
+      "antialias": true,
+      "maxPixelRatio": 2,
+      "decorScale": 1,
+      "shadowMapSize": 2048,
+      "textureSize": 256,
+      "textureAnisotropy": 4
+    }
+  },
+  "detection": {
+    "lowMaxCores": 4,
+    "lowMaxMemoryGb": 3,
+    "highMinCores": 8
+  },
+  "targets": {
+    "fps": 60,
+    "maxDrawCalls": 150,
+    "maxTriangles": 400000
+  }
+}
