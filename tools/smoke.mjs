@@ -161,6 +161,12 @@ const ts = () => window.__NUR__.config.tileSize;
 const chip = (nur, key) => nur.hud.chips[key].querySelector('b').textContent;
 const toastText = (nur) => nur.hud.toastNode.textContent;
 const entity = (nur, type) => [...nur.game.state.entities.values()].find((e) => e.type === type);
+/** دکمهٔ فروشگاه بر پایهٔ شناسهٔ ساختمان (به‌جای شمارهٔ ردیف که با افزودن سازه جابه‌جا می‌شود). */
+const shopItem = (nur, id) => {
+  const node = nur.hud.shopList.querySelector(`.shop-item[data-def="${id}"]`);
+  if (!node) throw new Error(`shop item not found: ${id}`);
+  return node;
+};
 
 function tick(nur, dt = 0.3) {
   nur.engine.tick(dt); // dt>step ⇒ several fixedUpdates; no rAF needed
@@ -263,7 +269,7 @@ await test('HUD: starting economy renders in Persian (۶۰۰/۸۰۰ …)', () =>
 });
 
 await test('placement: preview starts invalid at centre, valid on a free tile', () => {
-  nur.hud.shopList.children[1].click(); // مزرعه (farm)
+  shopItem(nur, 'farm').click();
   assert(nur.buildings.placing, 'placement active');
   assert(!nur.hud.placementBar.classList.contains('is-hidden'), 'placement bar visible');
   assert(nur.hud.confirmButton.disabled === true, 'confirm disabled on the occupied town-centre tile');
@@ -291,7 +297,7 @@ await test('acceptance ①/③: confirm farm → active job, queue visible insta
 });
 
 await test('acceptance ③: two active builders, third job queued, wall placement chains', () => {
-  nur.hud.shopList.children[2].click(); // چشمه (light-spring)
+  shopItem(nur, 'light-spring').click();
   movePlacement(nur, ...(() => {
     const s = freeSpot(nur, nur.buildings.byId.get('light-spring'));
     return [s.x, s.z];
@@ -300,7 +306,7 @@ await test('acceptance ③: two active builders, third job queued, wall placemen
   assert(nur.hud.queueList.querySelectorAll('.queue-row--active').length === 2, 'two active jobs');
   assert(nur.hud.queueBadge.textContent === '۰/۲', `badge after two jobs: ${nur.hud.queueBadge.textContent}`);
 
-  nur.hud.shopList.children[6].click(); // دیوار (wall)
+  shopItem(nur, 'wall').click();
   const wallSpot = freeSpot(nur, nur.buildings.byId.get('wall'));
   movePlacement(nur, wallSpot.x, wallSpot.z);
   nur.hud.confirmButton.click();
@@ -451,7 +457,7 @@ await test('pause: «راهنمای متن» opens the Quran panel and freezes t
 });
 
 await test('reload prep: an active watchtower job is part of the save', () => {
-  nur.hud.shopList.children[5].click(); // نگهبانی (watchtower)
+  shopItem(nur, 'watchtower').click();
   const spot = freeSpot(nur, nur.buildings.byId.get('watchtower'));
   movePlacement(nur, spot.x, spot.z);
   nur.hud.confirmButton.click();
@@ -489,7 +495,7 @@ await test('acceptance ④: pagehide persists the game, clock rewound 2 h for of
 await test('acceptance ④/⑤: reload restores state, gains from 2 h offline, capped', async () => {
   nur = await boot(); // second boot (?run=2) over the backdated record
   // secondsAway log line first (toast disappears after 2.4 s)
-  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۴ آماده شد')).pop();
+  const bootLog = logs.info.filter((l) => /\[شهر نور\] فاز [\d۰-۹]+ آماده شد/.test(l)).pop();
   const m = bootLog && bootLog.match(/بازیابی \((\d+)s غیبت\)/);
   assert(m, `restore log: ${bootLog}`);
   const away = Number(m[1]);
@@ -913,7 +919,7 @@ await test('acceptance ⑤: future timestamps → 0s away, no gains, no toast', 
   await nur.saveSystem.saveRecord({ id: 'main', schemaVersion: 2, savedAt: F, payload });
 
   nur = await boot(); // third boot
-  const bootLog = logs.info.filter((l) => l.includes('[شهر نور] فاز ۴ آماده شد')).pop();
+  const bootLog = logs.info.filter((l) => /\[شهر نور\] فاز [\d۰-۹]+ آماده شد/.test(l)).pop();
   assert(/\(0s غیبت\)/.test(bootLog), `zero seconds away: ${bootLog}`);
   for (const key of ['rizq', 'nur', 'hekmat', 'gohar']) {
     assert(nur.game.state.resources[key] === before[key], `${key} untouched (got ${nur.game.state.resources[key]}, want ${before[key]})`);

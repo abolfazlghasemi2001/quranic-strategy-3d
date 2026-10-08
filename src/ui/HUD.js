@@ -26,9 +26,12 @@ export class HUD {
    * @param {import('../game/EconomySystem.js').EconomySystem} options.economy
    * @param {import('../game/BuildQueue.js').BuildQueue} options.queue
    */
-  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, learning = null, onOpenQuran, onOpenStudy }) {
-    Object.assign(this, { config, engine, bus, monitor, rig, buildings, economy, queue, learning });
+  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, game = null, learning = null, onOpenQuran, onOpenStudy, onOpenBattle, onOpenBarracks, onOpenMissions }) {
+    Object.assign(this, { config, engine, bus, monitor, rig, buildings, economy, queue, game, learning });
     this.onOpenStudy = onOpenStudy;
+    this.onOpenMissions = onOpenMissions;
+    this.onOpenBattle = onOpenBattle;
+    this.onOpenBarracks = onOpenBarracks;
     const t = (key, fallback) => config.t(key, fallback);
 
     this.levelValue = el('b', { text: '۱' });
@@ -60,7 +63,7 @@ export class HUD {
       const timeText = seconds ? ` — ⏱ ${formatFa(seconds)} ${t('economy.seconds', 'ثانیه')}` : '';
       const item = el('button', {
         className: 'shop-item',
-        attrs: { type: 'button' },
+        attrs: { type: 'button', dataset: { def: def.id } },
         children: [
           el('span', { className: 'shop-item__icon', text: def.icon }),
           el('span', {
@@ -87,11 +90,15 @@ export class HUD {
     });
     this.shopButton = button('ساخت‌وساز', { className: 'game-corner-btn game-shop-btn', onClick: () => this.toggleShop() });
     this.shopButton.prepend(el('span', { text: '🏛' }));
-    this.questButton = button('مأموریت‌ها', {
+    // Phase 6: دروازهٔ کمپین قصص (نشان = شمار ستاره‌ها و مأموریت باز).
+    this.questBadge = el('span', { className: 'game-corner-badge game-corner-badge--quest', text: '★۰' });
+    this.questButton = button(t('campaign.button', 'قصه‌ها'), {
       className: 'game-corner-btn game-quest-btn',
-      onClick: () => this.toast('مأموریت‌ها در فاز بعد فعال می‌شوند.'),
+      title: t('campaign.panelTitle', 'کمپین قصص'),
+      onClick: () => this.onOpenMissions?.(),
     });
     this.questButton.prepend(el('span', { text: '☼' }));
+    this.questButton.append(this.questBadge);
 
     // Phase 4: دارالقرآن gateway + spaced-repetition badge (due count).
     this.studyBadge = el('span', { className: 'game-corner-badge is-hidden', text: '۰' });
@@ -102,6 +109,25 @@ export class HUD {
     });
     this.studyButton.prepend(el('span', { text: '۞' }));
     this.studyButton.append(this.studyBadge);
+
+    // Phase 5: پادگان (آموزش سپاه) و میدان نبرد.
+    this.armyBadge = el('span', { className: 'game-corner-badge game-corner-badge--army', text: '۰' });
+    this.armyButton = button(t('army.panel', 'پادگان'), {
+      className: 'game-corner-btn game-army-btn',
+      title: t('army.garrisonTitle', 'سپاه آماده'),
+      onClick: () => this.onOpenBarracks?.(),
+    });
+    this.armyButton.prepend(el('span', { text: '🛡' }));
+    this.armyButton.append(this.armyBadge);
+
+    this.battleBadge = el('span', { className: 'game-corner-badge game-corner-badge--battle is-hidden', text: '۰' });
+    this.battleButton = button(t('battle.button', 'نبرد'), {
+      className: 'game-corner-btn game-battle-btn',
+      title: t('battle.title', 'میدان نبرد'),
+      onClick: () => this.onOpenBattle?.(),
+    });
+    this.battleButton.prepend(el('span', { text: '⚔' }));
+    this.battleButton.append(this.battleBadge);
 
     /* --------------------------------------------------- queue panel */
     this.queueList = el('div', { className: 'queue-list' });
@@ -135,6 +161,20 @@ export class HUD {
     this._selectionHarvestBtn = null;
     this._selectionSpeedupJobId = null;
 
+    // نوار کوچک پیگیری مأموریت فعال (فاز ۶): عنوان، هدف اصلی و دکمهٔ پنل.
+    this.missionChipTitle = el('b', { text: '' });
+    this.missionChipGoal = el('small', { text: '' });
+    this.missionChipTimer = el('span', { className: 'game-mission-chip__timer', text: '' });
+    this.missionChip = el('div', {
+      className: 'game-mission-chip is-hidden',
+      children: [
+        el('span', { className: 'game-mission-chip__icon', text: '☼' }),
+        el('div', { className: 'game-mission-chip__body', children: [this.missionChipTitle, this.missionChipGoal] }),
+        this.missionChipTimer,
+        button(t('campaign.open', 'پنل'), { className: 'ui-btn game-mission-chip__btn', onClick: () => this.onOpenMissions?.() }),
+      ],
+    });
+
     this.toastNode = el('div', { className: 'game-toast' });
     this.pauseBadge = el('div', { className: 'ui-pause', text: 'متوقف' });
     this.root = el('div', {
@@ -145,9 +185,12 @@ export class HUD {
         this.player,
         this.buildersView,
         this.resourcesView,
+        this.missionChip,
         this.shopButton,
         this.questButton,
         this.studyButton,
+        this.armyButton,
+        this.battleButton,
         this.queuePanel,
         this.shop,
         this.placementBar,
@@ -171,6 +214,22 @@ export class HUD {
       bus.on(EVENTS.UI_TOAST, (v) => this.toast(typeof v === 'string' ? v : v?.message || '')),
       bus.on(EVENTS.QURAN_REVIEW_DUE, (v) => this.renderStudyBadge(v)),
       bus.on(EVENTS.QURAN_LESSON_REQUESTED, () => this.toggleShop(false)),
+      bus.on(EVENTS.ARMY_CHANGED, (readiness) => this.renderArmyBadge(readiness)),
+      bus.on(EVENTS.CAMPAIGN_CHANGED, (snapshot) => this.renderCampaign(snapshot)),
+      bus.on(EVENTS.MISSION_PROGRESS, (active) => this.renderMissionProgress(active)),
+      bus.on(EVENTS.BATTLE_STARTED, () => this.setBattleLive(true)),
+      bus.on(EVENTS.BATTLE_SESSION_CLOSED, () => this.setBattleLive(false)),
+      bus.on(EVENTS.BATTLE_PROGRESS, (status) => this.renderBattleBadge(status)),
+      bus.on(EVENTS.STRUCTURE_DAMAGED, ({ entityId }) => {
+        if (this._selectionEntity && this._selectionEntity.id === entityId) {
+          this.renderSelection({ entity: this._selectionEntity, def: this.buildings.byId.get(this._selectionEntity.type) });
+        }
+      }),
+      bus.on(EVENTS.STRUCTURE_REPAIRED, ({ entityId }) => {
+        if (this._selectionEntity && this._selectionEntity.id === entityId) {
+          this.renderSelection({ entity: this._selectionEntity, def: this.buildings.byId.get(this._selectionEntity.type) });
+        }
+      }),
     ];
   }
 
@@ -208,14 +267,21 @@ export class HUD {
     this._queueRows = [];
     for (const job of jobs) {
       const def = buildingData.buildings.find((b) => b.id === job.type);
-      const name = def ? def.name : job.type;
+      const isMission = job.kind === 'mission';
+      const name = isMission ? (job.label || this.config.t('campaign.job', 'کار مأموریت')) : def ? def.name : job.type;
       const levelText = job.targetLevel > 1 ? ` ← سطح ${formatFa(job.targetLevel)}` : '';
       const timer = el('span', { className: 'queue-timer', text: job.status === 'active' ? formatCountdown(job.endsAt - now) : '' });
       const row = el('div', {
         className: `queue-row queue-row--${job.status}`,
         children: [
-          el('span', { className: 'queue-icon', text: def?.icon || '▣' }),
-          el('span', { className: 'queue-name', children: [el('b', { text: name }), el('small', { text: levelText.trim() || name })] }),
+          el('span', { className: 'queue-icon', text: isMission ? (job.icon || '☼') : def?.icon || '▣' }),
+          el('span', {
+            className: 'queue-name',
+            children: [
+              el('b', { text: name }),
+              el('small', { text: isMission ? this.config.t('campaign.jobHint', 'کار کمپین قصص') : levelText.trim() || name }),
+            ],
+          }),
           job.status === 'active'
             ? timer
             : el('span', { className: 'queue-waiting', text: this.config.t('economy.queued', 'در انتظار بنّا') }),
@@ -307,6 +373,47 @@ export class HUD {
       }
     }
 
+    // Phase 5: پادگان آموزش نیرو را از همین منو باز می‌کند.
+    if (def.trainUnits) {
+      this.selection.append(el('div', {
+        children: [button(this.config.t('army.panel', 'پادگان'), { className: 'ui-btn ui-btn--primary', onClick: () => this.onOpenBarracks?.() })],
+      }));
+    }
+
+    // Phase 5: جان سازه و تعمیر (هزینه از defenses.json).
+    if (this.game?.structureStats && entity.status === 'ready') {
+      const maxHp = entity.maxHp ?? this.game.structureStats.maxHpFor(entity);
+      const hp = entity.hp == null ? maxHp : entity.hp;
+      const ratio = maxHp > 0 ? Math.max(0, Math.min(1, hp / maxHp)) : 1;
+      const barWrap = el('div', { className: `building-health__bar${ratio < 1 ? ' is-damaged' : ''}`, children: [el('i')] });
+      barWrap.style.setProperty('--progress', `${Math.round(ratio * 100)}%`);
+      this.selection.append(el('div', {
+        className: 'building-health',
+        children: [
+          barWrap,
+          el('small', { text: `${this.config.t('defense.hp', 'جان')} ${formatFa(Math.round(hp))}/${formatFa(Math.round(maxHp))}` }),
+        ],
+      }));
+      if (ratio < 1) {
+        const cost = this.game.structureStats.repairCost(entity);
+        const costText = Object.entries(cost || {})
+          .filter(([, value]) => value)
+          .map(([key, value]) => `${this.config.t(`economy.${key}`, key)} ${formatFa(value)}`)
+          .join(' · ');
+        const repairBtn = button(`${this.config.t('defense.repair', 'تعمیر')} (${costText})`, {
+          className: 'ui-btn',
+          onClick: () => {
+            const result = this.game.repairEntity(entity);
+            if (result.ok) this.toast(this.config.t('defense.repaired', 'سازه تعمیر شد.'));
+            else if (result.reason === 'resources') this.toast(this.config.t('defense.needResources', 'منابع کافی نیست.'));
+            this.renderSelection({ entity, def });
+          },
+        });
+        repairBtn.disabled = !this.economy.canAfford(cost || {});
+        this.selection.append(el('div', { children: [repairBtn] }));
+      }
+    }
+
     // Phase 4: دارالقرآن opens the lesson hub straight from its menu.
     if (def.lesson) {
       this.selection.append(el('div', {
@@ -352,6 +459,65 @@ export class HUD {
         this.selection.append(el('div', { children: [upgradeBtn] }));
       }
     }
+  }
+
+  /** شمار سپاه آماده روی دکمهٔ پادگان. */
+  renderArmyBadge(readiness) {
+    if (!readiness) return;
+    this.armyBadge.textContent = formatFa(readiness.total);
+    this.armyButton.classList.toggle('is-alert', readiness.total > 0);
+    this.armyButton.title = `${this.config.t('army.garrisonTitle', 'سپاه آماده')}: ${formatFa(readiness.total)} · ${this.config.t('army.capacity', 'ظرفیت سپاه')} ${formatFa(readiness.used)}/${formatFa(readiness.capacity)}`;
+  }
+
+  /** نبرد جاری: نشان روی دکمهٔ نبرد و شمار مهاجمان زنده. */
+  setBattleLive(live) {
+    this.battleLive = live;
+    this.battleBadge.classList.toggle('is-hidden', !live);
+    this.battleButton.classList.toggle('is-alert', live);
+    if (!live) this.battleBadge.textContent = '·';
+  }
+
+  renderBattleBadge(status) {
+    if (!status) return;
+    this.battleBadge.classList.remove('is-hidden');
+    this.battleBadge.textContent = status.done
+      ? this.config.t(`battle.${status.result}`, status.result)
+      : formatFa(status.raidersAlive);
+  }
+
+  /* ------------------------------------------------------------ campaign */
+
+  /** نشان ستاره و مأموریت باز روی دکمهٔ «قصه‌ها». */
+  renderCampaign(snapshot) {
+    if (!snapshot) return;
+    const totalStars = snapshot.totalStars || 0;
+    const maxStars = snapshot.missions.length * (snapshot.starsMax || 3);
+    this.questBadge.textContent = `★${formatFa(totalStars)}`;
+    const available = snapshot.missions.filter((mission) => mission.status === 'available').length;
+    const active = snapshot.active;
+    this.questButton.classList.toggle('is-alert', available > 0 || !!active);
+    this.questButton.title = active
+      ? `${this.config.t('campaign.active', 'مأموریت فعال')}: ${active.title}`
+      : `${this.config.t('campaign.panelTitle', 'کمپین قصص')} — ★${formatFa(totalStars)}/${formatFa(maxStars)}${available ? ` · ${formatFa(available)} مأموریت باز` : ''}`;
+    this.questBadge.classList.toggle('is-hidden', !snapshot.missions.length);
+    if (active) this.renderMissionProgress(active);
+    else this.missionChip.classList.add('is-hidden');
+  }
+
+  /** نوار پیگیری مأموریت فعال: هدف اصلی، وضعیت و زمان. */
+  renderMissionProgress(active) {
+    if (!active) {
+      this.missionChip.classList.add('is-hidden');
+      return;
+    }
+    const goal = (active.objectives || []).find((objective) => objective.type === 'primary') || (active.objectives || [])[0];
+    this.missionChip.classList.remove('is-hidden');
+    this.missionChip.classList.toggle('is-paused', !!active.paused);
+    this.missionChipTitle.textContent = active.title;
+    this.missionChipGoal.textContent = goal ? goal.label : (active.headline || '');
+    this.missionChipTimer.textContent = active.paused
+      ? this.config.t('campaign.pausedShort', 'متوقف')
+      : `${'★'.repeat(active.starsPreview || 0)}${active.headline ? ` · ${active.headline}` : ''}`;
   }
 
   /** نشان سررسید مرور فاصله‌دار روی دکمهٔ دارالقرآن. */

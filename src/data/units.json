@@ -1,0 +1,157 @@
+{
+  "note": "فاز ۵ — چهار گونهٔ واحد. هیچ عددی در کد نیست: توان، جان، برد، سرعت، هزینه و زمان آموزش همه از همین فایل خوانده می‌شود. نبرد هیچ سازوکار تصادفی بیرون از RNG بذردار ندارد.",
+  "roles": {
+    "melee": "نزدیک‌زن",
+    "ranged": "دورزن",
+    "support": "ترمیم‌گر",
+    "siege": "دیوارشکن"
+  },
+  "defaults": {
+    "radiusTiles": 0.34,
+    "aggroTiles": 6.0,
+    "repathSeconds": 0.9,
+    "separationTiles": 0.44,
+    "separationStrength": 0.55,
+    "retreatThreshold": 0.2,
+    "retreatSeconds": 2.4,
+    "fadeSeconds": 1.5,
+    "blockedStallSeconds": 1.1,
+    "holdTiles": 3.4,
+    "rallyTiles": 2.2,
+    "splashFalloff": 0.45,
+    "followTiles": null
+  },
+  "targetPriority": {
+    "units-first": [
+      "unit",
+      "defense",
+      "wall",
+      "building"
+    ],
+    "defense-first": [
+      "defense",
+      "unit",
+      "wall",
+      "building"
+    ],
+    "walls-first": [
+      "wall",
+      "defense",
+      "building",
+      "unit"
+    ],
+    "structures-first": [
+      "defense",
+      "wall",
+      "building",
+      "unit"
+    ],
+    "support": [
+      "unit"
+    ]
+  },
+  "units": [
+    {
+      "id": "guard",
+      "name": "نگهبان",
+      "role": "melee",
+      "kind": "melee",
+      "icon": "🛡",
+      "description": "پیادهٔ سپردار نزدیک‌زن؛ ستون خط دفاع و همراه کاروان.",
+      "cost": {
+        "rizq": 80,
+        "nur": 15,
+        "hekmat": 0
+      },
+      "trainSeconds": 18,
+      "housing": 1,
+      "hp": 280,
+      "damage": 22,
+      "attacksPerSecond": 1.15,
+      "rangeTiles": 0.95,
+      "speedTilesPerSecond": 2.0,
+      "targetPriority": "units-first",
+      "unitDamageMultiplier": 1,
+      "structureDamageMultiplier": 0.85,
+      "splashTiles": 0,
+      "projectile": null
+    },
+    {
+      "id": "archer",
+      "name": "کماندار",
+      "role": "ranged",
+      "kind": "ranged",
+      "icon": "🏹",
+      "description": "دورزن سبک؛ از فاصلهٔ امن شلیک می‌کند و شکننده است.",
+      "cost": {
+        "rizq": 70,
+        "nur": 35,
+        "hekmat": 0
+      },
+      "trainSeconds": 24,
+      "housing": 1,
+      "hp": 165,
+      "damage": 15,
+      "attacksPerSecond": 1.05,
+      "rangeTiles": 4.4,
+      "speedTilesPerSecond": 2.15,
+      "targetPriority": "defense-first",
+      "unitDamageMultiplier": 1,
+      "structureDamageMultiplier": 0.7,
+      "splashTiles": 0,
+      "projectile": "arrow"
+    },
+    {
+      "id": "healer",
+      "name": "ترمیم‌گر",
+      "role": "support",
+      "kind": "support",
+      "icon": "✚",
+      "description": "پرچم‌دار ترمیم؛ به جای آسیب، جان همراهان را بازمی‌گرداند. هیچ قابلیت تهاجمی ندارد.",
+      "cost": {
+        "rizq": 90,
+        "nur": 60,
+        "hekmat": 10
+      },
+      "trainSeconds": 32,
+      "housing": 1,
+      "hp": 190,
+      "damage": 0,
+      "healPerSecond": 17,
+      "attacksPerSecond": 1,
+      "rangeTiles": 3.2,
+      "speedTilesPerSecond": 1.9,
+      "targetPriority": "support",
+      "unitDamageMultiplier": 0,
+      "structureDamageMultiplier": 0,
+      "splashTiles": 0,
+      "projectile": null
+    },
+    {
+      "id": "breaker",
+      "name": "دیوارشکن",
+      "role": "siege",
+      "kind": "siege",
+      "icon": "⛏",
+      "description": "سنگین‌کار شکستن دیوار؛ آسیب چندبرابری به سازه‌ها و آسیب کم به افراد دارد.",
+      "cost": {
+        "rizq": 140,
+        "nur": 45,
+        "hekmat": 15
+      },
+      "trainSeconds": 46,
+      "housing": 2,
+      "hp": 420,
+      "damage": 34,
+      "attacksPerSecond": 0.7,
+      "rangeTiles": 1.0,
+      "speedTilesPerSecond": 1.55,
+      "targetPriority": "walls-first",
+      "unitDamageMultiplier": 0.6,
+      "structureDamageMultiplier": 4.5,
+      "splashTiles": 0,
+      "projectile": null
+    }
+  ],
+  "defaults_note": "followTiles خالی (null) = ترمیم‌گر بدون سقف فاصله دنبال هم‌رزم می‌رود تا از ستون عقب نماند."
+}

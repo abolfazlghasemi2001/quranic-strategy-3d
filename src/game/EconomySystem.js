@@ -33,6 +33,56 @@ export class EconomySystem {
     this.balance = balance;
     this.state = state;
     this.defsById = new Map(defs.map((d) => [d.id, d]));
+    /**
+     * ضریب‌های موقت مأموریت (فاز ۶): تولید و مصرف هر منبع.
+     * پیش‌فرض خالی است تا رفتار شهر در حالت عادی هیچ تغییری نکند.
+     */
+    this.modifiers = { production: {}, consumption: {} };
+  }
+
+  /* ----------------------------------------------------- mission modifiers */
+
+  /**
+   * ضریب تولید/مصرف را از مأموریت فعال می‌گیرد (EconomySystem خودش هیچ
+   * مأموریتی نمی‌شناسد؛ فقط ضریب‌ها را اعمال می‌کند).
+   * @param {{production?:Record<string,number>, consumption?:Record<string,number>}} modifiers
+   */
+  setModifiers(modifiers = {}) {
+    this.modifiers = {
+      production: { ...(modifiers.production || {}) },
+      consumption: { ...(modifiers.consumption || {}) },
+    };
+    return this.modifiers;
+  }
+
+  clearModifiers() {
+    this.modifiers = { production: {}, consumption: {} };
+  }
+
+  productionMultiplier(resource) {
+    const value = Number(this.modifiers.production?.[resource]);
+    return Number.isFinite(value) && value >= 0 ? value : 1;
+  }
+
+  /** کسر امن یک منبع (بدون منفی‌شدن). مقدار واقعاً کسرشده برمی‌گردد. */
+  drain(resource, amount) {
+    const value = Math.max(0, Number(amount) || 0);
+    if (value <= 0) return 0;
+    const current = Number(this.resources[resource]) || 0;
+    const moved = Math.min(current, value);
+    this.resources[resource] = current - moved;
+    return moved;
+  }
+
+  /** اعمال مصرف ثانیه‌ای ضریب‌ها (مأموریت‌ها؛ در حالت عادی صفر است). */
+  applyConsumption(seconds) {
+    const dt = Math.max(0, Number(seconds) || 0);
+    if (dt <= 0) return 0;
+    let total = 0;
+    for (const [resource, perSecond] of Object.entries(this.modifiers.consumption || {})) {
+      total += this.drain(resource, (Number(perSecond) || 0) * dt);
+    }
+    return total;
   }
 
   /* ------------------------------------------------------------- helpers */
@@ -70,16 +120,45 @@ export class EconomySystem {
     return this.balance.maxLevel;
   }
 
-  /** Global storage capacity per stored resource (ready warehouses only). */
+  /**
+   * ظرفیت انبار هر منبع = پایه + پاداش هر سازهٔ انباردار آماده.
+   *   • «انبار» (warehouse) هر سطح، هر سه منبع را بالا می‌برد.
+   *   • سازه‌هایی با `storageFor` (مثل «انبار غله») فقط منبع‌های خودشان را
+   *     بالا می‌برند و ضریب هر سطح از economy.storage.perStorageLevel می‌آید.
+   */
   capacity() {
     const cap = { ...this.data.storage.base };
     for (const entity of this.state.entities.values()) {
-      if (entity.type !== 'warehouse' || entity.status !== 'ready') continue;
-      for (const res of Object.keys(cap)) {
-        cap[res] += entity.level * this.data.storage.perWarehouseLevel[res];
+      if (entity.status !== 'ready') continue;
+      const def = this.def(entity.type);
+      if (!def) continue;
+      const bonus = this.storageBonus(def);
+      for (const [res, amount] of Object.entries(bonus)) {
+        cap[res] = (cap[res] || 0) + amount * entity.level;
       }
     }
     return cap;
+  }
+
+  /** پاداش ظرفیت هر سطح از یک سازهٔ انباردار (بدون وابستگی به نمونهٔ سازه). */
+  storageBonus(def) {
+    const bonus = {};
+    if (!def) return bonus;
+    if (def.storagePerLevel === true) {
+      for (const res of Object.keys(this.data.storage.base)) {
+        bonus[res] = this.data.storage.perWarehouseLevel[res] || 0;
+      }
+      return bonus;
+    }
+    if (Array.isArray(def.storageFor)) {
+      const table = this.data.storage.perStorageLevel || {};
+      for (const res of def.storageFor) {
+        const amount = Number(table[res]);
+        if (Number.isFinite(amount) && amount > 0) bonus[res] = amount;
+        else if (this.data.storage.perWarehouseLevel[res]) bonus[res] = this.data.storage.perWarehouseLevel[res];
+      }
+    }
+    return bonus;
   }
 
   freeCapacity(resource) {
@@ -122,6 +201,8 @@ export class EconomySystem {
       if (entity.status !== 'ready') continue;
       const rate = this.rateOf(entity);
       if (rate <= 0) continue;
+      // ضریب مأموریت (فراوانی/قحطی/شکرانه) روی نرخ همان لحظه اثر می‌گذارد.
+      const multiplier = this.productionMultiplier(this.def(entity.type)?.produces);
 
       if (entity.lastAccrualAt == null || now < entity.lastAccrualAt) {
         // First sight of the entity or the clock moved backwards: resync.
@@ -140,7 +221,7 @@ export class EconomySystem {
       const room = this.bufferCap(entity) - entity.pending;
       if (room <= 0) continue;
 
-      const produced = Math.min(room, (rate * elapsed) / HOUR_MS);
+      const produced = Math.min(room, (rate * multiplier * elapsed) / HOUR_MS);
       entity.pending += produced;
       accrued += produced;
     }

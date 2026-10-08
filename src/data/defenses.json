@@ -1,0 +1,119 @@
+{
+  "note": "فاز ۵ — سه سازهٔ دفاعی + دیوار. برد، آسیب، سرعت تیراندازی، جان و هزینه همه داده‌محورند: هزینه/زمان ساخت در src/data/balance.json (کلید balanceKey) و آمار رزمی در همین فایل. هیچ عددی در کد نیست.",
+  "balanceFile": "src/data/balance.json",
+  "defaults": {
+    "targetOrder": "nearest",
+    "splashFalloff": 0.45,
+    "slowFactor": 1,
+    "slowSeconds": 0
+  },
+  "targetOrders": {
+    "nearest": "نزدیک‌ترین هدف در برد",
+    "weakest": "کم‌جان‌ترین هدف در برد",
+    "strongest": "پرجان‌ترین هدف در برد"
+  },
+  "wall": {
+    "id": "wall",
+    "balanceKey": "wall",
+    "name": "دیوار",
+    "icon": "▥",
+    "hpPerLevel": 1100,
+    "hpLevelBonus": 0.25,
+    "rangeTiles": 0,
+    "damage": 0,
+    "attacksPerSecond": 0,
+    "splashTiles": 0,
+    "breakerMultiplier": 1.35,
+    "note": "دیوار آسیب نمی‌زند؛ فقط مانع مسیر است و با «دیوارشکن» شکسته می‌شود. شکستن دیوار خانهٔ مسیر را باز می‌کند."
+  },
+  "defenses": [
+    {
+      "id": "watchtower",
+      "balanceKey": "watchtower",
+      "name": "برج دیده‌بانی",
+      "icon": "♜",
+      "kind": "tower",
+      "hpPerLevel": 2400,
+      "hpLevelBonus": 0.16,
+      "rangeTiles": 6.4,
+      "damage": 44,
+      "attacksPerSecond": 0.85,
+      "splashTiles": 0,
+      "projectile": "light-bolt",
+      "targetOrder": "nearest",
+      "slow": {
+        "factor": 1,
+        "seconds": 0
+      },
+      "note": "برد بلند، شلیک کند و تک‌هدف؛ ستون دیده‌بانی شهر."
+    },
+    {
+      "id": "sentry-post",
+      "balanceKey": "sentry-post",
+      "name": "سنگر نگهبان",
+      "icon": "⛨",
+      "kind": "sentry",
+      "hpPerLevel": 3200,
+      "hpLevelBonus": 0.18,
+      "rangeTiles": 3.2,
+      "damage": 24,
+      "attacksPerSecond": 1.7,
+      "splashTiles": 0.85,
+      "projectile": "spark-burst",
+      "targetOrder": "weakest",
+      "slow": {
+        "factor": 0.55,
+        "seconds": 1.2
+      },
+      "note": "برد کوتاه، شلیک تند و جریمهٔ کندی برای مهاجم؛ نگهبان دروازه."
+    },
+    {
+      "id": "light-beacon",
+      "balanceKey": "light-beacon",
+      "name": "فانوس دفاعی",
+      "icon": "☀",
+      "kind": "beacon",
+      "hpPerLevel": 1500,
+      "hpLevelBonus": 0.14,
+      "rangeTiles": 5.2,
+      "damage": 34,
+      "attacksPerSecond": 0.6,
+      "splashTiles": 1.7,
+      "projectile": "light-ring",
+      "targetOrder": "nearest",
+      "slow": {
+        "factor": 0.75,
+        "seconds": 2.0
+      },
+      "note": "آسیب گسترده به گروه مهاجمان؛ برج نوری میدان."
+    }
+  ],
+  "structures": {
+    "hpPerTile": 240,
+    "levelBonusPerLevel": 0.14,
+    "hpById": {
+      "town-center": 2800,
+      "farm": 460,
+      "light-spring": 420,
+      "library": 520,
+      "warehouse": 1100,
+      "dar-al-quran": 1000,
+      "barracks": 1150
+    },
+    "note": "جان هر سازه = مقدار hpById (یا hpPerTile × تعداد خانه) × (۱ + levelBonusPerLevel × (سطح − ۱)). مرکز شهر تنها سازه‌ای است که سقوطش پایان نبرد را رقم می‌زند."
+  },
+  "repair": {
+    "costPer100Hp": {
+      "rizq": 14,
+      "nur": 6,
+      "hekmat": 2
+    },
+    "secondsPer100Hp": 6,
+    "minSeconds": 6,
+    "note": "سازهٔ آسیب‌دیده تا تعمیر، تولید نمی‌کند. تعمیر هزینهٔ درون‌بازی دارد و هیچ ساختمانی هرگز نابود نمی‌شود."
+  },
+  "outcome": {
+    "damagedByDefeat": 3,
+    "note": "شکست دفاعی = آسیب‌دیدن این تعداد سازه (یا رسیدن مهاجم به مرکز شهر). ساختمان‌ها پاک نمی‌شوند."
+  }
+}

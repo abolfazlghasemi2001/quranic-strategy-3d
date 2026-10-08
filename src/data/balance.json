@@ -532,6 +532,100 @@
         }
       ]
     },
+    "granary": {
+      "levels": [
+        {
+          "level": 1,
+          "cost": {
+            "rizq": 180,
+            "nur": 75,
+            "hekmat": 30
+          },
+          "seconds": 30
+        },
+        {
+          "level": 2,
+          "cost": {
+            "rizq": 300,
+            "nur": 125,
+            "hekmat": 50
+          },
+          "seconds": 50
+        },
+        {
+          "level": 3,
+          "cost": {
+            "rizq": 490,
+            "nur": 205,
+            "hekmat": 80
+          },
+          "seconds": 75
+        },
+        {
+          "level": 4,
+          "cost": {
+            "rizq": 810,
+            "nur": 340,
+            "hekmat": 135
+          },
+          "seconds": 120
+        },
+        {
+          "level": 5,
+          "cost": {
+            "rizq": 1335,
+            "nur": 555,
+            "hekmat": 220
+          },
+          "seconds": 185
+        },
+        {
+          "level": 6,
+          "cost": {
+            "rizq": 2200,
+            "nur": 920,
+            "hekmat": 365
+          },
+          "seconds": 290
+        },
+        {
+          "level": 7,
+          "cost": {
+            "rizq": 3630,
+            "nur": 1510,
+            "hekmat": 605
+          },
+          "seconds": 445
+        },
+        {
+          "level": 8,
+          "cost": {
+            "rizq": 5995,
+            "nur": 2500,
+            "hekmat": 1000
+          },
+          "seconds": 690
+        },
+        {
+          "level": 9,
+          "cost": {
+            "rizq": 9890,
+            "nur": 4120,
+            "hekmat": 1645
+          },
+          "seconds": 1070
+        },
+        {
+          "level": 10,
+          "cost": {
+            "rizq": 16315,
+            "nur": 6800,
+            "hekmat": 2720
+          },
+          "seconds": 1650
+        }
+      ]
+    },
     "watchtower": {
       "levels": [
         {
@@ -834,6 +928,288 @@
         }
       ],
       "note": "دارالقرآن: تولید حکمت + گذرگاه درس‌ها. نرخ تولید کمی کمتر از کتابخانه و هزینهٔ کمی بیشتر است تا مسیر اقتصاد متعادل بماند."
+    },
+    "barracks": {
+      "levels": [
+        {
+          "level": 1,
+          "cost": {
+            "rizq": 320,
+            "nur": 140,
+            "hekmat": 60
+          },
+          "seconds": 90
+        },
+        {
+          "level": 2,
+          "cost": {
+            "rizq": 520,
+            "nur": 225,
+            "hekmat": 95
+          },
+          "seconds": 130
+        },
+        {
+          "level": 3,
+          "cost": {
+            "rizq": 840,
+            "nur": 365,
+            "hekmat": 155
+          },
+          "seconds": 190
+        },
+        {
+          "level": 4,
+          "cost": {
+            "rizq": 1350,
+            "nur": 595,
+            "hekmat": 255
+          },
+          "seconds": 275
+        },
+        {
+          "level": 5,
+          "cost": {
+            "rizq": 2200,
+            "nur": 965,
+            "hekmat": 415
+          },
+          "seconds": 400
+        },
+        {
+          "level": 6,
+          "cost": {
+            "rizq": 3550,
+            "nur": 1550,
+            "hekmat": 670
+          },
+          "seconds": 575
+        },
+        {
+          "level": 7,
+          "cost": {
+            "rizq": 5800,
+            "nur": 2550,
+            "hekmat": 1100
+          },
+          "seconds": 835
+        },
+        {
+          "level": 8,
+          "cost": {
+            "rizq": 9350,
+            "nur": 4100,
+            "hekmat": 1750
+          },
+          "seconds": 1215
+        },
+        {
+          "level": 9,
+          "cost": {
+            "rizq": 15200,
+            "nur": 6650,
+            "hekmat": 2850
+          },
+          "seconds": 1760
+        },
+        {
+          "level": 10,
+          "cost": {
+            "rizq": 24600,
+            "nur": 10800,
+            "hekmat": 4600
+          },
+          "seconds": 2550
+        }
+      ]
+    },
+    "sentry-post": {
+      "levels": [
+        {
+          "level": 1,
+          "cost": {
+            "rizq": 190,
+            "nur": 90,
+            "hekmat": 60
+          },
+          "seconds": 45
+        },
+        {
+          "level": 2,
+          "cost": {
+            "rizq": 310,
+            "nur": 145,
+            "hekmat": 95
+          },
+          "seconds": 65
+        },
+        {
+          "level": 3,
+          "cost": {
+            "rizq": 500,
+            "nur": 235,
+            "hekmat": 155
+          },
+          "seconds": 95
+        },
+        {
+          "level": 4,
+          "cost": {
+            "rizq": 810,
+            "nur": 385,
+            "hekmat": 255
+          },
+          "seconds": 135
+        },
+        {
+          "level": 5,
+          "cost": {
+            "rizq": 1300,
+            "nur": 620,
+            "hekmat": 415
+          },
+          "seconds": 200
+        },
+        {
+          "level": 6,
+          "cost": {
+            "rizq": 2100,
+            "nur": 1000,
+            "hekmat": 670
+          },
+          "seconds": 290
+        },
+        {
+          "level": 7,
+          "cost": {
+            "rizq": 3450,
+            "nur": 1650,
+            "hekmat": 1100
+          },
+          "seconds": 420
+        },
+        {
+          "level": 8,
+          "cost": {
+            "rizq": 5550,
+            "nur": 2650,
+            "hekmat": 1750
+          },
+          "seconds": 605
+        },
+        {
+          "level": 9,
+          "cost": {
+            "rizq": 9000,
+            "nur": 4250,
+            "hekmat": 2850
+          },
+          "seconds": 880
+        },
+        {
+          "level": 10,
+          "cost": {
+            "rizq": 14600,
+            "nur": 6900,
+            "hekmat": 4600
+          },
+          "seconds": 1275
+        }
+      ]
+    },
+    "light-beacon": {
+      "levels": [
+        {
+          "level": 1,
+          "cost": {
+            "rizq": 240,
+            "nur": 160,
+            "hekmat": 90
+          },
+          "seconds": 60
+        },
+        {
+          "level": 2,
+          "cost": {
+            "rizq": 390,
+            "nur": 260,
+            "hekmat": 145
+          },
+          "seconds": 85
+        },
+        {
+          "level": 3,
+          "cost": {
+            "rizq": 630,
+            "nur": 420,
+            "hekmat": 235
+          },
+          "seconds": 125
+        },
+        {
+          "level": 4,
+          "cost": {
+            "rizq": 1000,
+            "nur": 680,
+            "hekmat": 385
+          },
+          "seconds": 185
+        },
+        {
+          "level": 5,
+          "cost": {
+            "rizq": 1650,
+            "nur": 1100,
+            "hekmat": 620
+          },
+          "seconds": 265
+        },
+        {
+          "level": 6,
+          "cost": {
+            "rizq": 2700,
+            "nur": 1800,
+            "hekmat": 1000
+          },
+          "seconds": 385
+        },
+        {
+          "level": 7,
+          "cost": {
+            "rizq": 4350,
+            "nur": 2900,
+            "hekmat": 1650
+          },
+          "seconds": 560
+        },
+        {
+          "level": 8,
+          "cost": {
+            "rizq": 7050,
+            "nur": 4700,
+            "hekmat": 2650
+          },
+          "seconds": 810
+        },
+        {
+          "level": 9,
+          "cost": {
+            "rizq": 11400,
+            "nur": 7600,
+            "hekmat": 4250
+          },
+          "seconds": 1170
+        },
+        {
+          "level": 10,
+          "cost": {
+            "rizq": 18400,
+            "nur": 12300,
+            "hekmat": 6900
+          },
+          "seconds": 1700
+        }
+      ]
     }
   }
 }

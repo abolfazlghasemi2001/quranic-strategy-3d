@@ -1,5 +1,7 @@
 import { clamp } from '../core/MathUtils.js';
 import { createLearningState, normalizeLearningState } from './quran/LearningState.js';
+import { createCampaignState, normalizeCampaignState } from './campaign/MissionState.js';
+import { createArmyState, createBattleState, normalizeArmyState, normalizeBattleState } from './barracks/ArmyState.js';
 
 /**
  * GameState — pure data model for the fixed-timestep logic layer.
@@ -7,7 +9,7 @@ import { createLearningState, normalizeLearningState } from './quran/LearningSta
  */
 export class GameState {
   constructor(config) {
-    this.version = 4; // logic schema (save schema handled by SaveSystem)
+    this.version = 6; // logic schema (save schema handled by SaveSystem)
     this.tick = 0;
     this.elapsed = 0;
     this.paused = false;
@@ -26,6 +28,13 @@ export class GameState {
 
     // --- quran learning layer (phase 4) ---
     this.learning = createLearningState();
+
+    // --- army + battle layer (phase 5) ---
+    this.army = createArmyState();
+    this.battles = createBattleState();
+
+    // --- campaign layer (phase 6): missions, stars and the active run ---
+    this.campaign = createCampaignState();
 
     this.entities = new Map();
     this.entitySeq = 1;
@@ -50,6 +59,10 @@ export class GameState {
       status: data.status ?? 'ready', // 'building' | 'ready' | 'upgrading'
       pending: data.pending ?? 0, // accrued but unharvested production
       lastAccrualAt: data.lastAccrualAt ?? null,
+      // --- phase 5: battle damage (filled by StructureStats/BattleSystem) ---
+      hp: data.hp ?? null,
+      maxHp: data.maxHp ?? null,
+      damaged: Boolean(data.damaged),
       root: data.root ?? null, // three.js Object3D (not serialized)
     };
     this.entities.set(id, entity);
@@ -98,6 +111,9 @@ export class GameState {
       lastDailyAt: this.lastDailyAt,
       dailyGranted: this.dailyGranted,
       learning: JSON.parse(JSON.stringify(this.learning)),
+      campaign: JSON.parse(JSON.stringify(this.campaign)),
+      army: JSON.parse(JSON.stringify(this.army)),
+      battles: JSON.parse(JSON.stringify(this.battles)),
       nextEntityId: this.nextEntityId,
       nextJobId: this.nextJobId,
       entitySeq: this.entitySeq,
@@ -112,6 +128,9 @@ export class GameState {
         status: e.status,
         pending: e.pending,
         lastAccrualAt: e.lastAccrualAt,
+        hp: e.hp,
+        maxHp: e.maxHp,
+        damaged: e.damaged,
       })),
     };
   }
@@ -135,6 +154,9 @@ export class GameState {
     this.nextJobId = payload.nextJobId ?? 1;
 
     this.learning = normalizeLearningState(payload.learning);
+    this.campaign = normalizeCampaignState(payload.campaign);
+    this.army = normalizeArmyState(payload.army);
+    this.battles = normalizeBattleState(payload.battles, { keep: 3 });
     this.entities = new Map();
     this.entitySeq = payload.entitySeq ?? 1;
     for (const data of payload.entities || []) {
