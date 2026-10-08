@@ -9,6 +9,8 @@
  *           adds pending/status/jobs/dailyGoharAt/nextEntityId/nextJobId.
  *   2 → 3 : adds the quran learning layer (Leitner boxes, lesson records,
  *           reward totals). Old saves keep working with empty progress.
+ *   3 → 4 : adds the phase-5 army/battle layer (garrison, training queue,
+ *           structure health and the last battle records for replay).
  *
  * A record with a NEWER schemaVersion than we understand is preserved as a
  * backup (`main-backup-v{n}`) and the game starts fresh — never crashes.
@@ -17,13 +19,14 @@
  * store is used so the game logic remains fully functional and testable.
  */
 
-export const SAVE_SCHEMA_VERSION = 3;
+export const SAVE_SCHEMA_VERSION = 4;
 export const SAVE_DB_NAME = 'shahr-nur';
 export const SAVE_STORE = 'saves';
 export const SAVE_KEY = 'main';
 
 /** Pure migrations: version → (payload) => payload of version+1. */
 import { normalizeLearningState } from './quran/LearningState.js';
+import { normalizeArmyState, normalizeBattleState } from './barracks/ArmyState.js';
 
 export const MIGRATIONS = {
   1(payload) {
@@ -58,6 +61,21 @@ export const MIGRATIONS = {
   2(payload) {
     const next = { ...payload };
     next.learning = normalizeLearningState(payload.learning);
+    return next;
+  },
+  // Phase 5: army, structure health and battle history. Buildings from older
+  // saves simply start at full health (maxHp is derived from defenses.json
+  // the first time the game boots).
+  3(payload) {
+    const next = { ...payload };
+    next.army = normalizeArmyState(payload.army);
+    next.battles = normalizeBattleState(payload.battles, { keep: 3 });
+    next.entities = (payload.entities || []).map((entity) => ({
+      ...entity,
+      hp: typeof entity.hp === 'number' ? entity.hp : null,
+      maxHp: typeof entity.maxHp === 'number' ? entity.maxHp : null,
+      damaged: Boolean(entity.damaged),
+    }));
     return next;
   },
 };

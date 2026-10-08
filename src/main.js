@@ -1,5 +1,5 @@
 /**
- * شهر نور — entry point (phase 4: Quran learning layer)
+ * شهر نور — entry point (phase 5: units, defence and battle mechanics)
  *
  * Boot order:
  *   config -> engine -> load save -> Quran dataset -> world -> input/camera ->
@@ -25,6 +25,9 @@ import { HUD } from './ui/HUD.js';
 import { DevPanel } from './ui/DevPanel.js';
 import { QuranPanel } from './ui/QuranPanel.js';
 import { LessonHub } from './ui/quran/LessonHub.js';
+import { BattleView } from './world/battle/BattleView.js';
+import { BattlePanel } from './ui/BattlePanel.js';
+import { BarracksPanel } from './ui/BarracksPanel.js';
 import { LoadingScreen, ErrorOverlay } from './ui/LoadingScreen.js';
 
 async function boot() {
@@ -127,6 +130,8 @@ async function boot() {
     persist: requestSave,
   });
   bus.on(EVENTS.JOB_FINISHED, requestSave);
+  // نتیجهٔ نبرد (آسیب سازه‌ها، سپاه بازمانده، پاداش) بی‌درنگ ذخیره می‌شود.
+  bus.on(EVENTS.BATTLE_ENDED, () => saveNow());
 
   // ------------------------------------------------------------------ ui
   const monitor = new PerfMonitor({ windowSeconds: 1.5, sampleInterval: 0.25 });
@@ -138,6 +143,53 @@ async function boot() {
     hasBuilding: () => [...game.state.entities.values()].some((e) => e.type === 'dar-al-quran' && e.status === 'ready'),
   });
   const quranPanel = new QuranPanel({ config, parent: document.body, learning: game.learning });
+
+  // Phase 5: لایهٔ رندر نبرد + پنل‌های سپاه و نبرد.
+  const battleView = new BattleView({
+    parent: world.group,
+    config,
+    state: game.state,
+    rig,
+    buildings,
+    battleData: game.battle.battleData,
+    unitsData: game.battle.unitsData,
+    getBattle: () => game.battle,
+    seed: config.seed,
+  });
+  const barracksPanel = new BarracksPanel({
+    config,
+    bus,
+    barracks: game.barracks,
+    economy: game.economy,
+    unitsData: game.battle.unitsData,
+  });
+  const battlePanel = new BattlePanel({
+    config,
+    bus,
+    battle: game.battle,
+    barracks: game.barracks,
+    unitsData: game.battle.unitsData,
+    view: battleView,
+    onBattleStart: () => {
+      buildings.cancelPlacement();
+      hud.toggleShop(false);
+      hud.setBattleLive(true);
+      battleView.mount(game.battle.sim);
+      const town = game.battle.sim?.townCenter();
+      const townDef = town ? { x: (town.col + town.w / 2) * config.tileSize, z: (town.row + town.h / 2) * config.tileSize } : null;
+      battleView.focusCamera(townDef || { x: config.cols * config.tileSize / 2, z: config.rows * config.tileSize / 2 });
+      hud.toast(config.t('battle.startedToast', 'نبرد آغاز شد؛ از پادگان نیرو مستقر کنید.'));
+    },
+    onBattleExit: () => {
+      battleView.unmount();
+      hud.setBattleLive(false);
+    },
+    onOpenBarracks: () => {
+      buildings.cancelPlacement();
+      barracksPanel.show();
+    },
+  });
+
   const hud = new HUD({
     config,
     engine,
@@ -147,7 +199,16 @@ async function boot() {
     buildings,
     economy: game.economy,
     queue: game.queue,
+    game,
     learning: game.learning,
+    onOpenBattle: () => {
+      buildings.cancelPlacement();
+      battlePanel.show();
+    },
+    onOpenBarracks: () => {
+      buildings.cancelPlacement();
+      barracksPanel.show();
+    },
     onOpenQuran: () => {
       quranPanel.show();
       engine.pause('modal');
@@ -202,6 +263,9 @@ async function boot() {
   engine.addUpdatable(game, 30);
   engine.addUpdatable(buildings, 35);
   engine.addUpdatable(lessonHub, 95);
+  engine.addUpdatable(battleView, 40);
+  engine.addUpdatable(battlePanel, 96);
+  engine.addUpdatable(barracksPanel, 97);
   engine.addUpdatable(hud, 100);
   engine.addUpdatable(devPanel, 110);
 
@@ -213,6 +277,7 @@ async function boot() {
   window.__NUR__ = {
     config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel,
     lessonHub, datasetLoader, quran, saveSystem, saveNow,
+    battleView, battlePanel, barracksPanel,
   };
 
   window.addEventListener('pagehide', (event) => {
@@ -224,6 +289,9 @@ async function boot() {
     hud.dispose();
     quranPanel.dispose();
     lessonHub.dispose();
+    battlePanel.dispose();
+    barracksPanel.dispose();
+    battleView.dispose();
     buildings.dispose();
     game.dispose();
     input.dispose();
@@ -235,11 +303,13 @@ async function boot() {
   });
 
   console.info(
-    `[شهر نور] فاز ۴ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
+    `[شهر نور] فاز ۵ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
     `ذخیره: ${saveRecord ? `بازیابی (${bootInfo.secondsAway}s غیبت)` : 'جدید'}، ` +
     `صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}، ` +
     `دیتاست قرآن: ${quran.dataset.stats.datasetId} (آیه ${quran.dataset.stats.verseCount}، درس ${quran.dataset.stats.lessonCount}، بازبینی‌شده ${quran.dataset.stats.reviewedVerseCount})، ` +
-    `در نوبت مرور: ${game.learning.stats().dueCount}`,
+    `در نوبت مرور: ${game.learning.stats().dueCount}، ` +
+    `سپاه: ${game.barracks.total()} (ظرفیت ${game.barracks.capacity()})، ` +
+    `سابقهٔ نبرد: ${game.state.battles.history.length}`,
   );
   return window.__NUR__;
 }

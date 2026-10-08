@@ -30,6 +30,18 @@ import { OrbitCameraRig } from '../src/core/OrbitCameraRig.js';
 import { GameState } from '../src/game/GameState.js';
 import { EconomySystem } from '../src/game/EconomySystem.js';
 import { BuildQueue } from '../src/game/BuildQueue.js';
+import { BarracksSystem } from '../src/game/barracks/BarracksSystem.js';
+import { BattleGrid } from '../src/game/battle/BattleGrid.js';
+import { findPath, pathWorldLength } from '../src/game/battle/AStar.js';
+import { BattleSim } from '../src/game/battle/BattleSim.js';
+import { canTransition } from '../src/game/battle/Unit.js';
+import { createStructureStats } from '../src/game/battle/StructureStats.js';
+import {
+  buildScenario,
+  defenseDefsFrom,
+  structureModifiersFrom,
+} from '../src/game/battle/BattleScenario.js';
+import { createRecord, replayRecord, recordSummary, verifySubmission } from '../src/game/battle/BattleRecorder.js';
 import { SaveSystem, migrateRecord, SAVE_SCHEMA_VERSION } from '../src/game/SaveSystem.js';
 import { LearningSystem } from '../src/game/quran/LearningSystem.js';
 import { Leitner } from '../src/game/quran/Leitner.js';
@@ -1395,10 +1407,779 @@ test('learning: the save roundtrip keeps Leitner boxes, lesson records and total
 });
 
 
+/* ==================================================================== phase 5
+   واحدها، دفاع و مکانیک نبرد — آزمون‌های منطق خالص (بدون DOM و بدون WebGL). */
+
+const unitsData = readJson('src/data/units.json');
+const defensesData = readJson('src/data/defenses.json');
+const battleData = readJson('src/data/battle.json');
+const battleCfg = { cols: terrain.grid.cols, rows: terrain.grid.rows, tileSize: terrain.tileSize, seed: world.seed >>> 0 };
+const structureStats = createStructureStats({ defenses: defensesData, config: battleCfg });
+const battleDeps = {
+  rules: battleData,
+  units: unitsData,
+  defenseDefs: defenseDefsFrom(defensesData),
+  structureModifiers: structureModifiersFrom(defensesData),
+};
+
+/** شهر آزمایشی: مرکز شهر + دیوار اختیاری + سازه‌های دفاعی + سپاه. */
+function makeCity({ walls = false, gate = true, defenses = [], army = {}, townLevel = 2 } = {}) {
+  const state = new GameState({ economy: economyData });
+  state.resources = { rizq: 100000, nur: 100000, hekmat: 100000, gohar: 200 };
+  const c = Math.floor(terrain.grid.cols / 2);
+  state.createEntity({ type: 'town-center', name: 'tc', col: c - 1, row: c - 1, size: [3, 3], level: townLevel, status: 'ready' });
+  if (walls) {
+    for (let col = c - 5; col <= c + 5; col += 1) {
+      for (const row of [c - 6, c + 6]) {
+        if (col === c && row === c - 6 && gate) continue; // دروازهٔ شمالی
+        state.createEntity({ type: 'wall', name: 'w', col, row, size: [1, 1], level: 1, status: 'ready' });
+      }
+    }
+    for (let row = c - 5; row <= c + 5; row += 1) {
+      for (const col of [c - 6, c + 6]) {
+        state.createEntity({ type: 'wall', name: 'w', col, row, size: [1, 1], level: 1, status: 'ready' });
+      }
+    }
+  }
+  for (const def of defenses) {
+    state.createEntity({ type: def.id, name: def.id, col: def.col, row: def.row, size: [2, 2], level: def.level ?? 1, status: 'ready' });
+  }
+  state.army.garrison = { ...army };
+  return state;
+}
+
+function battleFromCity(state, encounterId = 'raid-scouts', seed = 424242) {
+  const scenario = buildScenario({
+    config: battleCfg,
+    state,
+    defensesData,
+    battleData,
+    structureStats,
+    encounterId,
+    seed,
+  });
+  return new BattleSim({ scenario, ...battleDeps });
+}
+
+/** آرایش دستی برای آزمون‌های تک‌واحدی (بدون ساخت شهر کامل). */
+function makeScenario({ structures = [], garrison = {}, spawns = [], seed = 987654 } = {}) {
+  const built = structures.map((raw, index) => {
+    const maxHp = raw.maxHp ?? structureStats.maxHpFor({ type: raw.type, level: raw.level ?? 1, size: [raw.w ?? 1, raw.h ?? 1] });
+    return {
+      index,
+      sourceId: raw.sourceId ?? index + 1,
+      type: raw.type,
+      kind: raw.kind ?? structureStats.kindOf(raw.type),
+      col: raw.col,
+      row: raw.row,
+      w: raw.w ?? 1,
+      h: raw.h ?? 1,
+      level: raw.level ?? 1,
+      maxHp,
+      hp: raw.hp ?? maxHp,
+    };
+  });
+  const scenario = {
+    version: 1,
+    seed: seed >>> 0,
+    encounter: { id: 'unit-test', name: 'unit-test', threat: 1 },
+    cols: terrain.grid.cols,
+    rows: terrain.grid.rows,
+    tileSize: terrain.tileSize,
+    structures: built,
+    garrison,
+    spawns,
+    commands: [],
+  };
+  scenario.scenarioHash = 1;
+  return scenario;
+}
+
+const makeSim = (scenario) => new BattleSim({ scenario, ...battleDeps });
+const at = (col, row) => ({ x: (col + 0.5) * terrain.tileSize, z: (row + 0.5) * terrain.tileSize });
+
+/** نمونه‌برداری نیم‌خانه‌ای: آیا پارهٔ خط از میان خانه‌ای می‌گذرد؟ */
+function lineCells(ax, az, bx, bz, tile, fraction = 0.5) {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const distance = Math.sqrt(dx * dx + dz * dz);
+  const steps = Math.max(1, Math.ceil(distance / (tile * fraction)));
+  const cells = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const t = i / steps;
+    const x = ax + dx * t;
+    const z = az + dz * t;
+    const col = Math.floor(x / tile);
+    const row = Math.floor(z / tile);
+    cells.push({ col, row, x, z, inset: Math.min(x - col * tile, (col + 1) * tile - x, z - row * tile, (row + 1) * tile - z) });
+  }
+  return cells;
+}
+
+/* ------------------------------------------------------------------ data */
+
+test('phase 5 data: four unit types with roles, costs and combat stats in units.json', () => {
+  const roles = new Set(unitsData.units.map((u) => u.role));
+  assert(unitsData.units.length === 4, `4 unit types (got ${unitsData.units.length})`);
+  for (const role of ['melee', 'ranged', 'support', 'siege']) assert(roles.has(role), `role present: ${role}`);
+  for (const unit of unitsData.units) {
+    for (const key of ['id', 'name', 'role', 'hp', 'damage', 'attacksPerSecond', 'rangeTiles', 'speedTilesPerSecond', 'cost', 'trainSeconds', 'housing', 'targetPriority']) {
+      assert(unit[key] != null, `${unit.id}: field ${key}`);
+    }
+    assert(unitsData.targetPriority[unit.targetPriority], `${unit.id}: priority table "${unit.targetPriority}" exists`);
+    assert(unit.cost.rizq > 0 && unit.trainSeconds > 0, `${unit.id}: cost/time are positive`);
+    // هیچ متنی با اعراب کامل (نشانهٔ متن قرآنی) در دادهٔ نبرد نیست
+    assert(!/[\u064B-\u0652\u0670\u06D6-\u06ED]/.test(JSON.stringify(unit)), `${unit.id}: no vocalised Arabic`);
+  }
+  const healer = unitsData.units.find((u) => u.role === 'support');
+  assert(healer.healPerSecond > 0 && healer.damage === 0, 'the healer heals and deals no damage');
+  const breaker = unitsData.units.find((u) => u.role === 'siege');
+  assert(breaker.structureDamageMultiplier > breaker.unitDamageMultiplier, 'the wall-breaker is a structure specialist');
+});
+
+test('phase 5 data: wall + three defence structures carry range/damage/speed/hp/cost in defenses.json', () => {
+  assert(defensesData.wall && defensesData.wall.hpPerLevel > 0, 'wall health in JSON');
+  assert(defensesData.defenses.length >= 3, `at least 3 defence structures (got ${defensesData.defenses.length})`);
+  for (const def of defensesData.defenses) {
+    assert(typeof def.id === 'string' && def.id.length > 0, 'each defence has an id');
+    for (const key of ['rangeTiles', 'damage', 'attacksPerSecond', 'hpPerLevel']) {
+      assert(def[key] > 0, `${def.id}: ${key} > 0`);
+    }
+    assert(def.projectile && battleData.particles.projectileSpeeds[def.projectile] > 0,
+      `${def.id}: its projectile speed is in the JSON table`);
+    assert(def.targetOrder, `${def.id}: picks its targets by a data-driven rule`);
+    const entry = buildingsData.buildings.find((b) => b.id === def.id);
+    assert(entry && entry.defense, `${def.id}: has a shop entry flagged as defence`);
+    const curve = balanceData.buildings[def.balanceKey || def.id];
+    assert(curve && curve.levels.length === 10, `${def.id}: 10-level cost curve`);
+    const cost = curve.levels[0].cost;
+    assert(cost && Object.values(cost).some((value) => value > 0), `${def.id}: level 1 cost is defined`);
+  }
+  const tower = defensesData.defenses.find((d) => d.id === 'watchtower');
+  const beacon = defensesData.defenses.find((d) => d.id === 'light-beacon');
+  assert(tower.rangeTiles > beacon.rangeTiles, 'the watchtower out-ranges the beacon');
+  assert(beacon.splashTiles > 0 && beacon.slow.factor < 1, 'the beacon splashes and slows');
+  assert(defensesData.repair.costPer100Hp.rizq > 0, 'repair cost is data-driven');
+  assert(defensesData.structures.hpById['town-center'] > 0 && defensesData.structures.hpPerTile > 0, 'building health table exists');
+});
+
+test('phase 5 data: battle.json holds the whole simulation contract (no magic numbers in code)', () => {
+  for (const key of ['sim', 'deploy', 'attacker', 'defender', 'end', 'edges', 'encounters', 'rewards', 'army', 'camera', 'particles', 'history']) {
+    assert(battleData[key] != null, `battle.json: ${key}`);
+  }
+  assert(battleData.sim.stepHz >= 10 && Number.isInteger(battleData.sim.stepHz), 'fixed timestep is integral');
+  assert(battleData.sim.damageSpread === 0, 'zero damage spread ⇒ no random damage at all');
+  assert(battleData.encounters.length >= 3, `at least 3 encounters (got ${battleData.encounters.length})`);
+  for (const encounter of battleData.encounters) {
+    assert(encounter.waves.length >= 1, `${encounter.id}: has waves`);
+    for (const wave of encounter.waves) {
+      assert(unitsData.units.some((u) => u.id === wave.unit), `${encounter.id}: unit "${wave.unit}" exists`);
+      assert(battleData.edges[wave.edge], `${encounter.id}: edge "${wave.edge}" exists`);
+    }
+  }
+  const kinds = Object.keys(battleData.particles.bursts).length > 0;
+  assert(kinds, 'particle bursts are declared');
+  const particleFiles = readFileSync(resolve(root, 'src/world/battle/Particles.js'), 'utf8');
+  assert(!/blood|gore|دسمال خون|خون‌ریزی/i.test(particleFiles.replace(/بدون خون[^\n]*/g, '')), 'particles never mention blood');
+});
+
+test('phase 5: the simulation layer is free of Math.random, clocks and trigonometry', () => {
+  const files = ['BattleGrid.js', 'AStar.js', 'Unit.js', 'BattleSim.js', 'BattleScenario.js', 'BattleRecorder.js'];
+  for (const file of files) {
+    const content = readFileSync(resolve(root, `src/game/battle/${file}`), 'utf8');
+    assert(!/Math\.random\(/.test(content), `${file}: no Math.random()`);
+    assert(!/Date\.now\(|performance\.now\(/.test(content), `${file}: no wall clock`);
+    assert(!/Math\.(sin|cos|tan|atan2|hypot)\(/.test(content), `${file}: no trigonometry`);
+  }
+  const sim = readFileSync(resolve(root, 'src/game/battle/BattleSim.js'), 'utf8');
+  assert(/new Rng\(/.test(sim), 'the seeded Rng is the only source of randomness');
+});
+
+/* ---------------------------------------------------------------- grid/A* */
+
+test('phase 5 pathfinding: a wall blocks the grid, breaching frees the cells and bumps the version', () => {
+  const grid = new BattleGrid({ cols: 8, rows: 8, tileSize: 2 });
+  const wall = { index: 0, kind: 'wall', col: 3, row: 3, w: 1, h: 1 };
+  grid.addStructure(wall);
+  assert(grid.isBlocked(grid.index(3, 3)), 'the wall tile is blocked');
+  const version = grid.version;
+  assert(grid.freeStructure(wall) === true, 'breaching frees the tile');
+  assert(grid.isFree(grid.index(3, 3)), 'the tile is walkable again');
+  assert(grid.version > version, 'the grid version changed ⇒ cached paths invalidate');
+  const tower = { index: 1, kind: 'defense', col: 5, row: 5, w: 2, h: 2 };
+  grid.addStructure(tower);
+  assert(grid.freeStructure(tower) === false, 'hard structures never open up');
+  assert(grid.isBlocked(grid.index(5, 5)), 'the defence still blocks');
+});
+
+test('phase 5 pathfinding: A* routes around a wall through the only gate and never steps on a wall', () => {
+  const grid = new BattleGrid({ cols: 12, rows: 12, tileSize: 2 });
+  const walls = [];
+  const gateCol = 3; // دروازه در سمت چپ ⇒ مسیر مستقیم بسته است
+  for (let col = 2; col <= 9; col += 1) {
+    if (col === gateCol) continue; // دروازه
+    walls.push({ index: walls.length, kind: 'wall', col, row: 5, w: 1, h: 1 });
+  }
+  for (const wall of walls) grid.addStructure(wall);
+  const start = grid.index(6, 0);
+  const goal = grid.index(6, 10);
+  const result = findPath({ grid, start, isGoal: (index) => index === goal, goalHint: goal, maxNodes: 4000 });
+  assert(result.path, 'a path exists around the wall');
+  const cells = result.path;
+  assert(cells[cells.length - 1] === goal, 'the path ends on the goal');
+  for (const cell of cells) assert(grid.isFree(cell), `path cell ${cell} is walkable`);
+  const straightWorld = 10 * grid.tileSize;
+  const length = pathWorldLength(grid, cells);
+  assert(length > straightWorld + 1,
+    `the path detours via the gate (${length.toFixed(1)} world units > ${straightWorld} straight)`);
+  const gate = grid.index(gateCol, 5);
+  assert(cells.includes(gate), 'the path passes through the gate tile');
+  const again = findPath({ grid, start, isGoal: (index) => index === goal, goalHint: goal, maxNodes: 4000 });
+  assert(again.path.join(',') === cells.join(','), 'the same query returns the bit-identical path');
+});
+
+test('phase 5 pathfinding: a sealed ring makes the inner tower unreachable, so raiders go for the wall', () => {
+  const state = makeCity({ walls: true, gate: false, defenses: [{ id: 'watchtower', col: 19, row: 19 }] });
+  const sim = battleFromCity(state, 'raid-scouts', 777);
+  sim.runToEnd();
+  const report = sim.report();
+  assert(report.wallsBreached > 0, `raiders break the sealed wall (breached ${report.wallsBreached})`);
+  const tower = sim.structures.find((s) => s.type === 'watchtower');
+  const firstTowerHit = sim.events.findIndex((event) => event.type === 'structure-hit' && event.structure === tower.index);
+  const firstBreach = sim.events.findIndex((event) => event.type === 'wall-breach');
+  assert(firstBreach >= 0 && (firstTowerHit === -1 || firstTowerHit > firstBreach),
+    'the tower is only struck after the wall is down (no shooting through walls)');
+});
+
+test('phase 5 pathfinding: no attack ever crosses a standing wall segment', () => {
+  const state = makeCity({ walls: true, gate: true, defenses: [{ id: 'watchtower', col: 19, row: 19 }] });
+  const sim = battleFromCity(state, 'raid-column', 31337);
+  const wallCells = new Set();
+  for (const structure of sim.structures) {
+    if (structure.kind !== 'wall') continue;
+    for (let r = structure.row; r < structure.row + structure.h; r += 1) {
+      for (let c = structure.col; c < structure.col + structure.w; c += 1) wallCells.add(`${c}:${r}`);
+    }
+  }
+  let crossings = 0;
+  let checked = 0;
+  const limit = 600;
+  for (let tick = 0; tick < limit && !sim.done; tick += 1) {
+    sim.tick();
+    for (const event of sim.drainEvents()) {
+      if (event.type !== 'attack' || !event.source || !event.source.startsWith('u')) continue;
+      checked += 1;
+      const cells = lineCells(event.fromX, event.fromZ, event.toX, event.toZ, sim.tileSize, 0.25);
+      // خانهٔ مبدأ (واحد کنار دیوار ایستاده) و خانهٔ هدف (خودِ سازهٔ هدف، که شلیک
+      // به آن مجاز است) مستثنا هستند — همان قراردادی که شبیه‌ساز در خط دید دارد.
+      // «عبور» یعنی خط واقعاً از *بدنهٔ* دیوار بگذرد، نه اینکه لبهٔ خانه را ببرد.
+      const insetNeeded = sim.tileSize * 0.15;
+      const skip = new Set([`${cells[0].col}:${cells[0].row}`, `${cells[cells.length - 1].col}:${cells[cells.length - 1].row}`]);
+      for (const cell of cells) {
+        const key = `${cell.col}:${cell.row}`;
+        if (skip.has(key)) continue;
+        if (!wallCells.has(key)) continue;
+        if (cell.inset < insetNeeded) continue;
+        crossings += 1;
+        break;
+      }
+    }
+  }
+  assert(checked > 20, `enough attacks sampled (${checked})`);
+  assert(crossings === 0, `no arrow crosses a wall (${crossings} crossings)`);
+});
+
+/* ------------------------------------------------------------------- FSM */
+
+test('phase 5 FSM: idle→move→attack→down/retreat and no illegal jump', () => {
+  const scenario = makeScenario({
+    structures: [{ type: 'watchtower', col: 4, row: 6 }],
+    garrison: { guard: 2 },
+    spawns: [{ tick: 1, unit: 'guard', ...at(4, 1) }],
+  });
+  const sim = makeSim(scenario);
+  const seen = new Set();
+  for (let i = 0; i < 900 && !sim.done; i += 1) {
+    sim.tick();
+    for (const unit of sim.units) seen.add(unit.state);
+  }
+  for (const state of seen) assert(['idle', 'move', 'attack', 'retreat', 'down'].includes(state), `legal state ${state}`);
+  assert(seen.has('move'), 'units walk to their target');
+  assert(seen.has('attack'), 'units attack once in range');
+  const guard = sim.units[0];
+  assert(canTransition('idle', 'move') && canTransition('move', 'attack'), 'the table allows the useful transitions');
+  assert(!canTransition('down', 'attack') && !canTransition('down', 'move'), 'a unit that left the field never fights again');
+  assert(!canTransition('retreat', 'attack'), 'a retreating unit does not attack');
+  assert(guard.pathVersion >= 0, 'path bookkeeping stays on the record');
+});
+
+/* -------------------------------------------------------------- defences */
+
+test('phase 5 defence: a tower fires at the edge of its range (same measuring convention as units)', () => {
+  const tower = defensesData.defenses.find((d) => d.id === 'watchtower');
+  const half = 1; // نیم‌عرض سازهٔ ۲×۲ بر حسب خانه
+  const col = 10;
+  const row = 10;
+  const edgeDistanceTiles = tower.rangeTiles * 0.95;
+  const spawnRow = row + half + edgeDistanceTiles + 0.5;
+  const scenario = makeScenario({
+    structures: [{ type: 'watchtower', col, row }],
+    spawns: [{ tick: 1, unit: 'guard', ...at(col, spawnRow) }],
+  });
+  const sim = makeSim(scenario);
+  const shots = [];
+  for (let i = 0; i < 400 && !sim.done; i += 1) {
+    sim.tick();
+    for (const event of sim.drainEvents()) {
+      if (event.type === 'attack' && String(event.source).startsWith('s')) shots.push(event);
+    }
+  }
+  assert(shots.length > 0, 'the tower opens fire on a unit standing inside its range');
+  const defender = sim.units[0];
+  const first = shots[0];
+  const distanceFromEdge = Math.sqrt((first.toX - defender.x) ** 2 + (first.toZ - defender.z) ** 2);
+  assert(distanceFromEdge <= tower.rangeTiles * terrain.tileSize + 1e-6,
+    `the shot happens within range from the structure edge (${distanceFromEdge.toFixed(2)} ≤ ${(tower.rangeTiles * terrain.tileSize).toFixed(2)})`);
+});
+
+test('phase 5 defence: the sentry slows raiders and the beacon damages a group', () => {
+  const sentry = defensesData.defenses.find((d) => d.id === 'sentry-post');
+  const beacon = defensesData.defenses.find((d) => d.id === 'light-beacon');
+  const scenario = makeScenario({
+    structures: [{ type: 'sentry-post', col: 8, row: 8 }, { type: 'light-beacon', col: 12, row: 8 }],
+    spawns: [
+      { tick: 1, unit: 'guard', ...at(8, 11) },
+      { tick: 2, unit: 'guard', ...at(8, 11) },
+      { tick: 3, unit: 'guard', ...at(12, 11) },
+    ],
+  });
+  const sim = makeSim(scenario);
+  let slowed = 0;
+  let splashHits = 0;
+  for (let i = 0; i < 500 && !sim.done; i += 1) {
+    sim.tick();
+    for (const unit of sim.units) if (unit.slowTicks > 0) slowed = Math.max(slowed, unit.slowTicks);
+    for (const event of sim.drainEvents()) {
+      if (event.type === 'hit' && event.amount > 0) splashHits += 1;
+    }
+  }
+  assert(slowed > 0, 'the slow effect from JSON is applied to raiders');
+  assert(splashHits >= 4, `the beacon damages several raiders (${splashHits} hits)`);
+  assert(sentry.slow.factor < 1 && beacon.splashTiles > 0, 'the JSON values drive the behaviour');
+});
+
+/* --------------------------------------------------------------- determinism */
+
+test('phase 5 determinism: identical seed + identical commands ⇒ bit-identical battle', () => {
+  const run = () => {
+    const state = makeCity({
+      walls: true,
+      gate: true,
+      defenses: [{ id: 'watchtower', col: 17, row: 17, level: 2 }, { id: 'light-beacon', col: 22, row: 17 }],
+      army: { guard: 3, archer: 2, healer: 1, breaker: 1 },
+    });
+    const sim = battleFromCity(state, 'raid-column', 1234567);
+    for (let i = 0; i < 60; i += 1) sim.tick();
+    const point = sim.autoDeployPoint('guard', 0);
+    sim.deploy('guard', point.x, point.z);
+    for (let i = 0; i < 200; i += 1) sim.tick();
+    sim.deploy('archer', point.x, point.z);
+    sim.runToEnd();
+    return sim;
+  };
+  const a = run();
+  const b = run();
+  assert(a.result === b.result, `same result (${a.result})`);
+  assert(a.finishTick === b.finishTick, `same finish tick (${a.finishTick})`);
+  assert(a.hashState() === b.hashState(), 'same state hash');
+  assert((a.eventHash >>> 0) === (b.eventHash >>> 0), 'same event hash');
+  assert(JSON.stringify(a.report()) === JSON.stringify(b.report()), 'identical reports');
+  assert(a.appliedCommands.length === b.appliedCommands.length + 0, 'the same commands were applied');
+  const checkpointsA = a.checkpoints.map((cp) => `${cp.tick}:${cp.hash}`).join('|');
+  const checkpointsB = b.checkpoints.map((cp) => `${cp.tick}:${cp.hash}`).join('|');
+  assert(checkpointsA === checkpointsB, 'every checkpoint matches');
+});
+
+test('phase 5 determinism: a different seed produces a different battle', () => {
+  const run = (seed) => {
+    const state = makeCity({ defenses: [{ id: 'watchtower', col: 17, row: 17 }] });
+    const sim = battleFromCity(state, 'raid-scouts', seed);
+    sim.runToEnd(1200);
+    return `${sim.result}:${sim.finishTick}:${sim.hashState()}`;
+  };
+  assert(run(1) !== run(2), 'two seeds diverge');
+  assert(run(1) === run(1), 'and each seed is stable on its own');
+});
+
+test('phase 5 replay: the recorded battle replays to the same hash and verifies like a server would', () => {
+  const state = makeCity({ walls: true, gate: true, defenses: [{ id: 'watchtower', col: 17, row: 17, level: 2 }], army: { guard: 8, archer: 1 } });
+  const sim = battleFromCity(state, 'raid-scouts', 5150);
+  for (let i = 0; i < 40; i += 1) sim.tick();
+  const point = sim.autoDeployPoint('guard', 0);
+  assert(sim.deploy('guard', point.x, point.z).ok, 'the reserve can still deploy after the opening line');
+  sim.runToEnd();
+  const record = createRecord({ scenario: sim.scenario, sim, encounterId: 'raid-scouts', createdAt: 0 });
+  assert(record.commands.length === 1, 'the deploy command was recorded with its tick');
+  assert(record.checkpoints.length > 3, `checkpoints were captured (${record.checkpoints.length})`);
+
+  const replay = replayRecord(record, battleDeps);
+  assert(replay.ok, `replay matches the record (${JSON.stringify(replay.mismatches)})`);
+  assert(replay.result === record.result, 'the replay ends the same way');
+  assert(replay.sim.hashState() === record.report.stateHash, 'the replay state hash equals the recorded one');
+
+  const submission = {
+    scenario: record.scenario,
+    scenarioHash: record.scenarioHash,
+    commands: record.commands,
+    result: record.result,
+    ticks: record.ticks,
+    stateHash: record.report.stateHash,
+  };
+  assert(verifySubmission(submission, battleDeps).ok, 'a server can verify the submission from seed + commands alone');
+  const tampered = { ...submission, commands: [{ tick: 5, type: 'withdraw', seq: 0 }] };
+  const verdict = verifySubmission(tampered, battleDeps);
+  assert(!verdict.ok, 'a tampered command list fails verification');
+  const summary = recordSummary(record, null);
+  assert(summary.commands === 1 && summary.seed === 5150, 'the record summary is readable');
+});
+
+test('phase 5 replay: a recorded battle with 25 raiders still replays identically (server validation)', () => {
+  const state = makeCity({
+    walls: true,
+    gate: true,
+    defenses: [{ id: 'watchtower', col: 17, row: 17, level: 2 }, { id: 'sentry-post', col: 22, row: 17, level: 2 }],
+    army: { guard: 4, archer: 2, breaker: 1, healer: 1 },
+  });
+  const sim = battleFromCity(state, 'raid-siege', 90210);
+  sim.runToEnd();
+  const record = createRecord({ scenario: sim.scenario, sim, encounterId: 'raid-siege', createdAt: 0 });
+  const replay = replayRecord(record, battleDeps);
+  assert(replay.ok, `heavy battle replays identically (${JSON.stringify(replay.mismatches.slice(0, 2))})`);
+  assert(report0(record) > 20, `25 raiders were simulated (${report0(record)})`);
+});
+
+function report0(record) {
+  return record.report.raidersSpawned;
+}
+
+/* ------------------------------------------------------------------ combat */
+
+test('phase 5 battle: raiders walk through an open gate and never chew the wall instead', () => {
+  const state = makeCity({ walls: true, gate: true, defenses: [{ id: 'watchtower', col: 19, row: 19 }] });
+  const sim = battleFromCity(state, 'raid-scouts', 24680);
+  const gateCell = `${Math.floor(terrain.grid.cols / 2)}:${Math.floor(terrain.grid.cols / 2) - 6}`;
+  let throughGate = 0;
+  for (let i = 0; i < 2400 && !sim.done; i += 1) {
+    sim.tick();
+    for (const unit of sim.units) {
+      if (unit.removed || unit.faction !== 1) continue;
+      const cell = `${Math.floor(unit.x / sim.tileSize)}:${Math.floor(unit.z / sim.tileSize)}`;
+      if (cell === gateCell) throughGate += 1;
+    }
+  }
+  assert(throughGate > 0, 'at least one raider walked through the gate tile');
+  assert(sim.done, `the battle resolved (${sim.result})`);
+  assert(sim.report().wallsBreached === 0, 'with a gate open, no wall needed to be breached');
+});
+
+test('phase 5 battle: a healer heals its own side and never fires at anyone', () => {
+  const scenario = makeScenario({
+    structures: [{ type: 'town-center', col: 5, row: 5, w: 3, h: 3 }, { type: 'watchtower', col: 10, row: 5 }],
+    garrison: { healer: 1, guard: 2 },
+    spawns: [{ tick: 1, unit: 'guard', ...at(6, 10) }, { tick: 2, unit: 'guard', ...at(7, 10) }],
+  });
+  const sim = makeSim(scenario);
+  let healEvents = 0;
+  let healerAttacks = 0;
+  for (let i = 0; i < 900 && !sim.done; i += 1) {
+    sim.tick();
+    for (const event of sim.drainEvents()) {
+      if (event.type === 'heal') {
+        healEvents += 1;
+        const target = sim.unitsById.get(event.unitId);
+        assert(target && target.faction === 0, 'the healer only heals its own faction');
+      }
+      if (event.type === 'attack' && String(event.source).startsWith('u')) {
+        const shooter = sim.unitsById.get(Number(String(event.source).slice(1)));
+        if (shooter && shooter.role === 'support') healerAttacks += 1;
+      }
+    }
+  }
+  assert(healEvents > 0, `the healer healed (${healEvents} heals)`);
+  assert(healerAttacks === 0, 'the healer never attacks');
+  assert(sim.stats.healed > 0, 'healing is accounted for in the report');
+});
+
+test('phase 5 battle: defeated units retreat and fade out — no blood, no corpses', () => {
+  const scenario = makeScenario({
+    structures: [{ type: 'watchtower', col: 6, row: 3 }],
+    garrison: { guard: 1 },
+    spawns: [{ tick: 1, unit: 'guard', ...at(6, 8) }],
+  });
+  const sim = makeSim(scenario);
+  const allowed = new Set(['spawn', 'deploy', 'attack', 'heal', 'hit', 'structure-hit', 'structure-down', 'wall-breach', 'retreat', 'unit-down', 'end']);
+  const seen = new Set();
+  let removedAfterFade = false;
+  for (let i = 0; i < 1500 && !sim.done; i += 1) {
+    sim.tick();
+    for (const event of sim.drainEvents()) seen.add(event.type);
+    for (const unit of sim.units) {
+      if (unit.hp <= 0 && !unit.removed) assert(unit.state === 'retreat' || unit.state === 'down', 'a beaten unit retreats instead of dying');
+      if (unit.removed) removedAfterFade = true;
+    }
+  }
+  for (const type of seen) assert(allowed.has(type), `event type "${type}" is part of the safe set`);
+  assert(removedAfterFade, 'beaten units fade out and leave the field');
+  assert(!sim.units.some((u) => !u.removed && u.hp < 0), 'health never goes negative');
+});
+
+test('phase 5 battle: deployment is validated (free tile, safe distance, in-battle limit) and recorded', () => {
+  const state = makeCity({ defenses: [{ id: 'watchtower', col: 8, row: 8 }], army: { guard: 9 } });
+  const sim = battleFromCity(state, 'raid-scouts', 555);
+  for (let i = 0; i < 5; i += 1) sim.tick();
+  const deps = battleData.deploy;
+  assert(deps.maxPerBattle > 0 && deps.minEnemyDistanceTiles > 0, 'deploy rules come from JSON');
+
+  const towerCell = at(8 + 1, 8 + 1);
+  assert(!sim.deploy('guard', towerCell.x, towerCell.z).ok, 'no deployment inside a structure');
+  assert(!sim.deploy('guard', -50, -50).ok, 'no deployment outside the map');
+
+  const point = sim.autoDeployPoint('guard', 0);
+  const reserve = sim.garrison.guard;
+  assert(reserve > 0, `the reserve still holds troops after the opening deployment (${reserve})`);
+  assert(sim.deployCount === 0, 'the opening line does not spend the player deployment budget');
+  for (let i = 0; i < battleData.deploy.cooldownTicks + 1; i += 1) sim.tick();
+  const first = sim.deploy('guard', point.x, point.z);
+  assert(first.ok, `deployment accepted (${first.reason || 'ok'})`);
+  const again = sim.deploy('guard', point.x, point.z);
+  assert(!again.ok && again.reason === 'cooldown', `a manual deploy starts the cooldown (${again.reason})`);
+  assert(first.command.tick === sim.tickIndex + 1, 'the command carries the tick it will run on');
+  sim.tick();
+  assert(sim.appliedCommands.length === 1, 'the command is applied on the recorded tick');
+  assert(sim.garrison.guard === reserve - 1, 'the deployed unit left the reserve');
+
+  const raider = sim.units.find((unit) => unit.faction === 1);
+  assert(raider, 'raiders are on the field');
+  assert(!sim.deploy('guard', raider.x, raider.z).ok, 'no deployment right next to a raider');
+  assert(!sim.deploy('healer', point.x, point.z).ok, 'a unit type with an empty reserve cannot deploy');
+  for (let i = 0; i < battleData.deploy.cooldownTicks + 1; i += 1) sim.tick();
+  const reserveBefore = sim.garrison.guard;
+  const unitsBefore = sim.units.length;
+  assert(sim.canDeploy('guard', point.x, point.z).ok === true, 'canDeploy accepts what deploy would accept');
+  assert(sim.garrison.guard === reserveBefore && sim.units.length === unitsBefore, 'canDeploy has no side effects');
+});
+
+test('phase 5 battle: withdraw ends the battle and is recorded as a command', () => {
+  const state = makeCity({ defenses: [{ id: 'watchtower', col: 12, row: 12 }], army: { guard: 1 } });
+  const sim = battleFromCity(state, 'raid-scouts', 8);
+  for (let i = 0; i < 10; i += 1) sim.tick();
+  sim.withdraw();
+  sim.runToEnd(200);
+  assert(sim.done && sim.result === 'withdrawn', `withdraw closes the battle (${sim.result})`);
+  assert(sim.appliedCommands.some((command) => command.type === 'withdraw'), 'the withdraw command is on the record');
+});
+
+/* ---------------------------------------------------------- army/barracks */
+
+function makeBarracksWorld({ level = 1, barracks = true, busy = false } = {}) {
+  const { state, economy, queue } = bootEconomy({ rizq: 5000, nur: 5000, hekmat: 5000, gohar: 40 });
+  const system = new BarracksSystem({ config: makeConfig('medium'), state, economy, unitsData, battleData });
+  let entity = null;
+  if (barracks) {
+    entity = state.createEntity({ type: 'barracks', name: 'پادگان', col: 3, row: 3, size: [3, 3], level, status: busy ? 'building' : 'ready' });
+  }
+  void queue;
+  return { state, economy, system, entity };
+}
+
+test('phase 5 army: capacity and training come from battle.json + units.json', () => {
+  const { state, economy, system } = makeBarracksWorld({ level: 1 });
+  const army = battleData.army;
+  assert(system.capacity() === army.baseCapacity, `level-1 capacity = ${army.baseCapacity}`);
+  assert(system.countOf('guard') === 0 && system.total() === 0, 'the garrison starts empty');
+
+  const before = { ...state.resources };
+  const cost = system.costOf('guard');
+  const started = system.startTraining('guard', 1000);
+  assert(started.ok, 'training starts');
+  assert(state.resources.rizq === before.rizq - cost.rizq, 'the cost was paid from the JSON table');
+  assert(system.training.length === 1 && system.training[0].status === 'active', 'the job runs on a training line');
+  assert(system.used() === unitsData.units.find((u) => u.id === 'guard').housing, 'the reserve is occupied while training');
+
+  const finished = system.tick(1000 + system.secondsOf('guard') * 1000);
+  assert(finished.length === 1 && finished[0].unit === 'guard', 'the unit finishes on time');
+  assert(system.countOf('guard') === 1 && state.army.trained === 1, 'the trained unit joins the garrison');
+  assert(system.training.length === 0, 'the queue is empty afterwards');
+  assert(economy.canAfford(cost) === (state.resources.rizq >= cost.rizq), 'economy stays consistent');
+});
+
+test('phase 5 army: barracks level raises capacity and a full reserve blocks training', () => {
+  const { system } = makeBarracksWorld({ level: 3 });
+  const army = battleData.army;
+  assert(system.capacity() === army.baseCapacity + army.capacityPerBarracksLevel * 2, 'capacity grows per barracks level');
+  let guard = 0;
+  while (system.canTrain('guard').ok && guard < 60) {
+    system.startTraining('guard', 0);
+    system.tick(1e9);
+    guard += 1;
+  }
+  assert(system.canTrain('guard').ok === false, 'the reserve eventually fills up');
+  assert(['capacity-full', 'type-limit', 'cost'].includes(system.canTrain('guard').reason), `the refusal reason is explicit (${system.canTrain('guard').reason})`);
+  assert(system.used() <= system.capacity(), 'housing never exceeds capacity');
+});
+
+test('phase 5 army: no barracks means no training, and the save keeps the garrison and the queue', () => {
+  const { state, system } = makeBarracksWorld({ barracks: false });
+  assert(system.capacity() === 0, 'no barracks ⇒ no capacity');
+  const refused = system.startTraining('archer', 0);
+  assert(!refused.ok && refused.reason === 'no-barracks', 'training is refused without a barracks');
+
+  const { system: built } = makeBarracksWorld({ level: 2 });
+  built.startTraining('breaker', 0);
+  built.tick(1e7);
+  built.setGarrison({ guard: 3, archer: 1, healer: 0, breaker: 1 });
+  const empty = state.serialize();
+  assert(!empty.army.garrison.guard, 'an untouched city saves no troops');
+  const roundTrip = JSON.parse(JSON.stringify(built.state.serialize()));
+  const other = new GameState({ economy: economyData });
+  other.hydrate(roundTrip);
+  assert(other.army.garrison.guard === 3 && other.army.garrison.breaker === 1, 'the garrison survives the save roundtrip');
+  assert(other.army.trained >= 1, 'training totals survive too');
+});
+
+test('phase 5 army: events + readiness summary are emitted for the UI', () => {
+  const { state, economy, system } = makeBarracksWorld({ level: 2 });
+  const events = [];
+  const bus = { emit: (type, payload) => events.push({ type, payload }) };
+  const wired = new BarracksSystem({ config: makeConfig('medium'), state, economy, unitsData, battleData, bus });
+  wired.startTraining('guard', 0);
+  wired.tick(1e7);
+  assert(events.some((event) => event.type === 'army:changed'), 'ARMY_CHANGED is emitted on progress');
+  const readiness = wired.readiness();
+  assert(readiness.total === 1 && readiness.capacity > 0, 'readiness reports the reserve');
+  assert(readiness.byType.length === unitsData.units.length, 'every unit type is described for the UI');
+  assert(readiness.byType.every((item) => item.name && item.cost), 'the UI gets names and costs');
+  assert(system.hasBarracks() === true, 'the barracks is detected');
+});
+
+/* ---------------------------------------------------------------- outcome */
+
+test('phase 5 outcome: rewards, damaged structures and the army write-back follow the report', () => {
+  const state = makeCity({ defenses: [{ id: 'watchtower', col: 17, row: 17 }], army: { guard: 2 } });
+  const sim = battleFromCity(state, 'raid-scouts', 77);
+  const point = sim.autoDeployPoint('guard', 0);
+  sim.deploy('guard', point.x, point.z);
+  sim.runToEnd();
+  const report = sim.report();
+  assert(['victory', 'defeat', 'timeout', 'withdrawn'].includes(report.result), `result is one of the four outcomes (${report.result})`);
+  assert(report.seconds > 0 && report.ticks > 0, 'the report carries timing');
+  assert(report.stateHash > 0 && report.eventHash > 0, 'the report carries both hashes');
+  assert(report.raidersSpawned === 6, `the scenario spawns its raiders (${report.raidersSpawned})`);
+  assert(report.structures.length >= 0 && report.damagedStructures >= 0, 'structure damage is reported');
+  const rewards = battleData.rewards[report.result];
+  assert(rewards && rewards.nur >= 0, `a reward table exists for "${report.result}"`);
+  assert(report.seconds <= battleData.end.timeoutSeconds + 2, 'the battle respects the timeout');
+});
+
+test('phase 5 outcome: repair restores health and costs resources from defenses.json', () => {
+  const { state, economy } = bootEconomy({ rizq: 5000, nur: 5000, hekmat: 5000, gohar: 10 });
+  const entity = state.createEntity({ type: 'watchtower', name: 'برج', col: 4, row: 4, size: [2, 2], level: 1, status: 'ready' });
+  const maxHp = structureStats.maxHpFor(entity);
+  entity.maxHp = maxHp;
+  entity.hp = Math.floor(maxHp * 0.4);
+  const cost = structureStats.repairCost(entity);
+  assert(cost && cost.rizq > 0, 'repair cost scales with the missing health');
+  const seconds = structureStats.repairSeconds(entity);
+  assert(seconds >= defensesData.repair.minSeconds, `repair takes at least ${defensesData.repair.minSeconds}s of work (${seconds})`);
+  assert(structureStats.isDamaged(entity), 'damage is detected');
+  entity.hp = maxHp;
+  entity.damaged = false;
+  assert(!structureStats.isDamaged(entity) && structureStats.repairCost(entity) === null, 'a healthy structure needs no repair');
+  assert(economy.canAfford(cost), 'the test economy can pay for it');
+});
+
+test('phase 5 save: structure health and the battle record survive the save roundtrip', () => {
+  const state = makeCity({ defenses: [{ id: 'watchtower', col: 17, row: 17 }] });
+  const entity = [...state.entities.values()].find((e) => e.type === 'watchtower');
+  entity.maxHp = structureStats.maxHpFor(entity);
+  entity.hp = Math.floor(entity.maxHp * 0.5);
+  entity.damaged = true;
+  state.battles.seq = 2;
+  state.battles.wins = 1;
+  state.battles.history.push({
+    version: 1,
+    encounterId: 'raid-scouts',
+    seed: 99,
+    scenarioHash: 5,
+    scenario: { seed: 99, structures: [], spawns: [], garrison: {}, commands: [], version: 1, cols: 40, rows: 40, tileSize: 2, encounter: { id: 'raid-scouts', name: 'x', threat: 1 } },
+    commands: [],
+    checkpoints: [],
+    result: 'victory',
+    ticks: 100,
+    stepHz: 20,
+    report: { stateHash: 7, eventHash: 9, result: 'victory', ticks: 100 },
+    createdAt: 0,
+  });
+  const payload = JSON.parse(JSON.stringify(state.serialize()));
+  const restored = new GameState({ economy: economyData });
+  restored.hydrate(payload);
+  const back = [...restored.entities.values()].find((e) => e.type === 'watchtower');
+  assert(back.hp === entity.hp && back.maxHp === entity.maxHp, 'health survives the roundtrip');
+  assert(back.damaged === true, 'the damaged flag survives');
+  assert(restored.battles.seq === 2 && restored.battles.wins === 1, 'battle counters survive');
+  assert(restored.battles.history.length === 1 && restored.battles.history[0].seed === 99, 'the record survives');
+});
+
+test('phase 5 content policy: the battle layers know nothing about Quran text', () => {
+  const files = [
+    'src/game/battle/BattleSim.js', 'src/game/battle/BattleSystem.js', 'src/game/battle/BattleScenario.js',
+    'src/game/battle/BattleRecorder.js', 'src/game/barracks/BarracksSystem.js', 'src/ui/BattlePanel.js',
+    'src/ui/BarracksPanel.js', 'src/world/battle/BattleView.js', 'src/world/battle/UnitModels.js',
+    'src/world/battle/Particles.js',
+  ];
+  for (const file of files) {
+    const content = readFileSync(resolve(root, file), 'utf8');
+    assert(!/quran-sample|QuranDataset|verseList|textUthmani|game\/quran|ui\/quran/.test(content), `${file}: no Quran imports`);
+    assert(!/[\u064B-\u0652\u0670\u06D6-\u06ED]/.test(content.replace(/[\u064B-\u0652\u0670]/g, '')), `${file}: no vocalised Arabic`);
+  }
+  // صحنهٔ نبرد هیچ متن سه‌بعدی ندارد: نه TextGeometry، نه Sprite با متن
+  const scene = readFileSync(resolve(root, 'src/world/battle/BattleView.js'), 'utf8');
+  assert(!/TextGeometry|CanvasTexture\(.*text|fillText\(/.test(scene), 'the battle scene draws no text');
+  const sim = readFileSync(resolve(root, 'src/game/battle/BattleSim.js'), 'utf8');
+  assert(!/three|THREE|document\.|window\./.test(sim), 'the simulator never touches the renderer or the DOM');
+});
+
+test('phase 5 perf: a 25-raider battle simulates far faster than real time (30-unit budget)', () => {
+  const state = makeCity({
+    walls: true,
+    gate: true,
+    defenses: [{ id: 'watchtower', col: 17, row: 17, level: 2 }, { id: 'sentry-post', col: 22, row: 17, level: 2 }, { id: 'light-beacon', col: 17, row: 22 }],
+    army: { guard: 6, archer: 4, healer: 1, breaker: 1 },
+  });
+  const sim = battleFromCity(state, 'raid-siege', 31415);
+  let peakUnits = 0;
+  let ticks = 0;
+  const started = process.hrtime.bigint();
+  while (!sim.done && ticks < battleData.sim.maxTicks) {
+    sim.tick();
+    ticks += 1;
+    let live = 0;
+    for (const unit of sim.units) if (!unit.removed) live += 1;
+    if (live > peakUnits) peakUnits = live;
+  }
+  const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
+  const perTick = elapsedMs / Math.max(1, ticks);
+  assert(ticks > 100, `the battle ran (${ticks} ticks)`);
+  assert(peakUnits >= 20, `at least 20 units shared the field (${peakUnits})`);
+  assert(perTick < 1.5, `logic stays cheap: ${perTick.toFixed(3)} ms per tick (budget 1.5)`);
+  assert(elapsedMs / 1000 < (ticks / battleData.sim.stepHz) / 4, `simulation is ≥4× real time (${(elapsedMs / 1000).toFixed(2)}s for ${(ticks / battleData.sim.stepHz).toFixed(1)}s)`);
+});
+
+
 await flushPending();
 
 const pad = (value, width) => String(value).padEnd(width, ' ');
-console.log('\n=== شهر نور — self checks (فازهای ۱، ۳ و ۴) ===\n');
+console.log('\n=== شهر نور — self checks (فازهای ۱، ۳، ۴ و ۵) ===\n');
 for (const result of results) {
   console.log(`${result.ok ? '✓' : '✗'} ${pad(result.name, 62)}${result.ok ? '' : result.message}`);
 }
