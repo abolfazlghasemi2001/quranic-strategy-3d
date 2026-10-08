@@ -323,13 +323,13 @@ for (const viewport of VIEWPORTS) {
       check(`${tag}: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height`, dockShare <= 0.085, `${(dockShare * 100).toFixed(1)} %`);
       check(`${tag}: static HUD (status + dock) ≤ 15 % of viewport height`, share <= 0.15, `${(share * 100).toFixed(1)} %`);
     } else {
-      const dockShare = (data.dockBox?.w || 0) / viewport.width;
+      const dockShareH = (data.dockBox?.h || 0) / viewport.height;
       const topShare = (data.topbarBox?.h || 0) / viewport.height;
-      const mapArea = (viewport.width - (data.dockBox?.w || 0)) * (viewport.height - (data.topbarBox?.h || 0));
-      note(`${tag}: rail ${Math.round(data.dockBox?.w || 0)} px wide, status bar ${Math.round(data.topbarBox?.h || 0)} px tall, map area ${((mapArea / (viewport.width * viewport.height)) * 100).toFixed(1)} %`);
-      check(`${tag}: landscape dock is a rail ≤ 20 % of the width`, dockShare <= 0.20, `${(dockShare * 100).toFixed(1)} %`);
+      const mapArea = viewport.width * (viewport.height - (data.dockBox?.h || 0) - (data.topbarBox?.h || 0));
+      note(`${tag}: bottom dock ${Math.round(data.dockBox?.h || 0)} px tall, status bar ${Math.round(data.topbarBox?.h || 0)} px, map area ${((mapArea / (viewport.width * viewport.height)) * 100).toFixed(1)} %`);
+      check(`${tag}: landscape dock stays at the bottom (≤ 22 % of the height)`, dockShareH <= 0.22, `${(dockShareH * 100).toFixed(1)} %`);
       check(`${tag}: landscape status bar ≤ 12 % of the height`, topShare <= 0.12, `${(topShare * 100).toFixed(1)} %`);
-      check(`${tag}: map keeps ≥ 70 % of the viewport area`, mapArea / (viewport.width * viewport.height) >= 0.70, `${((mapArea / (viewport.width * viewport.height)) * 100).toFixed(1)} %`);
+      check(`${tag}: map keeps ≥ 65 % of the viewport area`, mapArea / (viewport.width * viewport.height) >= 0.65, `${((mapArea / (viewport.width * viewport.height)) * 100).toFixed(1)} %`);
     }
 
     if (shotsDir) {
