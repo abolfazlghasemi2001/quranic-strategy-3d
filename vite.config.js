@@ -9,6 +9,15 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     allowedHosts: true,
+    // Phase 8: proxy the jamaat WebSocket through the same origin so the
+    // browser client just connects to /social-ws (works behind previews, too).
+    proxy: {
+      '/social-ws': {
+        target: 'ws://127.0.0.1:8081',
+        ws: true,
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: '0.0.0.0',

@@ -132,4 +132,12 @@ export const EVENTS = Object.freeze({
   SETTINGS_OPENED: 'settings:opened',
   SETTINGS_CHANGED: 'settings:changed',
   META_PANEL_OPENED: 'meta:panel-opened',
+  // --- phase 8: social / multiplayer (جماعت) ---
+  SOCIAL_STATUS: 'social:status',
+  SOCIAL_CHAT: 'social:chat',
+  SOCIAL_PRESENCE: 'social:presence',
+  SOCIAL_HELP: 'social:help',
+  SOCIAL_EVENT: 'social:event',
+  SOCIAL_LEDGER: 'social:ledger',
+  SOCIAL_NOTICE: 'social:notice',
 });

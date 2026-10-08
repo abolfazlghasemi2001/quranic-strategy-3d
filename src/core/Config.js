@@ -14,6 +14,7 @@ import campaignData from '../data/campaign.json';
 import missionsData from '../data/missions.json';
 import metaData from '../data/meta.json';
 import ftueData from '../data/ftue.json';
+import socialData from '../data/social.json';
 import { hash2i } from './RNG.js';
 import { clamp } from './MathUtils.js';
 
@@ -85,6 +86,7 @@ export class Config {
       missions: missionsData,
       meta: metaData,
       ftue: ftueData,
+      social: socialData,
     };
 
     this.world = deepFreeze(clone(worldData));
@@ -103,8 +105,15 @@ export class Config {
     this.meta = deepFreeze(clone(metaData));
     /** Phase 7 interactive first-session flow and 30-minute roadmap. */
     this.ftue = deepFreeze(clone(ftueData));
+    /** Phase 8 multiplayer tuning (help/chat/event/rate limits) — data-driven. */
+    this.social = deepFreeze(clone(socialData));
 
-    const requested = new URLSearchParams(search).get('quality');
+    const params = new URLSearchParams(search);
+    const requested = params.get('quality');
+    // Optional multiplayer endpoint, e.g. ?social=ws://127.0.0.1:8081/social-ws
+    // (presence also triggers an automatic connect attempt after boot).
+    const socialParam = params.get('social');
+    this.socialUrl = /^wss?:\/\/.+/.test(socialParam || '') ? socialParam : null;
     this.tier = QUALITY_TIERS.includes(requested) ? requested : detectQualityTier(env);
     this.quality = deepFreeze({
       tier: this.tier,

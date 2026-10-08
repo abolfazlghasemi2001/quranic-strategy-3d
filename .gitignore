@@ -22,3 +22,6 @@ Thumbs.db
 npm-debug.log*
 yarn-error.log*
 *.log
+
+# multiplayer server persistence (minimal ledger + reports, per-machine)
+server/data/

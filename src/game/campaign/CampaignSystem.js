@@ -425,19 +425,19 @@ export class CampaignSystem {
 
     const granted = { nur: 0, hekmat: 0, gohar: 0, speedup: null, overflow: { nur: 0, hekmat: 0 } };
     if (reward.nur > 0) {
-      const result = this.economy.grant('nur', reward.nur, { clampToCapacity: respect });
+      const result = this.economy.grant('nur', reward.nur, { clampToCapacity: respect, source: 'mission' });
       granted.nur = result.moved;
       granted.overflow.nur = result.overflow;
       this.progress.totals.nur += result.moved;
     }
     if (reward.hekmat > 0) {
-      const result = this.economy.grant('hekmat', reward.hekmat, { clampToCapacity: respect });
+      const result = this.economy.grant('hekmat', reward.hekmat, { clampToCapacity: respect, source: 'mission' });
       granted.hekmat = result.moved;
       granted.overflow.hekmat = result.overflow;
       this.progress.totals.hekmat += result.moved;
     }
     if (reward.gohar > 0) {
-      granted.gohar = this.economy.earnGohar(reward.gohar);
+      granted.gohar = this.economy.earnGohar(reward.gohar, { source: 'mission' });
       this.progress.totals.gohar += granted.gohar;
     }
     if (reward.speedupSeconds > 0 && typeof this.applySpeedup === 'function') {
@@ -717,9 +717,11 @@ export class CampaignSystem {
     for (const [resource, amount] of Object.entries(cost || {})) {
       if (!(amount > 0)) continue;
       if (resource === 'gohar') {
-        this.economy.earnGohar(amount);
+        this.economy.earnGohar(amount, { source: 'refund' });
       } else {
-        this.economy.resources[resource] = (this.economy.resources[resource] || 0) + amount;
+        // grant() keeps the same no-capacity-clamp semantics and reports the
+        // refund to the server mirror while online.
+        this.economy.grant(resource, amount, { clampToCapacity: false, source: 'refund' });
       }
     }
   }

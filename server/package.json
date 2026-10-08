@@ -1,0 +1,14 @@
+{
+  "name": "shahr-nur-server",
+  "private": true,
+  "version": "0.3.0",
+  "type": "module",
+  "description": "شهر نور — سرور مرجع جماعت (فاز ۸: اجتماعی و چندنفره)",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

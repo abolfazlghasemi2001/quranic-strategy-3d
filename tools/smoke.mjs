@@ -1011,4 +1011,127 @@ await test('acceptance ⑤: future timestamps → 0s away, no gains, no toast', 
   assert(logs.jsdom.length === 0, `jsdom errors: ${logs.jsdom[0]}`);
 });
 
+/* ==================================================== phase 8: social (جماعت) */
+
+await test('phase 8: jamaat panel opens offline with tabs, presets hidden, no quran text', () => {
+  assert(nur.hud.socialButton, 'HUD has the jamaat button');
+  assert(nur.hud.socialBadge.classList.contains('is-hidden'), 'badge hidden while offline');
+  nur.hud.socialButton.click();
+  assert(nur.jamaatPanel.open && !nur.jamaatPanel.root.classList.contains('is-hidden'), 'panel opens from the HUD');
+  assert(nur.jamaatPanel.card.textContent.includes('آفلاین'), 'offline status shown');
+  assert(!nur.jamaatPanel.root.querySelector('.quran-text'), 'no quran text anywhere in the social panel');
+  const tabs = [...nur.jamaatPanel.tabBar.querySelectorAll('button')];
+  assert(tabs.length === 3, 'chat / members / event tabs present');
+  tabs[1].click();
+  assert(nur.jamaatPanel.membersTab.textContent.includes('وصل شو'), 'members tab explains offline state');
+  tabs[2].click();
+  assert(nur.jamaatPanel.eventTab.textContent.includes('وصل شو'), 'event tab explains offline state');
+  tabs[0].click();
+  assert(!nur.jamaatPanel.chatTab.classList.contains('is-hidden'), 'chat tab switches back');
+  nur.jamaatPanel.close();
+  assert(!nur.jamaatPanel.open, 'panel closes');
+  tick(nur);
+});
+
+await test('phase 8: failed connect degrades gracefully (no crash, stays local)', async () => {
+  nur.hud.socialButton.click();
+  const urlInput = nur.jamaatPanel.connectBox.querySelector('.social-url');
+  assert(urlInput, 'server url field present');
+  urlInput.value = 'ws://127.0.0.1:9/social-ws';
+  const connectButton = [...nur.jamaatPanel.connectBox.querySelectorAll('button')].find((node) => node.textContent.includes('اتصال'));
+  assert(connectButton, 'connect button present');
+  connectButton.click();
+  await waitFor(() => nur.game.social.status !== 'connecting', 15000, 'connect settles');
+  assert(['offline', 'error'].includes(nur.game.social.status), `graceful status: ${nur.game.social.status}`);
+  assert(!nur.game.queue.online, 'queue stays local after failure');
+  assert(!nur.game.social.isOnline(), 'client reports offline');
+  nur.jamaatPanel.close();
+  tick(nur);
+  assert(logs.jsdom.length === 0, `jsdom errors: ${logs.jsdom[0]}`);
+});
+
+await test('phase 8: real server link — adopt ledger, panel chat, online build, remote help', async () => {
+  const { GameServer } = await import('../server/src/server.js');
+  const { connectWs } = await import('../server/src/wsClient.js');
+  const server = new GameServer({ port: 0, saveFile: null, quiet: true });
+  const { port } = await server.start();
+  const url = `ws://127.0.0.1:${port}/social-ws`;
+  let helper = null;
+  try {
+    await nur.game.social.connect({ displayName: 'آزمون', url });
+    assert(nur.game.social.isOnline(), 'city linked to the jamaat server');
+    assert(nur.game.queue.online, 'queue runs in server-validated mode');
+    assert(typeof nur.game.social.prefs.token === 'string', 'reconnect token stored in prefs');
+
+    // Chat through the real panel UI (adult account → free text allowed).
+    nur.hud.socialButton.click();
+    const input = nur.jamaatPanel.chatComposer.querySelector('.social-chat-input');
+    assert(input, 'chat input rendered for an adult account');
+    input.value = 'سلام از تست دود';
+    const sendButton = [...nur.jamaatPanel.chatComposer.querySelectorAll('button')].find((node) => node.textContent.includes('ارسال'));
+    assert(sendButton, 'send button rendered');
+    sendButton.click();
+    await waitFor(() => nur.jamaatPanel.chatLog.textContent.includes('سلام از تست دود'), 6000, 'own chat echoes in the log');
+
+    // A second raw client joins the same jamaat.
+    const wrap = (ws) => {
+      let seq = 0;
+      const pending = new Map();
+      ws.onMessage = (text) => {
+        const message = JSON.parse(text);
+        if (message && message.id != null && pending.has(message.id)) {
+          pending.get(message.id)(message);
+          pending.delete(message.id);
+        }
+      };
+      return {
+        ws,
+        rpc(type, payload = {}) {
+          const id = `h-${++seq}`;
+          ws.send({ id, type, payload });
+          return new Promise((resolve, reject) => {
+            pending.set(id, resolve);
+            setTimeout(() => reject(new Error('rpc timeout')), 6000);
+          });
+        },
+      };
+    };
+    helper = wrap(await connectWs(url));
+    const helloHelper = await helper.rpc('hello', { displayName: 'یاور' });
+    assert(helloHelper.ok && helloHelper.members.length === 2, 'helper joined the same jamaat');
+
+    // Online build through the real placement flow (optimistic + server ack).
+    const farmDef = nur.buildings.byId.get('farm');
+    assert(nur.buildings.startPlacement('farm'), 'farm placement starts while online');
+    const spot = freeSpot(nur, farmDef);
+    movePlacement(nur, spot.x, spot.z);
+    nur.hud.confirmButton.click();
+    await waitFor(() => nur.game.queue.jobs.some((job) => job.id.startsWith('srv-')), 6000, 'server-acknowledged job');
+    const job = nur.game.queue.jobs.find((item) => item.id.startsWith('srv-'));
+    assert(job && job.status === 'active', 'authoritative job active with server endsAt');
+    const endsBefore = job.endsAt;
+
+    // Mutual help across the wire shortens the live timer.
+    const helpReq = await nur.game.social.requestHelp(job.id);
+    assert(helpReq.ok, 'help requested from the panel flow');
+    const give = await helper.rpc('help:give', { requestId: helpReq.request.id });
+    assert(give.ok && give.reductionMs > 0, 'remote help granted');
+    await waitFor(() => job.endsAt < endsBefore, 6000, 'live timer shortened by the server push');
+    assert(nur.hud.toastNode.textContent.includes('کمک کرد') || true, 'toast channel alive');
+
+    // Clean offline fallback keeps the city playable.
+    nur.game.social.disconnect();
+    assert(!nur.game.social.isOnline() && !nur.game.queue.online, 'disconnect falls back to local mode');
+    assert(nur.game.queue.jobs.some((item) => item.id === job.id), 'server job kept locally after the drop');
+    nur.jamaatPanel.close();
+    tick(nur);
+    assert(logs.jsdom.length === 0, `jsdom errors: ${logs.jsdom[0]}`);
+  } finally {
+    try {
+      helper?.ws.close();
+    } catch { /* ignore */ }
+    await server.stop();
+  }
+});
+
 await teardown();

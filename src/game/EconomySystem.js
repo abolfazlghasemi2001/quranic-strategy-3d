@@ -38,6 +38,66 @@ export class EconomySystem {
      * پیش‌فرض خالی است تا رفتار شهر در حالت عادی هیچ تغییری نکند.
      */
     this.modifiers = { production: {}, consumption: {} };
+    /**
+     * Phase 8 server mirror (null while offline — zero behaviour change).
+     * When online, every local mutation emits an intent so the authoritative
+     * server ledger can validate and adopt it; snapshots from the server are
+     * applied through `applyLedger` (which never re-emits).
+     */
+    this.mirror = null;
+    this._mirrorDepth = 0;
+    /** Mission consumption accumulates here and flushes every few seconds. */
+    this._drainPending = {};
+  }
+
+  /* ------------------------------------------------- server mirror (ph.8) */
+
+  /** Install/remove the online intent hook (owned by SocialSystem). */
+  setMirror(fn) {
+    this.mirror = typeof fn === 'function' ? fn : null;
+    if (!this.mirror) this._drainPending = {};
+  }
+
+  /** Run `fn` without emitting mirror intents (optimistic/rollback paths). */
+  suppressMirror(fn) {
+    this._mirrorDepth += 1;
+    try {
+      return fn();
+    } finally {
+      this._mirrorDepth = Math.max(0, this._mirrorDepth - 1);
+    }
+  }
+
+  _emitMirror(intent) {
+    if (!this.mirror || this._mirrorDepth > 0) return;
+    try {
+      this.mirror(intent);
+    } catch {
+      /* the game never breaks because the network did */
+    }
+  }
+
+  /**
+   * Adopt the authoritative server resources (server always wins).
+   * No mirror intent is emitted — this IS the server speaking.
+   */
+  applyLedger(resources) {
+    if (!resources || typeof resources !== 'object') return;
+    for (const key of ['rizq', 'nur', 'hekmat', 'gohar']) {
+      const value = Number(resources[key]);
+      if (Number.isFinite(value)) this.resources[key] = Math.min(1e9, Math.max(0, value));
+    }
+  }
+
+  /** Take and clear accumulated mission consumption (SocialSystem flushes it). */
+  takeDrainLedger() {
+    const pending = this._drainPending;
+    this._drainPending = {};
+    const cost = {};
+    for (const [resource, amount] of Object.entries(pending)) {
+      if (amount > 0.0001) cost[resource] = amount;
+    }
+    return Object.keys(cost).length > 0 ? cost : null;
   }
 
   /* ----------------------------------------------------- mission modifiers */
@@ -71,6 +131,9 @@ export class EconomySystem {
     const current = Number(this.resources[resource]) || 0;
     const moved = Math.min(current, value);
     this.resources[resource] = current - moved;
+    if (moved > 0 && this.mirror && this._mirrorDepth === 0) {
+      this._drainPending[resource] = (this._drainPending[resource] || 0) + moved;
+    }
     return moved;
   }
 
@@ -275,6 +338,7 @@ export class EconomySystem {
     if (moved > 0) {
       entity.pending -= moved;
       this.resources[resource] += moved;
+      this._emitMirror({ kind: 'harvest', resource, amount: moved });
     }
     void silent;
     // "full" = this harvest hit the ceiling while something is still pending.
@@ -291,6 +355,7 @@ export class EconomySystem {
   spend(cost) {
     if (!this.canAfford(cost)) return false;
     for (const [key, value] of Object.entries(cost)) this.resources[key] -= value;
+    this._emitMirror({ kind: 'spend', cost: { ...cost } });
     return true;
   }
 
@@ -301,32 +366,36 @@ export class EconomySystem {
    *
    * @param {string} resource — rizq | nur | hekmat | gohar
    * @param {number} amount
-   * @param {{clampToCapacity?: boolean}} [options]
+   * @param {{clampToCapacity?: boolean, source?: string}} [options]
    * @returns {{moved:number, overflow:number, resource:string}}
    */
-  grant(resource, amount, { clampToCapacity = true } = {}) {
+  grant(resource, amount, { clampToCapacity = true, source = 'other' } = {}) {
     const value = Math.max(0, Number(amount) || 0);
     if (!resource || value <= 0) return { moved: 0, overflow: 0, resource };
     if (!this.data.resources[resource]) return { moved: 0, overflow: value, resource };
     if (this.data.resources[resource].stored === false) {
       this.resources[resource] = (this.resources[resource] || 0) + value;
+      this._emitMirror({ kind: 'grant', resource, amount: value, source });
       return { moved: value, overflow: 0, resource };
     }
     const free = clampToCapacity ? this.freeCapacity(resource) : Infinity;
     const moved = Math.min(value, free);
     this.resources[resource] = (this.resources[resource] || 0) + moved;
+    if (moved > 0) this._emitMirror({ kind: 'grant', resource, amount: value, source });
     return { moved, overflow: value - moved, resource };
   }
 
-  earnGohar(amount) {
+  earnGohar(amount, { source = 'other' } = {}) {
     const before = this.resources.gohar || 0;
     this.resources.gohar = before + amount;
+    if (amount > 0) this._emitMirror({ kind: 'grant', resource: 'gohar', amount, source });
     return this.resources.gohar - before;
   }
 
   spendGohar(amount) {
     if ((this.resources.gohar || 0) < amount) return false;
     this.resources.gohar -= amount;
+    this._emitMirror({ kind: 'spend', cost: { gohar: amount } });
     return true;
   }
 
