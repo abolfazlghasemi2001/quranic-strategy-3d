@@ -7,6 +7,7 @@
  */
 import { el, button, formatFa, faDigits } from './dom.js';
 import { EVENTS } from '../core/EventBus.js';
+import characterData from '../data/characters.json';
 import { formatCountdown } from './HUD.js';
 
 const ROLE_KEYS = { melee: 'melee', ranged: 'ranged', support: 'support', siege: 'siege' };
@@ -19,13 +20,19 @@ const REASON_KEYS = {
 };
 
 export class BarracksPanel {
-  constructor({ config, bus, barracks, economy, unitsData, onOpenShop }) {
+  constructor({ config, bus, barracks, economy, unitsData, onOpenShop, onOpenCharacters = null, onRetryCharacters = null }) {
     this.config = config;
     this.bus = bus;
     this.barracks = barracks;
     this.economy = economy;
     this.unitsData = unitsData;
     this.onOpenShop = onOpenShop;
+    this.onOpenCharacters = onOpenCharacters;
+    this.onRetryCharacters = onRetryCharacters;
+    this.characterAssetStates = new Map();
+    this.characterProfileById = new Map((characterData.profiles || []).map((profile) => [profile.id, profile]));
+    this.characterModelIds = [...new Set((characterData.profiles || []).map((profile) => profile.modelId))];
+    this.selectedProfileByUnit = new Map(Object.entries(characterData.unitBindings || {}));
     this.visible = false;
     this.t = (key, fallback) => config.t(key, fallback);
     this._rows = [];
@@ -36,6 +43,16 @@ export class BarracksPanel {
     this.unitList = el('div', { className: 'barracks-units' });
     this.queueList = el('div', { className: 'barracks-queue' });
     this.hint = el('small', { className: 'barracks-hint' });
+    this.characterStatus = el('small', { className: 'barracks-character-status', text: this.t('army.charactersIdle', 'مدل‌های کاراکتر هنگام بازشدن پادگان آماده می‌شوند.') });
+    this.retryCharactersButton = button(this.t('army.retryCharacters', 'تلاش دوباره'), {
+      className: 'ui-btn',
+      onClick: () => this._requestCharacterLoad(true),
+    });
+    this.retryCharactersButton.hidden = true;
+    this.characterStatusRow = el('div', {
+      className: 'barracks-character-status-row',
+      children: [this.characterStatus, this.retryCharactersButton],
+    });
 
     this.root = el('div', {
       className: 'ui-root barracks-ui is-hidden',
@@ -58,6 +75,7 @@ export class BarracksPanel {
                 this.capacityText,
               ],
             }),
+            this.characterStatusRow,
             this.unitList,
             el('div', { className: 'barracks-queue-head', children: [el('b', { text: this.t('army.queue', 'صف آموزش') })] }),
             this.queueList,
@@ -76,7 +94,81 @@ export class BarracksPanel {
       bus.on(EVENTS.ECONOMY_CHANGED, () => {
         if (this.visible) this.render();
       }),
+      bus.on(EVENTS.CHARACTER_ASSET_STATUS, (status) => {
+        if (!status?.modelId) return;
+        this.characterAssetStates.set(status.modelId, status.status);
+        this._renderCharacterStatus();
+        if (this.visible) this.render();
+      }),
     ];
+  }
+
+  _requestCharacterLoad(retry = false) {
+    const loader = retry ? this.onRetryCharacters : this.onOpenCharacters;
+    if (typeof loader !== 'function') return;
+    try {
+      Promise.resolve(loader()).catch(() => {});
+    } catch {
+      // Asset loading is optional; the battle's instanced fallback remains available.
+    }
+  }
+
+  _renderCharacterStatus() {
+    const statuses = this.characterModelIds.map((modelId) => this.characterAssetStates.get(modelId) || 'idle');
+    const loading = statuses.filter((status) => status === 'loading').length;
+    const ready = statuses.filter((status) => status === 'ready').length;
+    const failed = statuses.filter((status) => status === 'fallback').length;
+    if (loading > 0) {
+      this.characterStatus.textContent = this.t('army.charactersLoading', 'مدل‌های سه‌بعدی در حال آماده‌سازی‌اند؛ بازی در همین حال قابل استفاده است.');
+    } else if (failed > 0) {
+      this.characterStatus.textContent = this.t('army.charactersFallback', 'برای برخی کاراکترها نمای جایگزین فعال است.');
+    } else if (ready === statuses.length && ready > 0) {
+      this.characterStatus.textContent = this.t('army.charactersReady', 'مدل‌های سه‌بعدی کاراکترها آماده‌اند.');
+    } else {
+      this.characterStatus.textContent = this.t('army.charactersIdle', 'مدل‌های کاراکتر هنگام بازشدن پادگان آماده می‌شوند.');
+    }
+    this.retryCharactersButton.hidden = failed === 0;
+  }
+
+  _createCharacterSelector(unitId, unitName) {
+    const selector = el('select', {
+      className: 'barracks-character-select',
+      attrs: {
+        'aria-label': `${this.t('army.characterChoice', 'ظاهر کاراکتر')} ${unitName}`,
+        dataset: { unit: unitId },
+      },
+    });
+    for (const profile of characterData.selection.map((id) => this.characterProfileById.get(id)).filter(Boolean)) {
+      const option = el('option', { text: profile.name, attrs: { value: profile.id } });
+      selector.append(option);
+    }
+    selector.value = this.selectedProfileByUnit.get(unitId) || characterData.unitBindings?.[unitId] || '';
+    selector.addEventListener('change', () => {
+      const profile = this.characterProfileById.get(selector.value);
+      if (!profile) return;
+      this.selectedProfileByUnit.set(unitId, profile.id);
+      this.bus.emit(EVENTS.CHARACTER_PROFILE_SELECTED, { unitId, profileId: profile.id });
+      this.render();
+    });
+    return el('label', {
+      className: 'barracks-character-choice',
+      children: [el('span', { text: this.t('army.characterChoice', 'ظاهر کاراکتر') }), selector],
+    });
+  }
+
+  _appearanceText(unitId) {
+    const profileId = this.selectedProfileByUnit.get(unitId) || characterData.unitBindings?.[unitId];
+    const profile = this.characterProfileById.get(profileId);
+    if (!profile) return '';
+    const status = this.characterAssetStates.get(profile.modelId) || 'idle';
+    const stateText = status === 'ready'
+      ? this.t('army.characterReady', 'مدل آماده')
+      : status === 'fallback'
+        ? this.t('army.characterFallback', 'نمای جایگزین')
+        : status === 'loading'
+          ? this.t('army.characterLoading', 'در حال بارگذاری')
+          : this.t('army.characterPending', 'مدل سه‌بعدی');
+    return `${this.t('army.characterRole', 'کاراکتر')}: ${profile.name} · ${stateText}`;
   }
 
   /* ------------------------------------------------------------------ render */
@@ -100,6 +192,7 @@ export class BarracksPanel {
       const count = this.barracks.countOf(def.id);
       const job = this.barracks.jobFor(def.id);
       const allowed = this.barracks.canTrain(def.id);
+      const characterSelector = this._createCharacterSelector(def.id, def.name);
       const cost = Object.entries(def.cost || {})
         .filter(([, value]) => value)
         .map(([key, value]) => `${t(`economy.${key}`, key)} ${formatFa(value)}`)
@@ -132,6 +225,8 @@ export class BarracksPanel {
               el('span', { className: 'barracks-unit__count', text: `${faDigits(count)}/${faDigits(this.barracks.maxPerType())}` }),
             ],
           }),
+          el('small', { className: 'barracks-unit__appearance', text: this._appearanceText(def.id) }),
+          characterSelector,
           el('div', {
             className: 'barracks-unit__stats',
             children: [
@@ -231,6 +326,8 @@ export class BarracksPanel {
   show() {
     this.visible = true;
     this.root.classList.remove('is-hidden');
+    this._requestCharacterLoad(false);
+    this._renderCharacterStatus();
     this.render();
   }
 

@@ -24,19 +24,13 @@ export class Game {
   /**
    * @param {object} options
    * @param {import('../core/Config.js').Config} options.config
-   * @param {import('../world/World.js').World} options.world
-   * @param {import('../core/OrbitCameraRig.js').OrbitCameraRig} options.rig
-   * @param {import('../core/InputManager.js').InputManager} options.input
    * @param {import('../core/EventBus.js').EventBus} options.bus
    * @param {object|null} [options.record] — migrated save payload from SaveSystem
    * @param {{dataset:object, validation:object, loadReport:object}|null} [options.quran]
    *        — phase 4: the normalised Quran dataset (loaded by main.js, never by the world/render layers)
    */
-  constructor({ config, world, rig, input, bus, record = null, quran = null }) {
+  constructor({ config, bus, record = null, quran = null }) {
     this.config = config;
-    this.world = world;
-    this.rig = rig;
-    this.input = input;
     this.bus = bus;
     this.record = record;
     this.quran = quran;
@@ -147,12 +141,9 @@ export class Game {
     this._queueDirty = false;
     this._lastEmit = 0;
 
-    // Screen tap -> tile:tap (keeps phase-1/2 contract: pixels never reach systems).
-    this.onTap = (payload) => this.handleTap(payload);
-    this.input.onTap = this.onTap;
-
     this._on = [
       [EVENTS.GAME_PAUSED, ({ paused }) => this.state.setPaused(paused)],
+      [EVENTS.WORLD_TAP, (intent) => this.handleTap(intent)],
     ];
     for (const [ev, fn] of this._on) bus.on(ev, fn);
   }
@@ -160,34 +151,31 @@ export class Game {
   /* --------------------------------------------------------------- taps */
 
   /**
-   * Screen tap -> world point -> tile. Emits `tile:tap` with both the world
-   * position and the tile coordinates (selection / harvest / markers listen).
+   * Consume a plain world-tap intent from WorldInputAdapter. Pixels and Three.js
+   * objects never enter the gameplay layer; this only updates game state/events.
    */
-  handleTap(payload) {
-    const viewport = payload && payload.viewport
-      ? payload.viewport
-      : { width: window.innerWidth, height: window.innerHeight };
-    const point = this.rig.screenToGround(payload.clientX ?? payload.x, payload.clientY ?? payload.y, viewport);
-    if (!point) return null;
-
-    const inside = this.world.isInsideMap(point.x, point.z);
-    const cell = this.world.getCellAt(point.x, point.z);
-    const now = Date.now();
-    this.state.lastTap = { x: point.x, z: point.z, cell, inside, time: this.state.elapsed };
+  handleTap(intent = {}) {
+    const x = Number(intent.x);
+    const z = Number(intent.z);
+    if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
+    const inside = Boolean(intent.inside);
+    const cell = intent.cell || null;
+    const now = Number(intent.at) || Date.now();
+    const source = intent.pointerType || 'unknown';
+    this.state.lastTap = { x, z, cell, inside, time: this.state.elapsed };
     this.state.tapCount += 1;
 
-    // در میانهٔ نبرد، تپ روی نقشه یعنی «استقرار نیرو»؛ انتخاب و ساخت‌وساز
-    // کنار می‌رود تا انگشت بازیکن هم‌زمان دو کار نکند.
+    // During a live battle, a map tap is a deploy intent rather than selection.
     const battlefield = inside && this.battle && this.battle.active && this.battle.mode === 'live';
     if (inside && battlefield) {
       this._haptic();
       this.bus.emit(EVENTS.BATTLE_TAP, {
-        x: point.x,
-        z: point.z,
+        x,
+        z,
         col: cell ? cell.col : null,
         row: cell ? cell.row : null,
         at: now,
-        source: payload.pointerType || 'unknown',
+        source,
       });
       return this.state.lastTap;
     }
@@ -195,13 +183,13 @@ export class Game {
     if (inside) {
       this._haptic();
       this.bus.emit(EVENTS.TILE_TAP, {
-        x: point.x,
-        z: point.z,
+        x,
+        z,
         col: cell ? cell.col : null,
         row: cell ? cell.row : null,
         at: now,
         tile: cell,
-        source: payload.pointerType || 'unknown',
+        source,
       });
     }
     return this.state.lastTap;
@@ -402,12 +390,23 @@ export class Game {
   /** Broadcast resources + capacity + city level + builders. */
   emitState(now, force) {
     void force;
+    const producers = [];
+    for (const entity of this.state.entities.values()) {
+      if (!this.economy.def(entity.type)?.produces) continue;
+      producers.push({
+        entityId: entity.id,
+        pending: Math.max(0, Number(entity.pending) || 0),
+        ready: this.economy.isReady(entity),
+        status: entity.status,
+      });
+    }
     this.bus.emit(EVENTS.ECONOMY_CHANGED, {
       resources: { ...this.state.resources },
       capacity: this.economy.capacity(),
       cityLevel: this.state.cityLevel(),
       builders: { free: this.queue.freeBuilders(), total: this.queue.builderCount },
       jobs: this.queue.jobs.map((j) => ({ id: j.id, status: j.status })),
+      producers,
       at: now || Date.now(),
     });
   }
@@ -572,6 +571,5 @@ export class Game {
     this.battle.dispose();
     for (const [ev, fn] of this._on) this.bus.off(ev, fn);
     this._on.length = 0;
-    if (this.input) this.input.onTap = null;
   }
 }

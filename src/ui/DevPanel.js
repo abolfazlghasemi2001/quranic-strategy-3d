@@ -10,13 +10,14 @@ import { EVENTS } from '../core/EventBus.js';
 const TIER_LABEL = { low: 'پایین (low)', medium: 'متوسط (medium)', high: 'بالا (high)' };
 
 export class DevPanel {
-  constructor({ config, engine, bus, monitor, rig, world, onSaveNow, onSimulateOffline }) {
+  constructor({ config, engine, bus, monitor, rig, world, characters = null, onSaveNow, onSimulateOffline }) {
     this.config = config;
     this.engine = engine;
     this.bus = bus;
     this.monitor = monitor;
     this.rig = rig;
     this.world = world;
+    this.characters = characters;
     this.onSaveNow = onSaveNow || null;
     this.onSimulateOffline = onSimulateOffline || null;
 
@@ -49,6 +50,10 @@ export class DevPanel {
     addRow('props', 'Props');
     addRow('chunks', 'Chunks');
     addRow('camera', 'Camera');
+    addRow('characterAssets', t('dev.characterAssets', 'دارایی کاراکتر'));
+    addRow('characterActivity', t('dev.characterActivity', 'کاراکترهای فعال'));
+    addRow('characterAnimations', t('dev.characterAnimations', 'انیمیشن‌های زنده'));
+    addRow('characterDrawCalls', t('dev.characterDrawCalls', 'Draw Call کاراکتر'));
 
     panel.append(
       el('p', {
@@ -196,6 +201,12 @@ export class DevPanel {
     const props = this.world.placements;
     this.rows.props.textContent = `${props.tree.length} / ${props.rock.length} / ${props.shrub.length}`;
     this.rows.chunks.textContent = String(this.world.chunks.size);
+
+    const characters = this.characters?.getDebugStats?.() || {};
+    this.rows.characterAssets.textContent = `${characters.assetsReady || 0}/${characters.assetsTotal || 0} · خطا ${characters.assetsFailed || 0}`;
+    this.rows.characterActivity.textContent = `${characters.active || 0} فعال · ${characters.pooled || 0} بازیافتی · ${characters.culled || 0} خارج دید`;
+    this.rows.characterAnimations.textContent = `${characters.animated || 0}/${characters.visible || 0}`;
+    this.rows.characterDrawCalls.textContent = String(characters.estimatedCharacterDrawCalls || 0);
 
     const budget = this.config.targets.maxDrawCalls || 150;
     this.rows.drawCalls.classList.toggle('ui-stat__value--bad', snapshot.drawCalls > budget);

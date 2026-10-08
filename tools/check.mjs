@@ -927,8 +927,8 @@ test('save: serialize contains no three.js roots', () => {
   const state = new GameState({ economy: economyData });
   const e = state.createEntity({ type: 'farm', name: 'x', col: 0, row: 0, size: [1, 1], level: 1, status: 'ready', root: { fake: 'three-object' } });
   const json = JSON.stringify(state.serialize());
-  assert(!json.includes('three-object'), 'roots are stripped');
-  assert(e.root != null, 'root still lives on the in-memory entity');
+  assert(!json.includes('three-object'), 'roots are not serialized');
+  assert(!Object.hasOwn(e, 'root'), 'renderer roots never enter the in-memory gameplay entity');
 });
 
 test('data: strings carry the current phase labels (queue, offline, lesson, campaign)', () => {

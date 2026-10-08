@@ -1,4 +1,7 @@
 /** Tiny DOM helpers for the UI layer (no framework, no external dependency). */
+import { faDigits, formatFa } from '../core/Format.js';
+
+export { faDigits, formatFa };
 
 export function el(tag, options = {}) {
   const { className, text, html, attrs, children, parent, style } = options;
@@ -20,20 +23,6 @@ export function el(tag, options = {}) {
   if (children) for (const child of children) if (child) node.append(child);
   if (parent) parent.append(node);
   return node;
-}
-
-const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-
-/** Latin digits -> Persian digits (for player facing numbers). */
-export function faDigits(value) {
-  return String(value).replace(/[0-9]/g, (digit) => PERSIAN_DIGITS[Number(digit)]);
-}
-
-export function formatFa(value, digits = 0) {
-  const fixed = Number(value).toFixed(digits);
-  const [intPart, decPart] = fixed.split('.');
-  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
-  return faDigits(decPart ? `${grouped}٫${decPart}` : grouped);
 }
 
 export function clear(node) {

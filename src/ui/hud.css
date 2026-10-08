@@ -1003,6 +1003,14 @@ body {
 .barracks-capacity-bar { flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,.09); overflow:hidden; }
 .barracks-capacity-bar > i { display:block; height:100%; width:var(--progress); background:linear-gradient(90deg,rgba(127,208,195,.9),rgba(255,215,122,.9)); }
 .barracks-capacity-bar > i.is-full { background:linear-gradient(90deg,#e07a3c,#ffcf9c); }
+.barracks-character-status-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 8px; }
+.barracks-character-status { color:var(--text-dim); font-size:calc(10px * var(--ui-font-scale, 1)); }
+.barracks-character-status-row .ui-btn { min-height:28px; padding:3px 8px; font-size:calc(10px * var(--ui-font-scale, 1)); }
+.barracks-character-status-row .ui-btn[hidden] { display:none; }
+.barracks-unit__appearance { display:block; margin-top:4px; color:var(--text-dim); font-size:calc(9.5px * var(--ui-font-scale, 1)); }
+.barracks-character-choice { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:5px; color:var(--text-dim); font-size:calc(10px * var(--ui-font-scale, 1)); }
+.barracks-character-select { max-width:65%; min-height:30px; padding:3px 8px; border:1px solid var(--line); border-radius:8px; background:var(--panel-strong); color:var(--text); font:inherit; }
+.barracks-character-select:focus-visible { outline:2px solid var(--accent-2); outline-offset:2px; }
 .barracks-units { display:grid; gap:6px; }
 .barracks-unit { padding:8px; border-radius:12px; background:rgba(255,255,255,.045); border:1px solid var(--line); }
 .barracks-unit.is-locked { opacity:.6; }
@@ -1678,7 +1686,7 @@ html.is-reduced-motion *::after {
    rail — a vertical rail on a short landscape screen looked like the
    buttons had “moved to the wrong corner”. Compact the status bar instead. */
 @media (orientation: landscape) and (max-height: 560px) {
-  :root { --hud-touch: 44px; }
+  :root { --hud-touch: 48px; }
   .game-hud {
     flex-flow: column nowrap;
     gap: 4px;
