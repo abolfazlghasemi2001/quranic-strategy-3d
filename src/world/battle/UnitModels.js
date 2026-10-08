@@ -1,12 +1,9 @@
 /**
- * UnitModels — همهٔ مدل‌های میدان نبرد، ساخته‌شده با کد (بدون هیچ فایل دودویی).
+ * UnitModels — low-poly fallback/LOD for distant battle units.
  *
- * قواعد طراحی:
- *   • low-poly و انتزاعی؛ هیچ چهره، هیچ اندام انسانی و هیچ نشانهٔ مذهبی روی مدل‌ها نیست.
- *   • رنگ‌ها به‌صورت «رنگ رأس» (vertex color) پخته می‌شوند تا هر گونهٔ واحد فقط
- *     یک متریال و یک InstancedMesh داشته باشد (چند draw call برای صدها سرباز).
- *   • رنگ هر لشکر از دادهٔ scene می‌آید: مدافع روشن/فیروزه‌ای، مهاجم خاکی/کهربایی.
- *   • همهٔ هندسه‌ها کوچک‌اند: یک واحد ≈ چند صد مثلث؛ حذف‌شان با dispose انجام می‌شود.
+ * Close units use the rigged, data-driven GLB character pipeline. Farther or
+ * overflow units use this single-material instanced representation to keep
+ * mobile draw calls bounded. All fallback geometry is shared per role/faction.
  */
 import * as THREE from 'three';
 

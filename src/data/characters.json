@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "title": "Character roster and render policy",
+  "contentPolicy": {
+    "fictionalHumansOnly": true,
+    "sacredFigures": false,
+    "blood": false,
+    "copiedGameDesign": false
+  },
+  "models": [
+    {
+      "id": "builder",
+      "asset": "./assets/characters/builders/builder.glb",
+      "targetHeight": 1.72,
+      "yawOffset": 0,
+      "animations": {
+        "idle": "Idle",
+        "walk": "Walking_A",
+        "run": "Running_A",
+        "melee": "1H_Melee_Attack_Slice_Horizontal",
+        "ranged": "1H_Ranged_Shooting",
+        "support": "Interact",
+        "hit": "Hit_A",
+        "death": "Death_A",
+        "victory": "Cheer"
+      }
+    },
+    {
+      "id": "farmer",
+      "asset": "./assets/characters/farmers/farmer.glb",
+      "targetHeight": 1.72,
+      "yawOffset": 0,
+      "animations": {
+        "idle": "Idle",
+        "walk": "Walking_A",
+        "run": "Running_A",
+        "melee": "1H_Melee_Attack_Slice_Horizontal",
+        "ranged": "1H_Ranged_Shooting",
+        "support": "Interact",
+        "hit": "Hit_A",
+        "death": "Death_A",
+        "victory": "Cheer"
+      }
+    },
+    {
+      "id": "guard",
+      "asset": "./assets/characters/guards/guard.glb",
+      "targetHeight": 1.72,
+      "yawOffset": 0,
+      "animations": {
+        "idle": "Idle",
+        "walk": "Walking_A",
+        "run": "Running_A",
+        "melee": "1H_Melee_Attack_Slice_Horizontal",
+        "ranged": "1H_Ranged_Shooting",
+        "support": "Interact",
+        "hit": "Hit_A",
+        "death": "Death_A",
+        "victory": "Cheer"
+      }
+    },
+    {
+      "id": "archer",
+      "asset": "./assets/characters/archers/archer.glb",
+      "targetHeight": 1.72,
+      "yawOffset": 0,
+      "animations": {
+        "idle": "Idle",
+        "walk": "Walking_A",
+        "run": "Running_A",
+        "melee": "1H_Melee_Attack_Slice_Horizontal",
+        "ranged": "1H_Ranged_Shooting",
+        "support": "Interact",
+        "hit": "Hit_A",
+        "death": "Death_A",
+        "victory": "Cheer"
+      }
+    },
+    {
+      "id": "scholar",
+      "asset": "./assets/characters/scholars/scholar.glb",
+      "targetHeight": 1.72,
+      "yawOffset": 0,
+      "animations": {
+        "idle": "Idle",
+        "walk": "Walking_A",
+        "run": "Running_A",
+        "melee": "1H_Melee_Attack_Slice_Horizontal",
+        "ranged": "1H_Ranged_Shooting",
+        "support": "Interact",
+        "hit": "Hit_A",
+        "death": "Death_A",
+        "victory": "Cheer"
+      }
+    }
+  ],
+  "profiles": [
+    {
+      "id": "builder",
+      "name": "سازنده",
+      "role": "builder",
+      "modelId": "builder",
+      "icon": "⚒",
+      "description": "شهروند خیالیِ سازنده؛ برای کارهای عمرانی شهر."
+    },
+    {
+      "id": "farmer",
+      "name": "کشاورز",
+      "role": "farmer",
+      "modelId": "farmer",
+      "icon": "♧",
+      "description": "شهروند خیالیِ کشاورز؛ همراه فعالیت‌های مزرعه و باغ."
+    },
+    {
+      "id": "guard",
+      "name": "نگهبان",
+      "role": "guard",
+      "modelId": "guard",
+      "icon": "⛨",
+      "description": "نگهبان خیالیِ نزدیک‌زن برای دفاع از شهر."
+    },
+    {
+      "id": "archer",
+      "name": "کماندار",
+      "role": "archer",
+      "modelId": "archer",
+      "icon": "➶",
+      "description": "کماندار خیالیِ دورزن با حرکت و تیراندازی متحرک."
+    },
+    {
+      "id": "scout",
+      "name": "پیشاهنگ",
+      "role": "scout",
+      "modelId": "archer",
+      "icon": "⌖",
+      "description": "پیشاهنگ خیالی برای دیده‌بانی و حرکت سریع؛ از همان مدل پایهٔ کماندار استفاده می‌کند."
+    },
+    {
+      "id": "scholar",
+      "name": "دانش‌پژوه",
+      "role": "scholar",
+      "modelId": "scholar",
+      "icon": "✎",
+      "description": "دانش‌پژوه خیالی؛ نمایشی و غیرمذهبی، بدون بازنمایی شخصیت مقدس."
+    },
+    {
+      "id": "healer",
+      "name": "یارِ همراه",
+      "role": "support",
+      "modelId": "scholar",
+      "icon": "✚",
+      "description": "واحد پشتیبانِ بازی؛ از مدل دانش‌پژوه و حرکت تعاملی استفاده می‌کند."
+    },
+    {
+      "id": "breaker",
+      "name": "سنگین‌کار",
+      "role": "siege",
+      "modelId": "builder",
+      "icon": "⚒",
+      "description": "واحد خیالیِ سنگین برای کار با دیوار؛ از مدل سازندهٔ عمومی استفاده می‌کند."
+    }
+  ],
+  "unitBindings": {
+    "guard": "guard",
+    "archer": "archer",
+    "healer": "healer",
+    "breaker": "breaker"
+  },
+  "selection": [
+    "builder",
+    "farmer",
+    "guard",
+    "archer",
+    "scout",
+    "scholar",
+    "healer",
+    "breaker"
+  ],
+  "quality": {
+    "tiers": {
+      "low": {
+        "maxAnimatedUnits": 2,
+        "animationStepSeconds": 0.05,
+        "maxAnimationDistance": 80
+      },
+      "medium": {
+        "maxAnimatedUnits": 4,
+        "animationStepSeconds": 0.033333,
+        "maxAnimationDistance": 120
+      },
+      "high": {
+        "maxAnimatedUnits": 8,
+        "animationStepSeconds": 0.016667,
+        "maxAnimationDistance": 180
+      }
+    },
+    "batterySaver": {
+      "maxAnimatedUnits": 1,
+      "animationStepSeconds": 0.05
+    }
+  }
+}

@@ -17,6 +17,8 @@ import { SoundManager } from './core/SoundManager.js';
 import { InputManager } from './core/InputManager.js';
 import { OrbitCameraRig } from './core/OrbitCameraRig.js';
 import { World } from './world/World.js';
+import { BuildingView } from './world/BuildingView.js';
+import { WorldInputAdapter } from './world/WorldInputAdapter.js';
 import { Game } from './game/Game.js';
 import { BuildingSystem } from './game/BuildingSystem.js';
 import { SaveSystem } from './game/SaveSystem.js';
@@ -135,7 +137,8 @@ async function boot() {
   const rig = new OrbitCameraRig({ camera: engine.camera, config, input, bus });
 
   // ---------------------------------------------------------------- game
-  const game = new Game({ config, world, rig, input, bus, record: saveRecord?.payload ?? null, quran });
+  const game = new Game({ config, bus, record: saveRecord?.payload ?? null, quran });
+  const worldInput = new WorldInputAdapter({ config, world, rig, input, bus });
   const bootInfo = game.bootstrap(); // hydrate + offline catch-up + seed if fresh
 
   // ------------------------------------------------------------ save hooks
@@ -158,17 +161,20 @@ async function boot() {
   game.attachPersist(requestSave);
   const soundManager = new SoundManager({ bus, enabled: game.meta.settings.soundEnabled });
   setRecitationEnabled(game.meta.settings.recitationEnabled);
-  world.setReducedMotion(applyAccessibilitySettings(game.meta.settings));
+  const reducedMotion = applyAccessibilitySettings(game.meta.settings);
+  world.setReducedMotion(reducedMotion);
 
   const buildings = new BuildingSystem({
-    config, world, rig, input, bus,
+    config, bus,
     state: game.state,
     economy: game.economy,
     queue: game.queue,
     game,
-    engine,
     persist: requestSave,
   });
+  const buildingView = new BuildingView({ config, world, rig, input, bus, state: game.state, engine });
+  buildingView.setReducedMotion(reducedMotion);
+  game.emitState(Date.now(), true); // seed renderer-only producer markers through a presentation snapshot
   bus.on(EVENTS.JOB_FINISHED, requestSave);
   // نتیجهٔ نبرد (آسیب سازه‌ها، سپاه بازمانده، پاداش) بی‌درنگ ذخیره می‌شود.
   bus.on(EVENTS.BATTLE_ENDED, () => saveNow());
@@ -191,18 +197,24 @@ async function boot() {
     state: game.state,
     rig,
     buildings,
+    buildingView,
+    bus,
     battleData: game.battle.battleData,
     unitsData: game.battle.unitsData,
     getBattle: () => game.battle,
     engine,
     seed: config.seed,
   });
+  battleView.setQuality(game.meta.settings);
+  battleView.setReducedMotion(reducedMotion);
   const barracksPanel = new BarracksPanel({
     config,
     bus,
     barracks: game.barracks,
     economy: game.economy,
     unitsData: game.battle.unitsData,
+    onOpenCharacters: () => battleView.preloadCharacters(),
+    onRetryCharacters: () => battleView.preloadCharacters({ retryFailed: true }),
   });
   const battlePanel = new BattlePanel({
     config,
@@ -353,9 +365,13 @@ async function boot() {
   });
   bus.on(EVENTS.SETTINGS_CHANGED, (settings) => {
     engine.setRuntimeSettings(settings);
+    battleView.setQuality(settings);
     soundManager.setEnabled(settings.soundEnabled);
     setRecitationEnabled(settings.recitationEnabled);
-    world.setReducedMotion(applyAccessibilitySettings(settings));
+    const reduceMotion = applyAccessibilitySettings(settings);
+    world.setReducedMotion(reduceMotion);
+    buildingView.setReducedMotion(reduceMotion);
+    battleView.setReducedMotion(reduceMotion);
     saveNow();
   });
   const devPanel = new DevPanel({
@@ -365,6 +381,7 @@ async function boot() {
     monitor,
     rig,
     world,
+    characters: battleView.characterSystem,
     onSaveNow: () => {
       saveNow();
       hud.toast('بازی ذخیره شد.');
@@ -403,9 +420,10 @@ async function boot() {
   engine.addUpdatable(rig, 20);
   engine.addUpdatable(game, 30);
   engine.addUpdatable(game.social, 31);
-  engine.addUpdatable(buildings, 35);
+  engine.addUpdatable(buildingView, 36);
   engine.addUpdatable(lessonHub, 95);
   engine.addUpdatable(battleView, 40);
+  engine.addUpdatable(battleView.characterSystem, 41);
   engine.addUpdatable(missionZone, 45);
   engine.addUpdatable(missionPanel, 98);
   engine.addUpdatable(battlePanel, 96);
@@ -421,7 +439,7 @@ async function boot() {
 
   // --------------------------------------------------------- debug handle
   window.__NUR__ = {
-    config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel,
+    config, engine, world, worldInput, game, buildings, buildingView, rig, input, bus, monitor, hud, devPanel, quranPanel,
     lessonHub, datasetLoader, quran, saveSystem, saveNow,
     battleView, battlePanel, barracksPanel, missionZone, missionPanel,
     metaSystem: game.meta, metaPanel, settingsPanel, ftueGuide, soundManager,
@@ -455,9 +473,14 @@ async function boot() {
     barracksPanel.dispose();
     battleView.dispose();
     buildings.dispose();
+    buildingView.dispose();
+    worldInput.dispose();
     game.dispose();
     input.dispose();
     rig.dispose();
+    engine.removeUpdatable(buildingView);
+    engine.removeUpdatable(battleView);
+    engine.removeUpdatable(battleView.characterSystem);
     engine.removeUpdatable(world);
     world.dispose();
     engine.dispose();

@@ -491,7 +491,8 @@ await test('acceptance ①: upgrade costs paid, waits for a builder, completes a
   tick(nur);
   const farm = entity(nur, 'farm');
   assert(farm.level === 2, `farm level ${farm.level}`);
-  assert(Math.abs(farm.root.scale.x - 1.035) < 1e-6, `level-2 scale (${farm.root.scale.x})`);
+  const farmRoot = nur.buildingView.getEntityRoot(farm.id);
+  assert(farmRoot && Math.abs(farmRoot.scale.x - 1.035) < 1e-6, `level-2 presentation scale (${farmRoot?.scale.x})`);
   assert(nur.game.queue.jobs.length === 0, 'queue empty after completion');
   assert(nur.hud.queuePanel.classList.contains('is-hidden'), 'queue panel hides when idle');
   assert(nur.hud.builderValue.textContent === '۲/۲', 'both builders free again');
@@ -715,7 +716,7 @@ await test('phase 4 ①: دارالقرآن opens the lesson hub on tap and keep
 
 await test('phase 4 (perf): the دارالقرآن model stays inside the draw-call budget', () => {
   const def = nur.buildings.byId.get('dar-al-quran');
-  const model = nur.buildings.factory.create(def);
+  const model = nur.buildingView.factory.create(def);
   let meshes = 0;
   let triangles = 0;
   model.traverse((object) => {

@@ -73,7 +73,6 @@ export class GameState {
       hp: data.hp ?? null,
       maxHp: data.maxHp ?? null,
       damaged: Boolean(data.damaged),
-      root: data.root ?? null, // three.js Object3D (not serialized)
     };
     this.entities.set(id, entity);
     const maxId = typeof id === 'number' ? id + 1 : this.entitySeq;

@@ -62,9 +62,12 @@ export class EventBus {
 /** Canonical event names (typos become a load error instead of a silent bug). */
 export const EVENTS = Object.freeze({
   TILE_TAP: 'tile:tap',
+  WORLD_TAP: 'world:tap-intent',
   CAMERA_CHANGED: 'camera:changed',
   RESIZE: 'renderer:resize',
   QUALITY_CHANGED: 'quality:changed',
+  CHARACTER_ASSET_STATUS: 'characters:asset-status',
+  CHARACTER_PROFILE_SELECTED: 'characters:profile-selected',
   GRID_VISIBILITY: 'ui:grid-visibility',
   DEV_TOGGLE: 'ui:dev-toggle',
   CAMERA_RESET: 'ui:camera-reset',
@@ -76,6 +79,10 @@ export const EVENTS = Object.freeze({
   ECONOMY_CHANGED: 'game:economy-changed',
   PLACEMENT_CHANGED: 'game:placement-changed',
   BUILDING_SELECTED: 'game:building-selected',
+  BUILDING_ADDED: 'game:building-added',
+  BUILDING_UPDATED: 'game:building-updated',
+  BUILDING_REMOVED: 'game:building-removed',
+  PLACEMENT_POINTER: 'game:placement-pointer',
   BUILD_QUEUE_CHANGED: 'game:build-queue-changed',
   JOB_FINISHED: 'game:job-finished',
   UI_TOAST: 'ui:toast',

@@ -2,7 +2,7 @@
  * BattleView — لایهٔ رندر میدان نبرد (فقط نمایش؛ هیچ منطقی اینجا نیست).
  *
  * همهٔ حالت‌ها از شبیه‌ساز خوانده می‌شود و این لایه فقط «می‌کشد»:
- *   • سربازان با InstancedMesh — یک mesh برای هر (گونهٔ واحد × لشکر) ⇒ چند draw call
+ *   • کاراکترهای نزدیک با rig/animation واقعی؛ LOD دوردست با InstancedMesh مشترک
  *   • نوار جان با دو InstancedMesh (پس‌زمینه + پرشدگی)
  *   • تیر و گلولهٔ نوری با استخر InstancedMesh
  *   • گرد و خاک و جرقهٔ نور با ParticleField (بدون خون، بدون آسیب گرافیکی)
@@ -11,6 +11,9 @@
  * قواعد محتوایی: هیچ متن و تصویری — و به‌ویژه هیچ متن قرآنی — روی صحنه نمی‌آید.
  */
 import * as THREE from 'three';
+import characterData from '../../data/characters.json';
+import { EVENTS } from '../../core/EventBus.js';
+import { CharacterSystem } from '../characters/CharacterSystem.js';
 import { ParticleField } from './Particles.js';
 import {
   BATTLE_FACTION,
@@ -37,15 +40,19 @@ export class BattleView {
    * @param {() => import('../../game/battle/BattleSystem.js').BattleSystem} options.getBattle
    * @param {number} [options.seed]
    */
-  constructor({ parent, config, state, rig, buildings = null, battleData, unitsData, getBattle, engine = null, seed = 1 }) {
+  constructor({ parent, config, state, rig, buildings = null, buildingView = null, bus = null, battleData, unitsData, getBattle, engine = null, seed = 1 }) {
     this.parent = parent;
     this.config = config;
     this.state = state;
     this.rig = rig;
     this.buildings = buildings;
+    this.buildingView = buildingView;
+    this.bus = bus;
     this.engine = engine;
     this.battleData = battleData;
     this.unitsData = unitsData;
+    this.unitDefs = new Map((unitsData?.units || []).map((def) => [def.id, def]));
+    this.characterProfileOverrides = new Map();
     this.getBattle = getBattle;
     this.seed = seed >>> 0;
 
@@ -53,6 +60,18 @@ export class BattleView {
     this.group.name = 'battle-view';
     this.group.visible = false;
     this.parent.add(this.group);
+    this.characterSystem = new CharacterSystem({ parent: this.group, config, bus, engine, data: characterData });
+    this._eventUnsubscribers = bus ? [
+      bus.on(EVENTS.BATTLE_EVENTS, ({ events } = {}) => this.handleEvents(events)),
+      bus.on(EVENTS.CHARACTER_PROFILE_SELECTED, ({ unitId, profileId } = {}) => this.setCharacterProfile(unitId, profileId)),
+    ] : [];
+    this._frustum = new THREE.Frustum();
+    this._viewProjection = new THREE.Matrix4();
+    this._frustumPoint = new THREE.Vector3();
+    this._renderRecords = [];
+    this._renderRecordsById = new Map();
+    this._selectedCharacterIds = new Set();
+    this._preferredCharacterKeys = new Set();
 
     this.mounted = false;
     this.sim = null;
@@ -87,6 +106,43 @@ export class BattleView {
     return this.mounted;
   }
 
+  getCharacterStats() {
+    return this.characterSystem.getDebugStats();
+  }
+
+  preloadCharacters(options) {
+    return this.characterSystem.preloadCharacters(options);
+  }
+
+  setQuality(settings) {
+    return this.characterSystem.setQuality(settings);
+  }
+
+  setReducedMotion(enabled) {
+    this.characterSystem.setReducedMotion(enabled);
+  }
+
+  /** Appearance-only override; combat stats and deterministic simulation are untouched. */
+  setCharacterProfile(unitId, profileId) {
+    const id = String(unitId || '');
+    if (!this.unitDefs.has(id)) return false;
+    const defaultProfile = this.characterSystem.registry.profileForUnit(id);
+    if (!profileId || profileId === defaultProfile?.id) {
+      this.characterProfileOverrides.delete(id);
+      return true;
+    }
+    if (!this.characterSystem.registry.getProfile(profileId)) return false;
+    this.characterProfileOverrides.set(id, profileId);
+    return true;
+  }
+
+  _profileForUnit(unitId) {
+    const override = this.characterProfileOverrides.get(unitId);
+    return override
+      ? this.characterSystem.registry.getProfile(override)
+      : this.characterSystem.registry.profileForUnit(unitId);
+  }
+
   /* -------------------------------------------------------------- mount/unmount */
 
   /**
@@ -99,6 +155,7 @@ export class BattleView {
     this.mounted = true;
     this.elapsed = 0;
     this.group.visible = true;
+    this.characterSystem.preloadCharacters().catch(() => {});
 
     const counts = new Map();
     const bump = (faction, type) => counts.set(`${faction}:${type}`, (counts.get(`${faction}:${type}`) || 0) + 1);
@@ -201,8 +258,7 @@ export class BattleView {
   captureStructures() {
     this.structureStates.clear();
     for (const structure of this.sim.structures) {
-      const entity = this.state.entities.get(structure.sourceId);
-      const root = entity ? entity.root : null;
+      const root = this.buildingView?.getEntityRoot(structure.sourceId) || null;
       if (!root) continue;
       this.structureStates.set(structure.index, {
         root,
@@ -269,6 +325,8 @@ export class BattleView {
     this.structureStates.clear();
     this.projectiles.length = 0;
     this.facing.clear();
+    this.characterSystem.releaseExcept(new Set());
+    this.characterSystem.setRenderStats({ visible: 0, animated: 0, fallback: 0, culled: 0 });
     this.mounted = false;
     this.sim = null;
     this.group.visible = false;
@@ -292,6 +350,7 @@ export class BattleView {
           break;
         case 'hit':
           this.burstAt('unitHit', event.x, event.z, 0.7);
+          this.characterSystem.get(event.unitId)?.playTransient('hit', 0.34);
           break;
         case 'heal':
           this.burstAt('spawn', event.toX, event.toZ, 0.9);
@@ -388,19 +447,34 @@ export class BattleView {
   renderUnits(alpha, camera) {
     for (const group of this.groups.values()) group.used = 0;
     let barCount = 0;
+    let culled = 0;
+    let animated = 0;
+    let fallbackCount = 0;
     const bars = { bg: this.barsBg, fill: this.barsFill };
     const barQuat = camera ? camera.quaternion : null;
+    const records = this._renderRecords;
+    records.length = 0;
+
+    if (camera) {
+      camera.updateMatrixWorld(true);
+      this._viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+      this._frustum.setFromProjectionMatrix(this._viewProjection);
+    }
 
     for (const unit of this.sim.units) {
       if (unit.removed) continue;
-      const key = `${unit.faction}:${unit.type}`;
-      const group = this.groups.get(key);
-      if (!group || group.used >= group.capacity) continue;
-
       const x = unit.prevX + (unit.x - unit.prevX) * alpha;
       const z = unit.prevZ + (unit.z - unit.prevZ) * alpha;
+      this._frustumPoint.set(x, 0.9, z);
+      if (camera && !this._frustum.containsPoint(this._frustumPoint)) {
+        culled += 1;
+        continue;
+      }
+
       const dx = unit.x - unit.prevX;
       const dz = unit.z - unit.prevZ;
+      if (dx || dz) this.facing.set(unit.id, Math.atan2(dx, dz));
+
       let scale = 1;
       let tint = 1;
       if (unit.state === 'down' || unit.state === 'retreat') {
@@ -409,36 +483,110 @@ export class BattleView {
         scale = unit.state === 'down' ? Math.max(0, 1 - progress) : 0.82 - progress * 0.1;
         tint = 0.72 + progress * 0.2;
       } else if (unit.state === 'attack') {
-        // ضربهٔ کوتاه: کمی به جلو خم می‌شود (بدون انیمیشن اسکلتی).
         scale = 1 + Math.max(0, Math.sin((unit.stateTicks % 12) / 12 * Math.PI)) * 0.03;
       }
       if (scale <= 0.02) continue;
 
-      if (dx || dz) {
-        const heading = Math.atan2(dx, dz);
-        this.facing.set(unit.id, heading);
+      const id = String(unit.id);
+      let record = this._renderRecordsById.get(id);
+      if (!record) {
+        record = { id };
+        this._renderRecordsById.set(id, record);
       }
-      this._euler.set(0, this.facing.get(unit.id) ?? 0, 0);
-      this._quat.setFromEuler(this._euler);
-      this._position.set(x, 0, z);
-      this._scale.setScalar(scale);
-      this._matrix.compose(this._position, this._quat, this._scale);
-      group.mesh.setMatrixAt(group.used, this._matrix);
-      this._color.setScalar(tint);
-      group.mesh.setColorAt(group.used, this._color);
-      group.used += 1;
+      record.unit = unit;
+      record.x = x;
+      record.z = z;
+      record.dx = dx;
+      record.dz = dz;
+      record.scale = scale;
+      record.tint = tint;
+      record.heading = this.facing.get(unit.id) ?? 0;
+      record.distanceSq = camera
+        ? camera.position.distanceToSquared(this._frustumPoint)
+        : 0;
+      record.profile = this._profileForUnit(unit.type);
+      record.rigged = false;
+      records.push(record);
+    }
 
-      // نوار جان بالای سر — با چرخش دوربین هم‌راستا می‌شود.
+    // Spend the animation budget on nearby, visible units; first select one
+    // representative per role/faction, then fill remaining slots by distance.
+    records.sort((a, b) => (a.distanceSq - b.distanceSq) || (a.unit.id - b.unit.id));
+    const selected = this._selectedCharacterIds;
+    selected.clear();
+    const diverse = this._preferredCharacterKeys;
+    diverse.clear();
+    const maxAnimated = this.characterSystem.maxAnimatedUnits;
+    const maxDistanceSq = this.characterSystem.maxAnimationDistance ** 2;
+    let chosen = 0;
+    for (const record of records) {
+      if (chosen >= maxAnimated) break;
+      if (!record.profile || record.distanceSq > maxDistanceSq) continue;
+      const preference = `${record.profile.modelId}:${record.unit.faction}`;
+      if (diverse.has(preference)) continue;
+      record.rigged = true;
+      selected.add(record.id);
+      diverse.add(preference);
+      chosen += 1;
+    }
+    if (chosen < maxAnimated) {
+      for (const record of records) {
+        if (chosen >= maxAnimated) break;
+        if (record.rigged || !record.profile || record.distanceSq > maxDistanceSq) continue;
+        record.rigged = true;
+        selected.add(record.id);
+        chosen += 1;
+      }
+    }
+    this.characterSystem.releaseExcept(selected);
+
+    for (const record of records) {
+      const unit = record.unit;
+      let isRigged = false;
+      if (record.rigged) {
+        const character = this.characterSystem.acquire(record.id, record.profile.id, unit.faction);
+        if (character) {
+          character.setTransform({
+            x: record.x,
+            y: 0,
+            z: record.z,
+            rotation: record.heading + (Number(this.characterSystem.registry.getModel(record.profile.modelId)?.yawOffset) || 0),
+            scale: record.scale,
+          });
+          character.setAnimation(this._animationForUnit(unit));
+          character.setVisible(character.ready);
+          isRigged = character.ready;
+          if (isRigged) animated += 1;
+        }
+      }
+
+      if (!isRigged) {
+        const key = `${unit.faction}:${unit.type}`;
+        const group = this.groups.get(key);
+        if (group && group.used < group.capacity) {
+          this._euler.set(0, record.heading, 0);
+          this._quat.setFromEuler(this._euler);
+          this._position.set(record.x, 0, record.z);
+          this._scale.setScalar(record.scale);
+          this._matrix.compose(this._position, this._quat, this._scale);
+          group.mesh.setMatrixAt(group.used, this._matrix);
+          this._color.setScalar(record.tint);
+          group.mesh.setColorAt(group.used, this._color);
+          group.used += 1;
+          fallbackCount += 1;
+        }
+      }
+
+      // Health bars remain instanced and only use visible units.
       if (barCount < 96 && unit.state !== 'down') {
         const ratio = Math.max(0, Math.min(1, unit.hp / unit.maxHp));
         const barY = 1.85;
-        this._euler.set(0, 0, 0);
         this._quat.copy(barQuat || IDENTITY_Q);
-        this._position.set(x - this.barWidth / 2, barY, z);
+        this._position.set(record.x - this.barWidth / 2, barY, record.z);
         this._scale.set(this.barWidth, 1, 1);
         this._matrix.compose(this._position, this._quat, this._scale);
         bars.bg.setMatrixAt(barCount, this._matrix);
-        this._position.set(x - this.barWidth / 2, barY, z - 0.01);
+        this._position.set(record.x - this.barWidth / 2, barY, record.z - 0.01);
         this._scale.set(this.barWidth * ratio, 1, 1);
         this._matrix.compose(this._position, this._quat, this._scale);
         bars.fill.setMatrixAt(barCount, this._matrix);
@@ -458,6 +606,18 @@ export class BattleView {
     bars.bg.instanceMatrix.needsUpdate = true;
     bars.fill.instanceMatrix.needsUpdate = true;
     if (bars.fill.instanceColor) bars.fill.instanceColor.needsUpdate = true;
+    this.characterSystem.setRenderStats({ visible: records.length, animated, fallback: fallbackCount, culled });
+  }
+
+  _animationForUnit(unit) {
+    if (unit.state === 'down') return 'death';
+    if (unit.state === 'retreat' || unit.state === 'move') return 'run';
+    if (unit.state === 'attack') {
+      const definition = this.unitDefs.get(unit.type);
+      if (unit.role === 'support' || definition?.kind === 'support') return 'support';
+      return definition?.projectile ? 'ranged' : 'melee';
+    }
+    return 'idle';
   }
 
   renderProjectiles(dt) {
@@ -543,6 +703,9 @@ export class BattleView {
 
   dispose() {
     this.unmount();
+    for (const off of this._eventUnsubscribers) off();
+    this._eventUnsubscribers.length = 0;
+    this.characterSystem.dispose();
     this.unitMaterial.dispose();
     this.parent.remove(this.group);
   }
