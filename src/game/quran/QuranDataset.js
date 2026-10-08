@@ -20,8 +20,8 @@ export const PLACEHOLDER_LABEL = 'نمونه — جایگزین شود';
 export const REVIEW_PENDING_LABEL = 'در انتظار بازبینی';
 export const PLACEHOLDER_TOKEN = 'نمونه';
 
-/** بازهٔ اعراب عربی: U+064B–U+0652 (تنوین/فتحه/ضمه/کسره/شده/سکون) + U+0670 + U+06D6–U+06ED. */
-const DIACRITICS_RE = /[\u064B-\u0652\u0670\u06D6-\u06ED]/;
+/** بازهٔ اعراب عربی: U+064B–U+065F (تنوین/فتحه/ضمه/کسره/شده/سکون/مدّه/همزه) + U+0670 + U+06D6–U+06ED. */
+const DIACRITICS_RE = /[\u064B-\u065F\u0670\u06D6-\u06ED]/;
 
 /** یک آیه وقتی «متن عثمانی با اعراب کامل» است که اعراب داشته باشد. */
 export function hasDiacritics(text) {
@@ -39,12 +39,13 @@ export function parseVerseId(id) {
   return { surahIndex: Number(match[1]), ayahIndex: Number(match[2]) };
 }
 
-/** توکن‌های متنی یک آیه (برای مینی‌گیم‌ها). */
+/** توکن‌های متنی یک آیه (برای مینی‌گیم‌ها). نشان تزئینی ۞ (U+06DE) توکن نیست. */
 export function tokenize(text) {
   return String(text || '')
     .split(/\s+/)
     .map((token) => token.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((token) => token !== '۞');
 }
 
 function safeWebUrl(value) {
@@ -183,6 +184,7 @@ export function normalizeDataset(raw, { origin = 'bundled' } = {}) {
     translator: rawMeta.translator || raw.translator || null,
     notice: rawMeta.notice || null,
     replacement: rawMeta.replacement || null,
+    review: rawMeta.review && typeof rawMeta.review === 'object' ? rawMeta.review : null,
     audio: rawMeta.audio || null,
     fieldNotes: rawMeta.fieldNotes || null,
     label: rawMeta.label || (rawMeta.placeholder ? PLACEHOLDER_LABEL : null),

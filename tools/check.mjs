@@ -995,17 +995,34 @@ test('quran: the bundled sample carries no Quranic text and is fully labelled', 
   assert(badges.includes(REVIEW_PENDING_LABEL), 'review-pending badge (acceptance: unreviewed verses are flagged)');
 });
 
-test('phase 9 provenance: every active Tanzil-attributed verse is visibly pending and sourced', () => {
+test('phase 9 provenance: the active dataset is either fully pending or reviewed with a verifiable record', () => {
   assert(publicQuran.meta.datasetId === 'tanzil-uthmani-1.1', 'the active default has an explicit dataset identity');
-  assert(publicQuran.meta.reviewed === false && publicQuran.meta.status === 'external-unreviewed', 'default dataset never claims project review');
-  assert(publicQuran.verseList.length > 6000 && publicQuran.stats.reviewedVerseCount === 0, 'the complete active text remains pending review');
+  const reviewed = publicQuran.meta.reviewed === true;
+  assert(reviewed || publicQuran.meta.status === 'external-unreviewed', 'an unreviewed default keeps the external-unreviewed status');
+  assert(!reviewed || publicQuran.meta.status === 'reviewed', 'a reviewed default carries the reviewed status');
+  // نگهبان: ادعای بازبینی فقط با رکورد قابل‌ردیابی — بازبین، تاریخ و منابع دارای checksum.
+  assert(!reviewed ||
+    (publicQuran.meta.review?.reviewer && publicQuran.meta.review?.date &&
+      Array.isArray(publicQuran.meta.review?.sources) && publicQuran.meta.review.sources.length > 0 &&
+      publicQuran.meta.review.sources.every((s) => s.sha256 && s.repo)),
+    'a review claim always ships with reviewer, date and checksummed sources');
+  assert(publicQuran.verseList.length === 6236, 'the complete active text is present');
+  assert(publicQuran.stats.reviewedVerseCount === (reviewed ? publicQuran.verseList.length : 0),
+    'the review state is consistent across every verse (never mixed)');
   assert(publicQuran.surahs.length === 114 && publicQuran.surahs.every((surah) => surah.namePlaceholder), 'all generated surah names are marked as placeholders');
   for (const verse of publicQuran.verseList) {
-    assert(!verse.reviewed && !verse.placeholder, `${verse.id} is explicitly external and unreviewed, not a fabricated placeholder`);
+    assert(verse.reviewed === reviewed && !verse.placeholder,
+      `${verse.id} review flag matches the dataset and is never a fabricated placeholder`);
     assert(verse.source.datasetId === publicQuran.meta.datasetId && verse.source.url && verse.source.license,
       `${verse.id} carries dataset provenance and license`);
-    assert(verseBadges(verse).some((badge) => badge.label === REVIEW_PENDING_LABEL),
-      `${verse.id} has a visible review-pending label`);
+    if (reviewed) {
+      assert(verseBadges(verse).some((badge) => badge.kind === 'reviewed') &&
+        !verseBadges(verse).some((badge) => badge.label === REVIEW_PENDING_LABEL),
+        `${verse.id} shows the reviewed badge without any pending label`);
+    } else {
+      assert(verseBadges(verse).some((badge) => badge.label === REVIEW_PENDING_LABEL),
+        `${verse.id} has a visible review-pending label`);
+    }
   }
 });
 
