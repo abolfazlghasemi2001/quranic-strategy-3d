@@ -1686,7 +1686,7 @@ html.is-reduced-motion *::after {
    rail — a vertical rail on a short landscape screen looked like the
    buttons had “moved to the wrong corner”. Compact the status bar instead. */
 @media (orientation: landscape) and (max-height: 560px) {
-  :root { --hud-touch: 44px; }
+  :root { --hud-touch: 48px; }
   .game-hud {
     flex-flow: column nowrap;
     gap: 4px;
