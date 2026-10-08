@@ -436,7 +436,7 @@ export class BattleSystem {
     const rewards = {};
     for (const [resource, amount] of Object.entries(rewardTable)) {
       if (resource === 'note' || !(amount > 0)) continue;
-      const granted = this.economy.grant(resource, amount);
+      const granted = this.economy.grant(resource, amount, { source: 'battle' });
       rewards[resource] = granted.moved;
     }
     if (Object.keys(rewards).length) {

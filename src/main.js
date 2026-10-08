@@ -33,6 +33,7 @@ import { MissionZone } from './world/MissionZone.js';
 import { MissionPanel } from './ui/campaign/MissionPanel.js';
 import { MetaPanel } from './ui/MetaPanel.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
+import { JamaatPanel } from './ui/social/JamaatPanel.js';
 import { FTUEGuide } from './ui/FTUEGuide.js';
 import { LoadingScreen, ErrorOverlay } from './ui/LoadingScreen.js';
 
@@ -247,6 +248,15 @@ async function boot() {
     onResume: () => engine.resume('meta-panel'),
   });
 
+  // Phase 8: جماعت — chat, mutual help and the weekly cooperative event.
+  const jamaatPanel = new JamaatPanel({
+    config,
+    bus,
+    social: game.social,
+    game,
+    parent: document.body,
+  });
+
   const hud = new HUD({
     config,
     engine,
@@ -259,6 +269,10 @@ async function boot() {
     game,
     learning: game.learning,
     campaign: game.campaign,
+    onOpenSocial: () => {
+      buildings.cancelPlacement();
+      jamaatPanel.show();
+    },
     onOpenMissions: () => {
       buildings.cancelPlacement();
       missionPanel.show();
@@ -300,7 +314,7 @@ async function boot() {
     buildings,
     rig,
     parent: document.body,
-    isModalOpen: () => [settingsPanel, metaPanel, lessonHub, quranPanel, missionPanel, battlePanel, barracksPanel].some(modalIsVisible),
+    isModalOpen: () => [settingsPanel, metaPanel, lessonHub, quranPanel, missionPanel, battlePanel, barracksPanel, jamaatPanel].some(modalIsVisible),
   });
   bus.on(EVENTS.SETTINGS_CHANGED, (settings) => {
     engine.setRuntimeSettings(settings);
@@ -351,6 +365,7 @@ async function boot() {
   engine.addUpdatable(world, 10);
   engine.addUpdatable(rig, 20);
   engine.addUpdatable(game, 30);
+  engine.addUpdatable(game.social, 31);
   engine.addUpdatable(buildings, 35);
   engine.addUpdatable(lessonHub, 95);
   engine.addUpdatable(battleView, 40);
@@ -358,6 +373,7 @@ async function boot() {
   engine.addUpdatable(missionPanel, 98);
   engine.addUpdatable(battlePanel, 96);
   engine.addUpdatable(barracksPanel, 97);
+  engine.addUpdatable(jamaatPanel, 99);
   engine.addUpdatable(hud, 100);
   engine.addUpdatable(ftueGuide, 105);
   engine.addUpdatable(devPanel, 110);
@@ -372,7 +388,14 @@ async function boot() {
     lessonHub, datasetLoader, quran, saveSystem, saveNow,
     battleView, battlePanel, barracksPanel, missionZone, missionPanel,
     metaSystem: game.meta, metaPanel, settingsPanel, ftueGuide, soundManager,
+    social: game.social, jamaatPanel,
   };
+
+  // Phase 8: ?social=ws://… auto-links the city to the jamaat server.
+  if (config.socialUrl) {
+    console.info(`[شهر نور] اتصال خودکار به سرور جماعت: ${config.socialUrl}`);
+    game.social.connect({ url: config.socialUrl }).catch(() => {});
+  }
 
   window.addEventListener('pagehide', (event) => {
     if (event.persisted) return; // keep everything for the back/forward cache
@@ -383,6 +406,7 @@ async function boot() {
     ftueGuide.dispose();
     settingsPanel.dispose();
     metaPanel.dispose();
+    jamaatPanel.dispose();
     soundManager.dispose();
     hud.dispose();
     quranPanel.dispose();

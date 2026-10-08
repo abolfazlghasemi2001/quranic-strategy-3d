@@ -199,7 +199,7 @@ export class LearningSystem {
 
     // ۳) پاداش‌ها (اختیاری، فقط تسریع‌کننده)
     const rewards = this._computeRewards(report);
-    const granted = this._grantRewards(rewards, now);
+    const granted = this._grantRewards(rewards, now, report.kind === 'review' ? 'review' : 'lesson');
 
     // ۴) کارنامه
     this.progress.history.unshift({
@@ -257,18 +257,18 @@ export class LearningSystem {
   /**
    * اعمال پاداش: منابع (با احترام به ظرفیت انبار)، تسریع تایمر بنّا، و استخر تسریع.
    */
-  _grantRewards(rewards, now) {
+  _grantRewards(rewards, now, source = 'lesson') {
     const respect = this.learning.rewards.respectStorageCapacity !== false;
     const granted = { nur: 0, hekmat: 0, overflow: { nur: 0, hekmat: 0 }, speedup: { appliedSeconds: 0, pooledSeconds: 0 }, at: now };
 
     if (rewards.nur > 0) {
-      const result = this.economy.grant('nur', rewards.nur, { clampToCapacity: respect });
+      const result = this.economy.grant('nur', rewards.nur, { clampToCapacity: respect, source });
       granted.nur = result.moved;
       granted.overflow.nur = result.overflow;
       this.progress.totals.nurEarned += result.moved;
     }
     if (rewards.hekmat > 0) {
-      const result = this.economy.grant('hekmat', rewards.hekmat, { clampToCapacity: respect });
+      const result = this.economy.grant('hekmat', rewards.hekmat, { clampToCapacity: respect, source });
       granted.hekmat = result.moved;
       granted.overflow.hekmat = result.overflow;
       this.progress.totals.hekmatEarned += result.moved;
@@ -288,8 +288,12 @@ export class LearningSystem {
     const cap = Number(this.learning.rewards.speedupPoolMaxSeconds) || 300;
     let remainingMs = Math.max(0, Math.round(seconds * 1000));
     let appliedMs = 0;
+    const serverOwned = this.queue?.online === true;
     const jobs = (this.queue?.jobs || [])
-      .filter((job) => job.status === 'active' && Number.isFinite(job.endsAt))
+      // While online, server-owned timers only shrink through validated help
+      // or speedup — lesson seconds pool instead of touching them directly.
+      .filter((job) => job.status === 'active' && Number.isFinite(job.endsAt)
+        && !(serverOwned && typeof job.id === 'string' && job.id.startsWith('srv-')))
       .sort((a, b) => a.endsAt - b.endsAt);
     for (const job of jobs) {
       if (remainingMs <= 0) break;

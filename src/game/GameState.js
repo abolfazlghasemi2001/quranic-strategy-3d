@@ -3,6 +3,7 @@ import { createLearningState, normalizeLearningState } from './quran/LearningSta
 import { createCampaignState, normalizeCampaignState } from './campaign/MissionState.js';
 import { createArmyState, createBattleState, normalizeArmyState, normalizeBattleState } from './barracks/ArmyState.js';
 import { createMetaState, normalizeMetaState } from './meta/MetaState.js';
+import { createSocialPrefs, normalizeSocialPrefs } from './social/SocialState.js';
 
 /**
  * GameState — pure data model for the fixed-timestep logic layer.
@@ -10,7 +11,7 @@ import { createMetaState, normalizeMetaState } from './meta/MetaState.js';
  */
 export class GameState {
   constructor(config) {
-    this.version = 7; // logic schema (save schema handled by SaveSystem)
+    this.version = 8; // logic schema (save schema handled by SaveSystem)
     this.tick = 0;
     this.elapsed = 0;
     this.paused = false;
@@ -41,6 +42,9 @@ export class GameState {
 
     // --- meta layer (phase 7): XP, achievements, daily task, FTUE + settings ---
     this.meta = createMetaState({ qualityTier: config?.quality?.tier || 'medium' });
+
+    // --- social layer (phase 8): multiplayer preferences ONLY (no ledger) ---
+    this.social = createSocialPrefs();
 
     this.entities = new Map();
     this.entitySeq = 1;
@@ -121,6 +125,7 @@ export class GameState {
       army: JSON.parse(JSON.stringify(this.army)),
       battles: JSON.parse(JSON.stringify(this.battles)),
       meta: JSON.parse(JSON.stringify(this.meta)),
+      social: JSON.parse(JSON.stringify(this.social)),
       nextEntityId: this.nextEntityId,
       nextJobId: this.nextJobId,
       entitySeq: this.entitySeq,
@@ -168,6 +173,7 @@ export class GameState {
       qualityTier: this.meta?.settings?.qualityTier || 'medium',
       legacySave: !payload.meta && Array.isArray(payload.entities) && payload.entities.length > 0,
     });
+    this.social = normalizeSocialPrefs(payload.social);
     this.entities = new Map();
     this.entitySeq = payload.entitySeq ?? 1;
     for (const data of payload.entities || []) {

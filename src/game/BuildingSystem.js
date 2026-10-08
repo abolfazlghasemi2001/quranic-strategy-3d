@@ -24,6 +24,9 @@ export class BuildingSystem {
    */
   constructor({ config, world, rig, input, bus, state, economy, queue, game, engine = null, persist }) {
     Object.assign(this, { config, world, rig, input, bus, state, economy, queue, game, engine });
+    if (game) game.buildings = this; // SocialSystem reaches rollback through game.buildings
+    /** temp job id -> { kind, entityId, cost } for placements awaiting server ack */
+    this._onlinePending = new Map();
     this.persist = persist || null;
     this.definitions = buildingData.buildings;
     this.byId = new Map(this.definitions.map((d) => [d.id, d]));
@@ -300,6 +303,8 @@ export class BuildingSystem {
       this.bus.emit(EVENTS.UI_TOAST, this.config.t('economy.notEnough', 'منابع کافی نیست.'));
       return false;
     }
+    // Phase 8: online placements are validated by the server (atomic intent).
+    if (this.isOnline()) return this._confirmPlacementOnline(p, def, col, row, cost);
     this.economy.spend(cost);
 
     const entity = this.state.createEntity({
@@ -445,6 +450,8 @@ export class BuildingSystem {
       this.bus.emit(EVENTS.UI_TOAST, this.config.t('economy.notEnough', 'منابع کافی نیست.'));
       return false;
     }
+    // Phase 8: online upgrades are validated by the server (atomic intent).
+    if (this.isOnline()) return this._upgradeSelectedOnline(entity, nextLevel, cost);
     this.economy.spend(cost);
     const durationMs = this.economy.secondsOf(entity.type, nextLevel) * 1000;
     const result = this.queue.enqueue(
@@ -465,6 +472,17 @@ export class BuildingSystem {
 
   /** Speed up an active job with gohar (the only in-game currency spend path). */
   speedup(jobId) {
+    if (this.isOnline()) {
+      const job = this.queue.jobs.find((j) => j.id === jobId);
+      if (job?.hold || (job && this._onlinePending.has(job.id))) {
+        this.bus.emit(EVENTS.UI_TOAST, this.config.t('social.pending', 'در انتظار تأیید سرور…'));
+        return false;
+      }
+      if (job && typeof job.id === 'string' && job.id.startsWith('srv-')) {
+        return this._speedupOnline(job);
+      }
+      // Local-only jobs (mission timers) keep the local path even when online.
+    }
     const result = this.queue.speedup(jobId, Date.now());
     if (result.ok) {
       this.bus.emit(EVENTS.UI_TOAST, `${this.config.t('economy.speedup', 'سرعت‌بخشی')}: −${formatFa(result.cost)} 💎`);
@@ -475,6 +493,227 @@ export class BuildingSystem {
     if (result.reason === 'gohar') this.bus.emit(EVENTS.UI_TOAST, this.config.t('economy.goharShort', 'گوهر کافی نیست.'));
     else if (result.reason === 'not-active') this.bus.emit(EVENTS.UI_TOAST, this.config.t('economy.queued', 'در انتظار بنّا'));
     return false;
+  }
+
+  /* --------------------------------------------- online (server-validated) */
+
+  isOnline() {
+    return !!this.game?.social?.isOnline();
+  }
+
+  /**
+   * Optimistic placement: the scaffold shows instantly, the server validates
+   * cost + slot atomically, and a rejection rolls everything back with a
+   * full refund. No cost or duration is sent — the server recomputes both.
+   */
+  _confirmPlacementOnline(p, def, col, row, cost) {
+    const social = this.game.social;
+    const applied = this.economy.suppressMirror(() => {
+      if (!this.economy.spend(cost)) return null;
+      const entity = this.state.createEntity({
+        type: def.id,
+        name: def.name,
+        col,
+        row,
+        size: [...def.size],
+        level: 1,
+        status: 'building',
+        pending: 0,
+        lastAccrualAt: null,
+      });
+      this._ensureHealth(entity);
+      const scaffold = this.factory.createScaffold(def);
+      this._placeRoot(scaffold, entity, 1);
+      entity.root = scaffold;
+      this.group.add(scaffold);
+      this.engine?.applyRuntimeSettingsTo(scaffold);
+      for (let r = row; r < row + def.size[1]; r += 1) {
+        for (let c = col; c < col + def.size[0]; c += 1) this.occupancy.set(`${c}:${r}`, entity.id);
+      }
+      const durationMs = this.economy.secondsOf(def.id, 1) * 1000;
+      const result = this.queue.enqueue(
+        { kind: 'build', entityId: entity.id, type: def.id, targetLevel: 1, durationMs },
+        Date.now(),
+      );
+      if (!result.ok) {
+        for (const [key, value] of Object.entries(cost || {})) this.economy.resources[key] += value;
+        this._removeEntity(entity);
+        return { queued: false };
+      }
+      // Parked until the server acknowledges (the local tick never runs it).
+      result.job.hold = true;
+      result.job.status = 'queued';
+      result.job.startedAt = null;
+      result.job.endsAt = null;
+      return { queued: true, entity, job: result.job };
+    });
+    if (!applied || !applied.queued) {
+      this.bus.emit(EVENTS.UI_TOAST, this.config.t('economy.queueFull', 'صف ساخت پر است'));
+      this._afterEconomyChange();
+      return false;
+    }
+    const { entity, job } = applied;
+    this._onlinePending.set(job.id, { kind: 'build', entityId: entity.id, cost: { ...cost } });
+    this.select(entity);
+    this.bus.emit(EVENTS.UI_TOAST, this.config.t('social.pending', 'در انتظار تأیید سرور…'));
+
+    if (def.id === 'wall' && this.economy.canAfford(cost) && this.queue.jobs.length < this.queue.maxJobs) {
+      this.group.remove(p.preview);
+      this._disposePreview(p.preview);
+      this.placing = null;
+      this.startPlacement('wall');
+      this._movePreview(Math.min(col + 1, this.config.cols - 1), row);
+    } else {
+      this.cancelPlacement();
+    }
+    this._afterEconomyChange();
+
+    social.request('build:enqueue', { kind: 'build', entityId: entity.id, defId: def.id, level: 1 }).then(
+      (answer) => {
+        if (!this._onlinePending.has(job.id)) return; // rolled back meanwhile
+        if (answer?.ok && answer.job) {
+          this._onlinePending.delete(job.id);
+          Object.assign(job, {
+            id: answer.job.id,
+            status: answer.job.status,
+            startedAt: answer.job.startedAt,
+            endsAt: answer.job.endsAt,
+            durationMs: answer.job.durationMs,
+            hold: false,
+          });
+          social.adoptLedger(answer.ledger, answer.serverNow);
+          this.bus.emit(EVENTS.BUILDING_QUEUED, { job, entity });
+          this.bus.emit(EVENTS.UI_TOAST, `${def.name} در صف ساخت قرار گرفت.`);
+          this.game.markQueueDirty();
+          this.game.emitQueue();
+          this._afterEconomyChange();
+        } else {
+          this.rollbackOnlineJob(job.id, answer?.error || 'invalid');
+        }
+      },
+      () => this.rollbackOnlineJob(job.id, 'timeout'),
+    );
+    return true;
+  }
+
+  _upgradeSelectedOnline(entity, nextLevel, cost) {
+    const social = this.game.social;
+    const applied = this.economy.suppressMirror(() => {
+      if (!this.economy.spend(cost)) return null;
+      const durationMs = this.economy.secondsOf(entity.type, nextLevel) * 1000;
+      const result = this.queue.enqueue(
+        { kind: 'upgrade', entityId: entity.id, type: entity.type, targetLevel: nextLevel, durationMs },
+        Date.now(),
+      );
+      if (!result.ok) {
+        for (const [key, value] of Object.entries(cost || {})) this.economy.resources[key] += value;
+        return { queued: false };
+      }
+      result.job.hold = true;
+      result.job.status = 'queued';
+      result.job.startedAt = null;
+      result.job.endsAt = null;
+      return { queued: true, job: result.job };
+    });
+    if (!applied || !applied.queued) {
+      this.bus.emit(EVENTS.UI_TOAST, this.config.t('economy.queueFull', 'صف ساخت پر است'));
+      this._afterEconomyChange();
+      return false;
+    }
+    const { job } = applied;
+    this._onlinePending.set(job.id, { kind: 'upgrade', entityId: entity.id, cost: { ...cost } });
+    this.bus.emit(EVENTS.UI_TOAST, this.config.t('social.pending', 'در انتظار تأیید سرور…'));
+    this.select(entity);
+    this._afterEconomyChange();
+
+    social.request('build:enqueue', {
+      kind: 'upgrade',
+      entityId: entity.id,
+      defId: entity.type,
+      level: nextLevel,
+      fromLevel: entity.level,
+    }).then(
+      (answer) => {
+        if (!this._onlinePending.has(job.id)) return;
+        if (answer?.ok && answer.job) {
+          this._onlinePending.delete(job.id);
+          Object.assign(job, {
+            id: answer.job.id,
+            status: answer.job.status,
+            startedAt: answer.job.startedAt,
+            endsAt: answer.job.endsAt,
+            durationMs: answer.job.durationMs,
+            hold: false,
+          });
+          social.adoptLedger(answer.ledger, answer.serverNow);
+          this.bus.emit(EVENTS.UI_TOAST, `${entity.name || this.byId.get(entity.type)?.name} — ارتقا به سطح ${formatFa(nextLevel)} در صف قرار گرفت.`);
+          this.game.markQueueDirty();
+          this.game.emitQueue();
+          this._afterEconomyChange();
+        } else {
+          this.rollbackOnlineJob(job.id, answer?.error || 'invalid');
+        }
+      },
+      () => this.rollbackOnlineJob(job.id, 'timeout'),
+    );
+    return true;
+  }
+
+  _speedupOnline(job) {
+    const social = this.game.social;
+    social.request('build:speedup', { jobId: job.id }).then(
+      (answer) => {
+        if (answer?.ok) {
+          social.adoptLedger(answer.ledger, answer.serverNow);
+          const index = this.queue.jobs.indexOf(job);
+          if (index >= 0) this.queue.jobs.splice(index, 1);
+          this.game._finishJob(job, Date.now());
+          this.bus.emit(EVENTS.UI_TOAST, `${this.config.t('economy.speedup', 'سرعت‌بخشی')}: −${formatFa(answer.cost)} 💎`);
+          this._afterEconomyChange();
+          if (this.selected) this.select(this.selected);
+        } else {
+          this.bus.emit(EVENTS.UI_TOAST, social.errorText(answer?.error));
+        }
+      },
+      () => this.bus.emit(EVENTS.UI_TOAST, social.errorText('timeout')),
+    );
+    return true;
+  }
+
+  /** Remove a never-acknowledged placement and refund it in full. */
+  rollbackOnlineJob(jobId, errorCode, { silent = false } = {}) {
+    const pending = this._onlinePending.get(jobId);
+    const job = this.queue.jobs.find((item) => item.id === jobId);
+    this._onlinePending.delete(jobId);
+    if (job) this.queue.jobs.splice(this.queue.jobs.indexOf(job), 1);
+    if (pending) {
+      this.economy.suppressMirror(() => {
+        for (const [key, value] of Object.entries(pending.cost || {})) this.economy.resources[key] += value;
+      });
+      if (pending.kind === 'build') {
+        const entity = this.state.getEntity(pending.entityId);
+        if (entity) {
+          if (this.selected?.id === entity.id) this.clearSelection();
+          this._removeEntity(entity);
+        }
+      }
+    }
+    if (!silent) {
+      const social = this.game?.social;
+      this.bus.emit(EVENTS.UI_TOAST, social ? social.errorText(errorCode) : this.config.t('economy.notEnough', 'منابع کافی نیست.'));
+    }
+    this.game.markEconomyDirty();
+    this.game.markQueueDirty();
+    this.game.emitState(Date.now(), false);
+    this.game.emitQueue();
+  }
+
+  /** Drop every unacknowledged placement (disconnect path) with one toast. */
+  rollbackAllOnlinePending() {
+    const ids = [...this._onlinePending.keys()];
+    if (ids.length === 0) return;
+    for (const jobId of ids) this.rollbackOnlineJob(jobId, 'offline', { silent: true });
+    this.bus.emit(EVENTS.UI_TOAST, this.config.t('social.rolledBack', 'ساخت‌های تأییدنشده لغو و هزینه برگشت.'));
   }
 
   /* ---------------------------------------------------------- job finished */

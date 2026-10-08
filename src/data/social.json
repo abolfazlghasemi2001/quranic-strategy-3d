@@ -1,0 +1,96 @@
+{
+  "server": {
+    "port": 8081,
+    "path": "/social-ws",
+    "jamaatId": "jamaat-nur",
+    "jamaatName": "جماعت نور",
+    "maxMembers": 50,
+    "presenceTimeoutMs": 60000,
+    "completeGraceMs": 1500,
+    "tickMs": 5000,
+    "clientVersion": "0.3.0",
+    "note": "سرور مرجع: منابع و تایمرها فقط در سرور معتبرند. ساعت سرور تنها مرجع زمان است؛ هیچ عددی از کلاینت (منابع، endsAt) پذیرفته نمی‌شود."
+  },
+  "ledger": {
+    "maxBuildingsAdopted": 60,
+    "linkSeedBudgetHours": 8,
+    "harvestSlack": 1.0,
+    "maxCostTotal": 1000000,
+    "allowedGrantSources": ["lesson", "review", "mission", "battle", "town", "refund", "event", "daily", "other"],
+    "grantCaps": {
+      "lesson": 200,
+      "review": 60,
+      "mission": 1500,
+      "battle": 500,
+      "town": 50,
+      "refund": 5000,
+      "event": 500,
+      "daily": 100,
+      "other": 100
+    },
+    "note": "بودجهٔ برداشت هر منبع فقط از روی نرخ تولید ساختمان‌های تأییدشده پر می‌شود؛ برداشتِ بیشتر، سقف می‌خورد."
+  },
+  "help": {
+    "seconds": 60,
+    "maxPerJob": 5,
+    "maxReductionFrac": 0.5,
+    "minRemainingMs": 5000,
+    "giverCooldownMs": 30000,
+    "note": "کمک متقابل در ساخت: هر کمک ۶۰ ثانیه از تایمر کم می‌کند؛ بدون غارت و بدون از دست دادن منابع."
+  },
+  "chat": {
+    "maxLength": 280,
+    "history": 100,
+    "windowMs": 30000,
+    "maxPerWindow": 5,
+    "presetWindowMs": 60000,
+    "maxPresetPerWindow": 12,
+    "mask": "⁂",
+    "profanity": ["کیر", "کص", "کون", "جنده", "فاحشه", "حرومزاده", "حرمزاده", "بیناموس", "کسکش", "قحبه"],
+    "note": "فهرست آغازین واژه‌های نامناسب برای فیلتر چت؛ نمونه است و باید با بازبینی ناظر انسانی کامل شود. متن چت فقط در حافظه نگه‌داری می‌شود و ذخیرهٔ دائم ندارد."
+  },
+  "quickChat": [
+    { "id": "salam", "text": "سلام! 👋" },
+    { "id": "help-me", "text": "کمکم می‌کنی؟ 🙏" },
+    { "id": "thanks", "text": "ممنون! 🌟" },
+    { "id": "bravo", "text": "آفرین! 👏" },
+    { "id": "event", "text": "برای رویداد هفتگی کمک کنید 🤝" },
+    { "id": "goodluck", "text": "موفق باشی! 🍀" }
+  ],
+  "event": {
+    "title": "کاروان نور",
+    "description": "هدف مشترک هفتگی جماعت: با اهدای رزق، نور و حکمت کاروان را به مقصد برسانید. رقابت فقط دوستانه است؛ بدون غارت و بدون از دست دادن منابع.",
+    "goal": 1000,
+    "weights": { "rizq": 1, "nur": 2, "hekmat": 3 },
+    "rewardGohar": 8,
+    "note": "با کامل‌شدن هدف، همهٔ هم‌سهم‌ها پاداش یکسان می‌گیرند. هفتهٔ میلادی (UTC) مبنای دوره است."
+  },
+  "reportReasons": [
+    { "id": "spam", "text": "هرزنگاری" },
+    { "id": "insult", "text": "توهین یا فحاشی" },
+    { "id": "cheat", "text": "تقلب" },
+    { "id": "other", "text": "دیگر موارد نامناسب" }
+  ],
+  "rate": {
+    "globalPerMinute": 120,
+    "helloPerMinute": 10,
+    "syncPerMinute": 10,
+    "pullPerMinute": 20,
+    "pingPerMinute": 60,
+    "enqueuePerMinute": 10,
+    "completePerMinute": 30,
+    "harvestPerMinute": 20,
+    "spendPerMinute": 60,
+    "grantPerMinute": 60,
+    "donatePerMinute": 20,
+    "helpGivePerMinute": 6,
+    "reportPerHour": 5
+  },
+  "privacy": {
+    "minimalData": true,
+    "storedFields": ["token", "displayName", "isChild", "resources", "jobs", "buildings", "contributions", "reports"],
+    "chatPersisted": false,
+    "childFreeChat": false,
+    "note": "حداقل داده: فقط نام نمایشی (بدون اطلاعات شخصی)، پرچم کودک، لجر بازی و گزارش‌ها. چت آزاد برای حساب کودک بسته است و فقط پیام آماده مجاز است."
+  }
+}

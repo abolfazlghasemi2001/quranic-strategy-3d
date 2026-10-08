@@ -72,6 +72,11 @@ import { wordMatchPairsFor, tokensPool } from '../src/game/quran/content.js';
 import { AyahCompletionGame } from '../src/game/quran/minigames/AyahCompletion.js';
 import { WordMatchGame } from '../src/game/quran/minigames/WordMatch.js';
 import { AyahOrderGame } from '../src/game/quran/minigames/AyahOrder.js';
+import { GameServer } from '../server/src/server.js';
+import { connectWs } from '../server/src/wsClient.js';
+import { RateLimiter } from '../server/src/rateLimit.js';
+import { filterChat } from '../server/src/chatFilter.js';
+import { issueToken, sanitizeDisplayName } from '../server/src/auth.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
@@ -87,6 +92,7 @@ const balanceData = readJson('src/data/balance.json');
 const buildingsData = readJson('src/data/buildings.json');
 const metaData = readJson('src/data/meta.json');
 const ftueData = readJson('src/data/ftue.json');
+const socialData = readJson('src/data/social.json');
 
 const WORLD_WIDTH = terrain.grid.cols * terrain.tileSize;
 const WORLD_DEPTH = terrain.grid.rows * terrain.tileSize;
@@ -2600,10 +2606,334 @@ test('phase 7 daily + settings: unfinished tasks and preferences persist across 
   metaAgain.dispose();
 });
 
+/* ------------------------------------------------- phase 8: social (جماعت) */
+
+test('phase 8 chat filter: masks blocked words incl. Arabic variants and stretching', () => {
+  const wordlist = socialData.chat.profanity;
+  assert(Array.isArray(wordlist) && wordlist.length >= 5, 'starter wordlist present in social.json');
+  const mask = socialData.chat.mask || '⁂';
+  const first = wordlist[0];
+  let out = filterChat(`سلام ${first} خداحافظ`, { wordlist, mask, maxLength: 280 });
+  assert(out.blocked && out.hits === 1, 'blocked word detected');
+  assert(!out.text.includes(first) && out.text.includes(mask), `word masked: ${out.text}`);
+  const variant = first.replace(/ی/g, 'ي').replace(/ک/g, 'ك');
+  out = filterChat(variant, { wordlist, mask, maxLength: 280 });
+  assert(out.blocked, `arabic-script variant masked (${variant})`);
+  out = filterChat(first.split('').join('ـ'), { wordlist, mask, maxLength: 280 });
+  assert(out.blocked, 'tatweel-stretched word masked');
+  out = filterChat('سلام! امروز شهر زیباست.', { wordlist, mask, maxLength: 280 });
+  assert(!out.blocked && out.text === 'سلام! امروز شهر زیباست.', 'clean text untouched');
+  assert(filterChat('   ', { wordlist, mask }).text === '', 'blank collapses to empty');
+  assert(filterChat('x'.repeat(500), { wordlist: [], mask, maxLength: 10 }).text.length === 10, 'length capped');
+});
+
+test('phase 8 rate limit: sliding window blocks bursts then refills', () => {
+  let now = 1_000_000;
+  const limiter = new RateLimiter({ now: () => now });
+  const rule = { windowMs: 1000, max: 3 };
+  assert(limiter.check('k', rule).ok, '1st passes');
+  assert(limiter.check('k', rule).ok, '2nd passes');
+  assert(limiter.check('k', rule).ok, '3rd passes');
+  const blocked = limiter.check('k', rule);
+  assert(!blocked.ok && blocked.retryAfterMs > 0, '4th blocked with retryAfterMs');
+  now += 1001;
+  assert(limiter.check('k', rule).ok, 'window refills over time');
+  assert(limiter.sweep(1000) >= 0, 'sweep runs without error');
+});
+
+test('phase 8 auth: tokens unique, display names sanitised, privacy minimal', () => {
+  const tokens = new Set([issueToken(), issueToken(), issueToken()]);
+  assert(tokens.size === 3 && [...tokens][0].length >= 32, 'unguessable unique tokens');
+  assert(sanitizeDisplayName('  نگهبان   نور  ') === 'نگهبان نور', 'whitespace collapsed');
+  assert(sanitizeDisplayName('a') === null, 'too-short name rejected');
+  assert(sanitizeDisplayName('x'.repeat(50)).length === 16, 'name truncated to 16 chars');
+  assert(sanitizeDisplayName('ab\ncd') === 'abcd', 'control characters stripped');
+  assert(sanitizeDisplayName(null) === null, 'non-string rejected');
+  const stored = socialData.privacy.storedFields.join(' ');
+  assert(!/email|phone|device|age|location/i.test(stored), 'no personal data in the stored field list');
+  assert(socialData.privacy.chatPersisted === false, 'chat is never persisted');
+  assert(socialData.privacy.childFreeChat === false, 'child accounts get no free chat');
+});
+
+/** Wrap a WsTestClient with id-matched rpc() plus a push queue. */
+function wrapSocial(ws) {
+  let seq = 0;
+  const pending = new Map();
+  const pushes = [];
+  ws.onMessage = (text) => {
+    const message = JSON.parse(text);
+    if (message && message.id != null && pending.has(message.id)) {
+      pending.get(message.id)(message);
+      pending.delete(message.id);
+    } else {
+      pushes.push(message);
+    }
+  };
+  return {
+    ws,
+    pushes,
+    rpc(type, payload = {}) {
+      const id = `t-${++seq}-${Math.floor(Math.random() * 1e6)}`;
+      ws.send({ id, type, payload });
+      return new Promise((resolve, reject) => {
+        pending.set(id, resolve);
+        setTimeout(() => {
+          if (pending.delete(id)) reject(new Error(`rpc timeout: ${type}`));
+        }, 6000);
+      });
+    },
+  };
+}
+
+async function waitForSocialPush(client, name, timeoutMs = 4000) {
+  const start = Date.now();
+  for (;;) {
+    const index = client.pushes.findIndex((message) => message && message.push === name);
+    if (index >= 0) return client.pushes.splice(index, 1)[0];
+    if (Date.now() - start > timeoutMs) throw new Error(`push timeout: ${name}`);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+}
+
+test('phase 8 e2e: two clients join one jamaat — help, ledger authority, filter, rate limit, report, child, event', async () => {
+  const server = new GameServer({ port: 0, saveFile: null, quiet: true });
+  const { port } = await server.start();
+  const url = `ws://127.0.0.1:${port}/social-ws`;
+  const clients = [];
+  try {
+    const open = async () => {
+      const wrapped = wrapSocial(await connectWs(url));
+      clients.push(wrapped);
+      return wrapped;
+    };
+    const a = await open();
+    const b = await open();
+
+    // --- [✓] two simultaneous clients in one jamaat ------------------
+    const helloA = await a.rpc('hello', { displayName: 'آرش' });
+    assert(helloA.ok && helloA.token, 'client A authenticated with a token');
+    assert(helloA.members.length === 1, 'A sees itself in the jamaat');
+    const helloB = await b.rpc('hello', { displayName: 'سارا' });
+    assert(helloB.ok, 'client B authenticated');
+    assert(helloB.members.length === 2, 'B sees both members (one jamaat)');
+    assert(helloA.jamaat.id === helloB.jamaat.id, 'both clients share the jamaat id');
+    const pullA = await a.rpc('state:pull', {});
+    assert(pullA.members.length === 2, 'presence push/pull shows both clients');
+
+    // --- city link: only validated {type, level} pairs are adopted -----
+    const badLink = await a.rpc('city:sync', { buildings: [{ type: 'nope', level: 99 }] });
+    assert(!badLink.ok && badLink.error === 'invalid', 'unknown building rejected on link');
+    const link = await a.rpc('city:sync', {
+      buildings: [{ type: 'town-center', level: 1 }, { type: 'farm', level: 2 }],
+      cityLevel: 1,
+    });
+    assert(link.ok && link.count === 2, 'valid city summary adopted');
+
+    // --- chat: filter over the real socket ------------------------------
+    const chat = await a.rpc('chat:send', { text: 'سلام جماعت!' });
+    assert(chat.ok && chat.message.text === 'سلام جماعت!', 'clean chat passes');
+    const dirty = await a.rpc('chat:send', { text: `سلام ${socialData.chat.profanity[0]}` });
+    assert(dirty.ok, 'filtered chat still delivers');
+    assert(!dirty.message.text.includes(socialData.chat.profanity[0]), 'blocked word masked over the socket');
+    assert(dirty.message.text.includes(socialData.chat.mask), 'mask character present');
+
+    // --- [✓] mutual build help shortens the timer ----------------------
+    const enqueue = await a.rpc('build:enqueue', { kind: 'build', entityId: 7, defId: 'farm', level: 1 });
+    assert(enqueue.ok && enqueue.job.id.startsWith('srv-'), 'server-stamped job created');
+    assert(enqueue.job.endsAt > Date.now(), 'endsAt uses the server clock (future)');
+    assert(Math.round(enqueue.ledger.resources.rizq) < Math.round(helloA.ledger.resources.rizq), 'cost spent on the server ledger');
+    const before = enqueue.job.endsAt;
+    const helpReq = await a.rpc('help:request', { jobId: enqueue.job.id });
+    assert(helpReq.ok, 'help request opened');
+    // Enqueue/request echo the ledger back — drain snapshots so the next one is the give's.
+    for (let i = a.pushes.length - 1; i >= 0; i--) if (a.pushes[i]?.push === 'ledger') a.pushes.splice(i, 1);
+    const give = await b.rpc('help:give', { requestId: helpReq.request.id });
+    assert(give.ok && give.reductionMs > 0, `help cut ${give.reductionMs}ms off the timer`);
+    const ledgerPush = await waitForSocialPush(a, 'ledger');
+    const pushedJob = ledgerPush.payload.jobs.find((job) => job.id === enqueue.job.id);
+    assert(pushedJob.endsAt === before - give.reductionMs, 'owner receives the targeted ledger push with the shorter timer');
+    const noticePush = await waitForSocialPush(a, 'notice');
+    assert(noticePush.payload.kind === 'help-received', 'owner receives the help notification push');
+    const afterHelp = await a.rpc('state:pull', {});
+    const helpedJob = afterHelp.jobs.find((job) => job.id === enqueue.job.id);
+    assert(helpedJob.endsAt === before - give.reductionMs, 'authoritative endsAt shortened by exactly the help');
+    const selfHelp = await a.rpc('help:give', { requestId: helpReq.request.id });
+    assert(!selfHelp.ok && selfHelp.error === 'forbidden', 'helping your own build is forbidden');
+    const twice = await b.rpc('help:give', { requestId: helpReq.request.id });
+    assert(!twice.ok && twice.error === 'exhausted', 'same member cannot help the same request twice');
+    const enqueue2 = await a.rpc('build:enqueue', { kind: 'build', entityId: 8, defId: 'farm', level: 1 });
+    const helpReq2 = await a.rpc('help:request', { jobId: enqueue2.job.id });
+    const cooled = await b.rpc('help:give', { requestId: helpReq2.request.id });
+    assert(!cooled.ok && cooled.error === 'cooldown', 'giver cooldown enforced');
+
+    // --- [✓] client tampering never touches the server ------------------
+    const noSet = await a.rpc('ledger:set', { rizq: 999999 });
+    assert(!noSet.ok && noSet.error === 'unknown-type', 'no set-resources message exists');
+    const tamper = await a.rpc('ledger:harvest', { resource: 'rizq', amount: 999999 });
+    assert(tamper.ok && tamper.moved < 999999, `huge harvest capped to budgeted production (${tamper.moved})`);
+    const beforeSpend = (await a.rpc('state:pull', {})).ledger.resources.rizq;
+    const overspend = await a.rpc('ledger:spend', { cost: { rizq: 999999 } });
+    assert(!overspend.ok && overspend.error === 'insufficient', 'overspend rejected');
+    const afterSpend = (await a.rpc('state:pull', {})).ledger.resources.rizq;
+    assert(afterSpend === beforeSpend, 'rejected spend leaves the server ledger untouched');
+    const early = await a.rpc('build:complete', { jobId: enqueue.job.id });
+    assert(!early.ok && early.error === 'too-early', 'early completion rejected (server clock rules)');
+    assert(early.job.endsAt === before - give.reductionMs, 'server returns the authoritative endsAt');
+    const badGrant = await a.rpc('ledger:grant', { resource: 'nur', amount: 5000, source: 'lesson' });
+    assert(badGrant.ok && badGrant.moved <= (socialData.ledger.grantCaps.lesson || 200), 'grant capped per source');
+
+    // --- upgrade validation + server-confirmed finish --------------------
+    const speedup = await a.rpc('build:speedup', { jobId: enqueue.job.id });
+    assert(speedup.ok && speedup.cost > 0, 'validated speedup finishes the job');
+    const upgradeBad = await a.rpc('build:enqueue', { kind: 'upgrade', entityId: 7, defId: 'farm', level: 3, fromLevel: 5 });
+    assert(!upgradeBad.ok, 'upgrade from a wrong level rejected');
+    const upgrade = await a.rpc('build:enqueue', { kind: 'upgrade', entityId: 7, defId: 'farm', level: 2, fromLevel: 1 });
+    assert(upgrade.ok, 'upgrade validated against the server-tracked building');
+
+    // --- friendly only: no attack/loot/plunder messages ------------------
+    for (const hostile of ['attack', 'loot', 'plunder', 'battle:attack', 'city:raid']) {
+      const rejected = await a.rpc(hostile, {});
+      assert(!rejected.ok && rejected.error === 'unknown-type', `«${hostile}» does not exist`);
+    }
+
+    // --- [✓] rate limit over the real socket (fresh client) --------------
+    const r = await open();
+    await r.rpc('hello', { displayName: 'تندرو' });
+    const burst = [];
+    for (let i = 0; i < 6; i += 1) burst.push(await r.rpc('chat:send', { text: `پیام ${i}` }));
+    const limited = burst.filter((answer) => !answer.ok && answer.error === 'rate-limited');
+    assert(burst.filter((answer) => answer.ok).length === 5, 'chat window allows 5 messages');
+    assert(limited.length >= 1, '6th message in the window is rate-limited');
+
+    // --- [✓] report is stored ---------------------------------------------
+    const before_reports = server.reportCount;
+    const report = await b.rpc('chat:report', { messageId: dirty.message.id, reason: 'insult' });
+    assert(report.ok && report.reportId, 'report acknowledged');
+    assert(server.reportCount === before_reports + 1, 'report stored on the server');
+    const badReason = await b.rpc('chat:report', { messageId: dirty.message.id, reason: 'nope' });
+    assert(!badReason.ok && badReason.error === 'invalid', 'report reason must come from the allow-list');
+
+    // --- child account: no free chat, presets only ------------------------
+    const c = await open();
+    const helloC = await c.rpc('hello', { displayName: 'بچه', isChild: true });
+    assert(helloC.ok && helloC.player.isChild, 'child account created');
+    const childChat = await c.rpc('chat:send', { text: 'hello' });
+    assert(!childChat.ok && childChat.error === 'child-restricted', 'child free chat blocked');
+    const preset = await c.rpc('chat:preset', { presetId: 'salam' });
+    assert(preset.ok && preset.message.preset, 'child preset message delivered');
+    const badPreset = await c.rpc('chat:preset', { presetId: 'nope' });
+    assert(!badPreset.ok, 'unknown preset rejected');
+    // The child flag can never be flipped on reconnect.
+    const c2 = await open();
+    const helloC2 = await c2.rpc('hello', { token: helloC.token, isChild: false });
+    assert(helloC2.ok && helloC2.player.isChild && helloC2.player.id === helloC.player.id, 'child flag immutable, token reconnects');
+
+    // --- weekly cooperative event (shared goal, equal reward) --------------
+    const donate = await a.rpc('event:donate', { resource: 'rizq', amount: 50 });
+    assert(donate.ok && donate.points === 50, 'donation adds weighted points');
+    const f = await open();
+    const helloF = await f.rpc('hello', { displayName: 'کاروانی' });
+    for (let i = 0; i < 10; i += 1) {
+      const grant = await f.rpc('ledger:grant', { resource: 'rizq', amount: 100, source: 'other' });
+      assert(grant.ok && grant.moved === 100, 'capped grant succeeds within capacity');
+      const step = await f.rpc('event:donate', { resource: 'rizq', amount: 100 });
+      assert(step.ok, `donation ${i + 1}/10 accepted`);
+      if (step.completed) break;
+    }
+    const finalEvent = await f.rpc('state:pull', {});
+    assert(finalEvent.event.completed, 'shared weekly goal completed');
+    assert(finalEvent.leaderboard[0].playerId === helloF.player.id, 'leaderboard ranks the top contributor');
+    const doneAgain = await f.rpc('event:donate', { resource: 'rizq', amount: 10 });
+    assert(!doneAgain.ok && doneAgain.error === 'completed', 'donations close after completion');
+    assert(Math.round(finalEvent.ledger.resources.gohar) === Math.round(helloF.ledger.resources.gohar) + 8, 'equal gohar reward granted');
+
+    // --- malformed frames never crash the server ---------------------------
+    const raw = clients[0];
+    raw.ws.send('this is not json{');
+    const errPush = await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(null), 3000);
+      const check = () => {
+        const index = raw.pushes.findIndex((message) => message && message.ok === false);
+        if (index >= 0) {
+          clearTimeout(timer);
+          resolve(raw.pushes.splice(index, 1)[0]);
+        } else {
+          setTimeout(check, 50);
+        }
+      };
+      check();
+    });
+    assert(errPush && errPush.error === 'invalid', 'malformed frame answered with invalid (connection survives)');
+    const stillAlive = await a.rpc('presence:ping', {});
+    assert(stillAlive.ok && Number.isFinite(stillAlive.serverNow), 'connection alive after malformed input');
+  } finally {
+    for (const client of clients) {
+      try {
+        client.ws.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    await server.stop();
+  }
+});
+
+test('phase 8 client: SocialClient request/response, pushes and graceful failure', async () => {
+  const { SocialClient } = await import('../src/game/social/SocialClient.js');
+  const server = new GameServer({ port: 0, saveFile: null, quiet: true });
+  const { port } = await server.start();
+  try {
+    const pushes = [];
+    const client = new SocialClient({
+      url: `ws://127.0.0.1:${port}/social-ws`,
+      onPush: (push) => pushes.push(push),
+    });
+    const hello = await client.connect({ displayName: 'کلاینت' });
+    assert(hello.ok && hello.token, 'hello resolves with a token');
+    assert(client.connected, 'connected flag set');
+    const chat = await client.request('chat:send', { text: 'سلام' });
+    assert(chat.ok && chat.message.text === 'سلام', 'request/response roundtrip works');
+    const start = Date.now();
+    while (Date.now() - start < 3000 && !pushes.some((push) => push.push === 'chat')) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert(pushes.some((push) => push.push === 'presence'), 'presence push delivered');
+    assert(pushes.some((push) => push.push === 'chat'), 'chat broadcast push delivered');
+    client.close();
+    assert(!client.connected, 'manual close clears the connection');
+
+    const bad = new SocialClient({ url: 'ws://127.0.0.1:9/social-ws' });
+    let failed = null;
+    try {
+      await bad.connect({});
+    } catch (error) {
+      failed = error;
+    }
+    assert(failed && failed.error, 'closed port rejects gracefully instead of hanging');
+
+    const keep = globalThis.WebSocket;
+    try {
+      globalThis.WebSocket = undefined;
+      const noWs = new SocialClient({ url: `ws://127.0.0.1:${port}/social-ws` });
+      let unsupported = null;
+      try {
+        await noWs.connect({});
+      } catch (error) {
+        unsupported = error;
+      }
+      assert(unsupported && unsupported.error === 'unsupported', 'missing WebSocket degrades gracefully');
+    } finally {
+      globalThis.WebSocket = keep;
+    }
+  } finally {
+    await server.stop();
+  }
+});
+
 await flushPending();
 
 const pad = (value, width) => String(value).padEnd(width, ' ');
-console.log('\n=== شهر نور — self checks (فازهای ۱ تا ۷) ===\n');
+console.log('\n=== شهر نور — self checks (فازهای ۱ تا ۸) ===\n');
 for (const result of results) {
   console.log(`${result.ok ? '✓' : '✗'} ${pad(result.name, 62)}${result.ok ? '' : result.message}`);
 }

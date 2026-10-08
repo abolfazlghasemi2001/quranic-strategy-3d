@@ -9,6 +9,7 @@ import { createStructureStats } from './battle/StructureStats.js';
 import { CampaignSystem } from './campaign/CampaignSystem.js';
 import { normalizeMissions, validateMissions } from './campaign/MissionData.js';
 import { MetaSystem } from './meta/MetaSystem.js';
+import { SocialSystem } from './social/SocialSystem.js';
 import buildingData from '../data/buildings.json';
 import unitsData from '../data/units.json';
 import defensesData from '../data/defenses.json';
@@ -123,6 +124,17 @@ export class Game {
       dataset: quran?.dataset || null,
       applySpeedup: (seconds, at) => (this.learning ? this.learning.applySpeedup(seconds, at) : null),
       isBattleActive: () => !!this.battle?.active,
+    });
+
+    // --- phase 8: social / multiplayer — offline-first, server-authoritative when linked ---
+    this.social = new SocialSystem({
+      config,
+      bus,
+      state: this.state,
+      economy: this.economy,
+      queue: this.queue,
+      game: this,
+      url: config.socialUrl || null,
     });
 
     /** Injected by main.js once the save helpers exist (debounced autosave). */
@@ -349,6 +361,13 @@ export class Game {
     const consumed = this.economy.applyConsumption(dt);
     if (consumed > 0) this.markEconomyDirty();
 
+    // Phase 8: while online, server-tracked timers complete only through
+    // server validation (their clock rules); the local tick skips them and
+    // still fast-forwards every local-only job (mission timers, etc.).
+    const online = this.social.isOnline();
+    this.queue.online = online;
+    if (online) this.social.tickJobs(now);
+
     const finished = this.queue.tick(now);
     if (finished.length) this.markQueueDirty();
 
@@ -433,7 +452,7 @@ export class Game {
       if (job.kind === 'upgrade' && job.type === 'town-center') {
         const reward = this.economy.townCenterReward();
         if (reward > 0) {
-          this.economy.earnGohar(reward);
+          this.economy.earnGohar(reward, { source: 'town' });
           this.bus.emit(EVENTS.UI_TOAST, {
             message: `ارتقای مرکز شهر +${reward} گوهر`,
             type: 'success',
@@ -547,6 +566,7 @@ export class Game {
   }
 
   dispose() {
+    this.social?.dispose();
     this.meta?.dispose();
     this.campaign?.dispose();
     this.battle.dispose();

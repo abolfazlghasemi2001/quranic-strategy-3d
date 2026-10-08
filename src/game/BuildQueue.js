@@ -27,6 +27,17 @@ export class BuildQueue {
     this.economy = economy;
     this.state = state;
     this.onFinished = onFinished || null;
+    /**
+     * Phase 8: while online, server-tracked jobs (`srv-…`) are completed only
+     * through server validation (SocialSystem) — the local tick leaves them
+     * alone. Held jobs (`hold`) await that same validation and never tick.
+     */
+    this.online = false;
+  }
+
+  /** True when this job's timer is currently owned by the server. */
+  isServerOwned(job) {
+    return !!job && this.online && typeof job.id === 'string' && job.id.startsWith('srv-');
   }
 
   get jobs() {
@@ -113,6 +124,8 @@ export class BuildQueue {
   _promote(at) {
     for (const job of this.jobs) {
       if (job.status !== 'queued') continue;
+      if (job.hold) continue; // awaiting server acknowledgement
+      if (this.isServerOwned(job)) continue; // the server promotes its own jobs
       if (this.freeBuilders() <= 0) break;
       job.status = 'active';
       job.startedAt = at;
@@ -134,6 +147,8 @@ export class BuildQueue {
     for (;;) {
       let due = null;
       for (const job of this.jobs) {
+        if (job.hold) continue;
+        if (this.isServerOwned(job)) continue;
         if (job.status === 'active' && job.endsAt <= now) {
           if (!due || job.endsAt < due.endsAt || (job.endsAt === due.endsAt && this.jobs.indexOf(job) < this.jobs.indexOf(due))) {
             due = job;
@@ -163,6 +178,8 @@ export class BuildQueue {
   speedup(jobId, now = Date.now()) {
     const job = this.jobs.find((j) => j.id === jobId);
     if (!job) return { ok: false, reason: 'missing' };
+    if (job.hold) return { ok: false, reason: 'held' };
+    if (this.isServerOwned(job)) return { ok: false, reason: 'server' };
     if (job.status !== 'active') return { ok: false, reason: 'not-active' };
 
     const cost = this.economy.speedupCost(job, now);

@@ -26,7 +26,7 @@ export class HUD {
    * @param {import('../game/EconomySystem.js').EconomySystem} options.economy
    * @param {import('../game/BuildQueue.js').BuildQueue} options.queue
    */
-  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, game = null, learning = null, onOpenQuran, onOpenStudy, onOpenBattle, onOpenBarracks, onOpenMissions, onOpenSettings, onOpenMeta }) {
+  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, game = null, learning = null, onOpenQuran, onOpenStudy, onOpenBattle, onOpenBarracks, onOpenMissions, onOpenSettings, onOpenMeta, onOpenSocial }) {
     Object.assign(this, { config, engine, bus, monitor, rig, buildings, economy, queue, game, learning });
     this.onOpenStudy = onOpenStudy;
     this.onOpenSettings = onOpenSettings;
@@ -34,6 +34,7 @@ export class HUD {
     this.onOpenMissions = onOpenMissions;
     this.onOpenBattle = onOpenBattle;
     this.onOpenBarracks = onOpenBarracks;
+    this.onOpenSocial = onOpenSocial;
     const t = (key, fallback) => config.t(key, fallback);
 
     this.levelValue = el('b', { text: '۱' });
@@ -146,6 +147,16 @@ export class HUD {
     this.battleButton.prepend(el('span', { text: '⚔' }));
     this.battleButton.append(this.battleBadge);
 
+    // Phase 8: جماعت — chat, mutual help and the weekly cooperative event.
+    this.socialBadge = el('span', { className: 'game-corner-badge game-corner-badge--social is-hidden', text: '۰' });
+    this.socialButton = button(t('social.button', 'جماعت'), {
+      className: 'game-corner-btn game-social-btn',
+      title: t('social.title', '◈ جماعت'),
+      onClick: () => this.onOpenSocial?.(),
+    });
+    this.socialButton.prepend(el('span', { text: '◈' }));
+    this.socialButton.append(this.socialBadge);
+
     /* --------------------------------------------------- queue panel */
     this.queueList = el('div', { className: 'queue-list' });
     this.queueBadge = el('span', { className: 'queue-badge', text: '۰' });
@@ -209,6 +220,7 @@ export class HUD {
         this.studyButton,
         this.armyButton,
         this.battleButton,
+        this.socialButton,
         this.queuePanel,
         this.shop,
         this.placementBar,
@@ -243,6 +255,9 @@ export class HUD {
       bus.on(EVENTS.BATTLE_STARTED, () => this.setBattleLive(true)),
       bus.on(EVENTS.BATTLE_SESSION_CLOSED, () => this.setBattleLive(false)),
       bus.on(EVENTS.BATTLE_PROGRESS, (status) => this.renderBattleBadge(status)),
+      bus.on(EVENTS.SOCIAL_STATUS, () => this.renderSocial()),
+      bus.on(EVENTS.SOCIAL_CHAT, () => this.renderSocial()),
+      bus.on(EVENTS.SOCIAL_HELP, () => this.renderSocial()),
       bus.on(EVENTS.STRUCTURE_DAMAGED, ({ entityId }) => {
         if (this._selectionEntity && this._selectionEntity.id === entityId) {
           this.renderSelection({ entity: this._selectionEntity, def: this.buildings.byId.get(this._selectionEntity.type) });
@@ -255,6 +270,7 @@ export class HUD {
       }),
     ];
     if (this.game?.meta) this.renderMeta(this.game.meta.snapshot());
+    this.renderSocial();
   }
 
   toggleShop(force) {
@@ -309,9 +325,11 @@ export class HUD {
               el('small', { text: isMission ? this.config.t('campaign.jobHint', 'کار کمپین قصص') : levelText.trim() || name }),
             ],
           }),
-          job.status === 'active'
-            ? timer
-            : el('span', { className: 'queue-waiting', text: this.config.t('economy.queued', 'در انتظار بنّا') }),
+          job.hold
+            ? el('span', { className: 'queue-waiting', text: this.config.t('social.pending', 'در انتظار تأیید سرور…') })
+            : job.status === 'active'
+              ? timer
+              : el('span', { className: 'queue-waiting', text: this.config.t('economy.queued', 'در انتظار بنّا') }),
         ],
       });
       if (job.status === 'active') {
@@ -461,7 +479,11 @@ export class HUD {
       this._selectionSpeedupJobId = job.id;
       this.selection.append(el('div', { className: 'building-progress', children: [timer, speedBtn] }));
     } else if (job && job.status === 'queued') {
-      this.selection.append(el('small', { text: this.config.t('economy.queued', 'در انتظار بنّا') }));
+      this.selection.append(el('small', {
+        text: job.hold
+          ? this.config.t('social.pending', 'در انتظار تأیید سرور…')
+          : this.config.t('economy.queued', 'در انتظار بنّا'),
+      }));
     } else if (entity.status === 'ready' && job == null) {
       // upgrade affordance
       const nextLevel = entity.level + 1;
@@ -502,6 +524,20 @@ export class HUD {
     this.battleBadge.classList.toggle('is-hidden', !live);
     this.battleButton.classList.toggle('is-alert', live);
     if (!live) this.battleBadge.textContent = '·';
+  }
+
+  /** جماعت badge: unread chat + open help requests while online. */
+  renderSocial() {
+    const social = this.game?.social;
+    if (!social) return;
+    const online = social.isOnline();
+    this.socialButton.classList.toggle('is-alert', online);
+    const count = online ? (social.unread || 0) + social.openHelpForMe().length : 0;
+    this.socialBadge.textContent = formatFa(count);
+    this.socialBadge.classList.toggle('is-hidden', count === 0);
+    this.socialButton.title = online
+      ? `${this.config.t('social.title', '◈ جماعت')} — ${formatFa(social.members.length)} عضو`
+      : this.config.t('social.title', '◈ جماعت');
   }
 
   renderBattleBadge(status) {
