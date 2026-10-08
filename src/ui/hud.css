@@ -1418,7 +1418,9 @@ html.is-reduced-motion *::after {
   align-items: stretch;
   gap: var(--hud-gap);
   padding-block-start: calc(var(--safe-top) + var(--hud-pad));
-  padding-inline: calc(var(--safe-inline-start) + var(--hud-pad));
+  padding-inline-start: calc(var(--safe-inline-start) + var(--hud-pad));
+  padding-inline-end: calc(var(--safe-inline-end) + var(--hud-pad));
+  padding-block-end: 0;
 }
 
 /* ------------------------------------------------------------- status bar */
@@ -1520,10 +1522,14 @@ html.is-reduced-motion *::after {
   align-items: stretch;
   justify-content: space-between;
   gap: var(--hud-gap);
+  align-self: center;
+  width: min(100%, 560px);
+  margin-inline: auto;
   padding: var(--dock-pad);
+  padding-inline: calc(var(--dock-pad) + 2px);
   padding-block-end: calc(var(--safe-bottom) + var(--dock-pad));
   border-radius: 18px 18px 0 0;
-  background: linear-gradient(180deg, rgba(6, 16, 19, 0.3), rgba(6, 16, 19, 0.74));
+  background: linear-gradient(180deg, rgba(6, 16, 19, 0.55), rgba(6, 16, 19, 0.92));
   border: 1px solid var(--line);
   border-block-end: none;
 }
@@ -1668,64 +1674,61 @@ html.is-reduced-motion *::after {
 }
 
 /* ------------------------------------------------------------- landscape
-   Two slim rows: the status bar, then a start-side action rail next to the
-   panels. The map keeps the full remaining height; nothing is hidden. */
+   Keep the action dock glued to the bottom (thumb zone), never as a side
+   rail — a vertical rail on a short landscape screen looked like the
+   buttons had “moved to the wrong corner”. Compact the status bar instead. */
 @media (orientation: landscape) and (max-height: 560px) {
-  :root { --hud-touch: 48px; }
+  :root { --hud-touch: 44px; }
   .game-hud {
-    flex-flow: row wrap;
-    align-content: flex-start;
-    gap: 6px;
+    flex-flow: column nowrap;
+    gap: 4px;
     padding-block-start: calc(var(--safe-top) + 4px);
-    padding-block-end: calc(var(--safe-bottom) + 4px);
+    padding-block-end: 0;
   }
-  .hud-topbar { flex: 0 0 100%; max-height: none; min-height: 0; align-items: center; }
-  .game-player { padding-block: 3px; }
-  .game-player__xp-text { display: none; }   /* the 3 px bar still shows progress */
+  .hud-topbar { flex: 0 0 auto; max-height: none; min-height: 0; align-items: center; }
+  .game-player { padding-block: 3px; max-width: 34vw; }
+  .game-player__xp-text { display: none; }
   .game-resource { grid-template-columns: auto auto minmax(0, auto); }
-  .game-resource small { grid-column: auto; }   /* wide screen → name beside value */
-  .game-player { max-width: 34vw; }
+  .game-resource small { grid-column: auto; }
   .game-resources { flex: 0 1 auto; margin-inline-start: auto; }
   .hud-bottom {
-    flex: 1 1 100%;
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: flex-start;
-    gap: 6px;
-    min-height: 0;
-    margin-block-start: 0;
-  }
-  .hud-panels {
-    order: 1;
-    align-items: flex-end;
-    margin-inline-start: 6px;
-    max-width: min(56vw, 420px);
-    flex: 0 1 auto;
-  }
-  .hud-panels > * { width: min(56vw, 420px); }
-  .hud-dock {
-    order: 0;
     flex: 0 0 auto;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-end;
-    width: clamp(116px, 18vw, 152px);
+    gap: 4px;
+    min-height: 0;
+    margin-block-start: auto;
+  }
+  .hud-panels {
+    align-items: center;
+    max-width: 100%;
+  }
+  .hud-panels > * { width: min(70vw, 420px); }
+  .hud-dock {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    width: min(100%, 560px);
+    align-self: center;
     padding: var(--dock-pad);
-    border-radius: 18px;
-    border-block-end: 1px solid var(--line);
-    background: var(--panel-strong);
+    padding-block-end: calc(var(--safe-bottom) + var(--dock-pad));
+    border-radius: 16px 16px 0 0;
+    border-block-end: none;
+    background: linear-gradient(180deg, rgba(6, 16, 19, 0.55), rgba(6, 16, 19, 0.92));
   }
   .hud-action {
-    flex: 0 0 auto;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 7px;
-    padding-inline: 8px;
+    flex: 1 1 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    padding-inline: 4px;
     min-height: var(--hud-touch);
     font-size: calc(10.5px * var(--ui-font-scale, 1));
   }
-  .hud-action__icon { font-size: calc(18px * var(--ui-font-scale, 1)); }
-  .game-mission-chip { max-width: min(56vw, 420px); }
+  .hud-action__icon { font-size: calc(16px * var(--ui-font-scale, 1)); }
+  .hud-action .ui-btn__label { font-size: 10px; }
+  .game-mission-chip { max-width: min(70vw, 420px); }
 }
 
 /* ----------------------------------------------- high-contrast reinforcement */
