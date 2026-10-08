@@ -19,7 +19,7 @@ import { dirname } from 'node:path';
 
 const [, , uthmaniPath = 'tools/tanzil/quran-uthmani.txt', translationPath = 'tools/tanzil/fa_gharaati.txt', outPath = 'public/quran/quran.json'] = process.argv;
 
-const DIACRITICS_RE = /[\u064B-\u0652\u0670\u06D6-\u06ED]/;
+const DIACRITICS_RE = /[\u064B-\u065F\u0670\u06D6-\u06ED]/;
 
 function read(path) {
   return readFileSync(path, 'utf8').replace(/^\uFEFF/, '').split(/\r?\n/);
