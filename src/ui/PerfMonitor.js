@@ -2,12 +2,16 @@
  * PerfMonitor — stable FPS/ms measurement plus the renderer counters.
  * The UI reads it at ~4 Hz so the numbers are readable and the DOM is not
  * written to on every frame.
+ *
+ * Phase 9 optimization: the rolling frame window used to push a fresh
+ * `{ t, dt }` object every frame and `shift()` it out (an O(n) memmove plus
+ * ~60 small allocations per second). It is now a preallocated Float32Array
+ * ring buffer — zero per-frame allocation, O(1) push/pop.
  */
 export class PerfMonitor {
-  constructor({ windowSeconds = 1.5, sampleInterval = 0.25 } = {}) {
+  constructor({ windowSeconds = 1.5, sampleInterval = 0.25, maxFps = 120 } = {}) {
     this.windowSeconds = windowSeconds;
     this.sampleInterval = sampleInterval;
-    this.frames = [];
     this.fps = 0;
     this.fpsMin = Infinity;
     this.fpsMax = 0;
@@ -19,24 +23,47 @@ export class PerfMonitor {
     this.textures = 0;
     this._elapsed = 0;
     this._sinceSample = 0;
+    // Ring buffer of frame timestamps. Sized for the window at maxFps plus
+    // headroom, so it never wraps mid-window under normal frame rates.
+    this._capacity = Math.max(16, Math.ceil(windowSeconds * maxFps) + 2);
+    this._times = new Float64Array(this._capacity);
+    this._head = 0; // next write position; oldest entry is (_head - _count) mod capacity
+    this._count = 0;
+  }
+
+  /** Number of frame timestamps currently inside the rolling window. */
+  get frameCount() {
+    return this._count;
+  }
+
+  _oldestIndex() {
+    return (this._head - this._count + this._capacity) % this._capacity;
+  }
+
+  _newestIndex() {
+    return (this._head - 1 + this._capacity) % this._capacity;
   }
 
   update(dt, stats) {
     this._elapsed += dt;
-    this.frames.push({ t: this._elapsed, dt });
 
-    // drop frames outside the rolling window
+    // O(1) ring-buffer push — no per-frame object allocation.
+    this._times[this._head] = this._elapsed;
+    this._head = (this._head + 1) % this._capacity;
+    if (this._count < this._capacity) this._count += 1;
+
+    // drop frames outside the rolling window (pop from the front)
     const cutoff = this._elapsed - this.windowSeconds;
-    while (this.frames.length > 2 && this.frames[0].t < cutoff) this.frames.shift();
+    while (this._count > 2 && this._times[this._oldestIndex()] < cutoff) {
+      this._count -= 1;
+    }
 
     this._sinceSample += dt;
     if (this._sinceSample < this.sampleInterval) return null;
     this._sinceSample = 0;
 
-    const first = this.frames[0];
-    const last = this.frames[this.frames.length - 1];
-    const span = Math.max(1e-4, last.t - first.t);
-    this.fps = (this.frames.length - 1) / span;
+    const span = Math.max(1e-4, this._times[this._newestIndex()] - this._times[this._oldestIndex()]);
+    this.fps = (this._count - 1) / span;
     this.fpsMin = Math.min(this.fpsMin, this.fps);
     this.fpsMax = Math.max(this.fpsMax, this.fps);
 
