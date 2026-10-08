@@ -971,6 +971,7 @@ function syntheticVerse(surahIndex, ayahIndex, extra = {}) {
 }
 
 const bundled = normalizeDataset(quranSample, { origin: 'bundled' });
+const publicQuran = normalizeDataset(readJson('public/quran/quran.json'), { origin: 'remote' });
 
 /* --------------------------------------------------------------- دیتاست */
 
@@ -992,6 +993,20 @@ test('quran: the bundled sample carries no Quranic text and is fully labelled', 
   const badges = verseBadges(bundled.verseList[0]).map((b) => b.label);
   assert(badges.includes(PLACEHOLDER_LABEL), 'placeholder badge');
   assert(badges.includes(REVIEW_PENDING_LABEL), 'review-pending badge (acceptance: unreviewed verses are flagged)');
+});
+
+test('phase 9 provenance: every active Tanzil-attributed verse is visibly pending and sourced', () => {
+  assert(publicQuran.meta.datasetId === 'tanzil-uthmani-1.1', 'the active default has an explicit dataset identity');
+  assert(publicQuran.meta.reviewed === false && publicQuran.meta.status === 'external-unreviewed', 'default dataset never claims project review');
+  assert(publicQuran.verseList.length > 6000 && publicQuran.stats.reviewedVerseCount === 0, 'the complete active text remains pending review');
+  assert(publicQuran.surahs.length === 114 && publicQuran.surahs.every((surah) => surah.namePlaceholder), 'all generated surah names are marked as placeholders');
+  for (const verse of publicQuran.verseList) {
+    assert(!verse.reviewed && !verse.placeholder, `${verse.id} is explicitly external and unreviewed, not a fabricated placeholder`);
+    assert(verse.source.datasetId === publicQuran.meta.datasetId && verse.source.url && verse.source.license,
+      `${verse.id} carries dataset provenance and license`);
+    assert(verseBadges(verse).some((badge) => badge.label === REVIEW_PENDING_LABEL),
+      `${verse.id} has a visible review-pending label`);
+  }
 });
 
 test('phase 9 provenance: placeholder word banks are sourced, labelled and excluded from distractors', () => {
