@@ -1,0 +1,102 @@
+{
+  "progression": {
+    "levelThresholds": [0, 100, 250, 450, 700, 1000, 1400, 1850, 2350, 2900],
+    "eventXp": {
+      "buildingCompleted": 12,
+      "harvest": 6,
+      "lessonCompleted": 20,
+      "storyCompleted": 15,
+      "dailyMissionCompleted": 15
+    },
+    "note": "XP فقط پیشرفت نمایشی بازیکن است؛ قابل خرید نیست، از دست نمی‌رود و مزیت رزمی نمی‌دهد."
+  },
+  "achievements": [
+    {
+      "id": "first-building",
+      "title": "نخستین آبادانی",
+      "description": "اولین ساختمان شهر را کامل کن.",
+      "icon": "🏛",
+      "stat": "buildingsBuilt",
+      "target": 1,
+      "xp": 25
+    },
+    {
+      "id": "first-harvest",
+      "title": "برداشت نخست",
+      "description": "برای نخستین بار از یک تولیدکننده برداشت کن.",
+      "icon": "🌾",
+      "stat": "harvests",
+      "target": 1,
+      "xp": 25
+    },
+    {
+      "id": "first-lesson",
+      "title": "دوست‌دار آموختن",
+      "description": "یک درس را کامل کن؛ اشتباه‌کردن جریمه ندارد.",
+      "icon": "۞",
+      "stat": "lessonsCompleted",
+      "target": 1,
+      "xp": 30
+    },
+    {
+      "id": "city-planner",
+      "title": "برنامه‌ریز شهر",
+      "description": "سه ساختمان را کامل کن.",
+      "icon": "🧭",
+      "stat": "buildingsBuilt",
+      "target": 3,
+      "xp": 40
+    },
+    {
+      "id": "steady-hands",
+      "title": "دست‌های پیوسته",
+      "description": "ده برداشت انجام بده؛ هر تعداد که در زمان خودت خواستی.",
+      "icon": "✦",
+      "stat": "harvests",
+      "target": 10,
+      "xp": 40
+    },
+    {
+      "id": "story-reader",
+      "title": "روایت‌خوان",
+      "description": "یک مأموریت داستانی را کامل کن.",
+      "icon": "☼",
+      "stat": "storiesCompleted",
+      "target": 1,
+      "xp": 35
+    }
+  ],
+  "dailyMissions": [
+    {
+      "id": "gentle-harvest",
+      "title": "برداشت آرام",
+      "description": "هر زمان خواستی، یک بار از یکی از ساختمان‌های تولیدی برداشت کن.",
+      "event": "harvest",
+      "target": 1,
+      "icon": "🌾"
+    },
+    {
+      "id": "small-step",
+      "title": "یک گام در آبادانی",
+      "description": "یک ساختمان را کامل کن؛ انتخاب ساختمان با خودت است.",
+      "event": "build",
+      "target": 1,
+      "icon": "🏛"
+    },
+    {
+      "id": "optional-study",
+      "title": "زمانی برای آموختن",
+      "description": "اگر مایل بودی، یک درس را کامل کن؛ این کار برای پیشرفت شهر اجباری نیست.",
+      "event": "lesson",
+      "target": 1,
+      "icon": "۞"
+    }
+  ],
+  "dailyPolicy": {
+    "label": "اختیاری، بدون مهلت یا زنجیرهٔ ورود؛ هدف نیمه‌کاره تا انجام‌شدن ذخیره می‌ماند.",
+    "missedDayPenalty": false,
+    "streaks": false,
+    "exclusiveRewards": false,
+    "resetIncompleteProgress": false
+  }
+}

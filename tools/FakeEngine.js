@@ -48,6 +48,11 @@ export class Engine {
     this.time = 0;
     this.frame = 0;
     this.running = false;
+    this.runtimeQualityTier = config?.quality?.tier || 'medium';
+    this.batterySaver = false;
+    this.runtimeQuality = { ...(config?.quality || {}) };
+    this.frameCap = config?.targets?.fps || 60;
+    this.shadowMapEnabled = Boolean(config?.quality?.shadows);
     this._pauseReasons = new Set();
     this._updatables = [];
     this._disposed = false;
@@ -58,11 +63,39 @@ export class Engine {
   }
 
   addToScene(object) {
-    if (object) this.scene.add(object);
+    if (object) {
+      this.scene.add(object);
+      this.applyRuntimeSettingsTo(object);
+    }
   }
 
   removeFromScene(object) {
     if (object) this.scene.remove(object);
+  }
+
+  setRuntimeSettings({ qualityTier = this.runtimeQualityTier, batterySaver = this.batterySaver } = {}) {
+    this.runtimeQualityTier = ['low', 'medium', 'high'].includes(qualityTier) ? qualityTier : (this.config?.quality?.tier || 'medium');
+    const qualityData = this.config?.sources?.quality || {};
+    const profile = { ...(qualityData.defaults || this.config?.quality || {}), ...(qualityData.tiers?.[this.runtimeQualityTier] || {}) };
+    this.batterySaver = Boolean(batterySaver);
+    this.runtimeQuality = { ...profile, shadows: Boolean(profile.shadows) && !this.batterySaver };
+    this.frameCap = this.batterySaver ? 30 : (this.config?.targets?.fps || 60);
+    this.shadowMapEnabled = Boolean(this.runtimeQuality.shadows);
+    this.applyRuntimeSettingsTo(this.scene);
+    return { qualityTier: this.runtimeQualityTier, batterySaver: this.batterySaver, frameCap: this.frameCap, shadows: this.shadowMapEnabled };
+  }
+
+  applyRuntimeSettingsTo(root) {
+    if (!root?.traverse) return root;
+    const shadows = Boolean(this.runtimeQuality?.shadows && !this.batterySaver);
+    root.traverse((node) => {
+      if (node.isMesh) {
+        node.castShadow = shadows;
+        node.receiveShadow = shadows;
+      }
+      if (node.isDirectionalLight && node.name === 'sun') node.castShadow = shadows;
+    });
+    return root;
   }
 
   addUpdatable(object, priority = 0) {

@@ -44,6 +44,9 @@ import {
 import { createRecord, replayRecord, recordSummary, verifySubmission } from '../src/game/battle/BattleRecorder.js';
 import { SaveSystem, migrateRecord, SAVE_SCHEMA_VERSION } from '../src/game/SaveSystem.js';
 import { CampaignSystem } from '../src/game/campaign/CampaignSystem.js';
+import { MetaSystem } from '../src/game/meta/MetaSystem.js';
+import { EventBus, EVENTS } from '../src/core/EventBus.js';
+import { Engine as FakeEngine } from './FakeEngine.js';
 import {
   containsVocalisedArabic,
   missionRefCards,
@@ -82,6 +85,8 @@ const strings = readJson('src/data/strings.fa.json');
 const economyData = readJson('src/data/economy.json');
 const balanceData = readJson('src/data/balance.json');
 const buildingsData = readJson('src/data/buildings.json');
+const metaData = readJson('src/data/meta.json');
+const ftueData = readJson('src/data/ftue.json');
 
 const WORLD_WIDTH = terrain.grid.cols * terrain.tileSize;
 const WORLD_DEPTH = terrain.grid.rows * terrain.tileSize;
@@ -636,7 +641,9 @@ test('economy: starting resources fit inside base storage capacity', () => {
   assert(economyData.builders.total === 2, 'two builders (acceptance ③)');
   assert(economyData.queue.maxJobs >= economyData.builders.total, 'queue must hold at least the active jobs');
   assert(economyData.speedup.minGohar >= 1 && economyData.speedup.goharPerMinute >= 1, 'speedup pricing');
-  assert(economyData.goharSources.dailyBonus > 0 && economyData.goharSources.townCenterLevelReward > 0, 'gohar in-game sources exist');
+  assert(economyData.goharSources.dailyBonus === 0 && economyData.goharSources.townCenterLevelReward > 0, 'no login grant; gohar has a non-streak gameplay source');
+  const { economy } = makeEconomy();
+  assert(economy.grantDailyBonus(1_700_000_000_000) === 0, 'legacy daily-bonus hook never pays');
   assert(economyData.offline.maxHours > 0, 'offline cap exists');
 });
 
@@ -802,6 +809,7 @@ test('save: v1 record migrates to current schema (gold→rizq etc.)', () => {
   assert(Array.isArray(result.payload.jobs) && result.payload.jobs.length === 0, 'jobs added');
   assert(result.payload.entities[0].status === 'ready' && result.payload.entities[0].pending === 0, 'entity production fields added');
   assert(result.payload.lastAccrualAt === 1_690_000_000_000, 'accrual timestamp seeded from savedAt');
+  assert(result.payload.meta.onboarding.status === 'completed', 'legacy cities are not forced into the new-user FTUE');
 });
 
 test('save: future schema is backed up instead of crashing; current passes through', () => {
@@ -843,7 +851,7 @@ test('save: serialize contains no three.js roots', () => {
 });
 
 test('data: strings carry the current phase labels (queue, offline, lesson, campaign)', () => {
-  assert(/[۳۴۵۶]/.test(strings.app.phase), 'phase label updated');
+  assert(strings.app.phase.includes('فاز ۷'), 'phase label reflects the current phase');
   assert(typeof strings.loading.steps.save === 'string', 'loading save step');
   assert(typeof strings.economy.queued === 'string' && typeof strings.economy.storageFull === 'string', 'economy strings');
   assert(typeof strings.loading.steps.quran === 'string', 'phase-4 loading step');
@@ -2453,10 +2461,149 @@ test('phase 6 missions pay star rewards that respect the warehouse ceiling and n
   assert(!JSON.stringify(report).includes('roll') && !JSON.stringify(report).includes('chance'), 'no randomness anywhere in the reward path');
 });
 
+test('phase 7 data: FTUE covers the first 30 minutes and daily tasks have no miss-day penalty', () => {
+  assert(ftueData.activeSessionTargetSeconds === 1800, 'the onboarding target is 30 active minutes');
+  assert(ftueData.steps.length >= 10 && ftueData.steps.every((step) => step.actionLabel), 'the staged guide names a concrete next action in every step');
+  assert(ftueData.steps.find((step) => step.id === 'wait-farm').body.includes('یک انگشت'), 'the guide teaches the mobile camera gesture');
+  assert(ftueData.firstThirtyMinutes.length === 8, 'the 30-minute route is split into eight clear windows');
+  assert(ftueData.firstThirtyMinutes[0].minute === 0 && ftueData.firstThirtyMinutes.at(-1).minute === 25, 'the route begins at 0 and reaches its 25–30 minute close');
+  assert(ftueData.policy.noDeadline && ftueData.policy.noMissedDayPenalty && ftueData.policy.noStreaks && ftueData.policy.noAds, 'FTUE policies reject deadlines, streak pressure and ads');
+  assert(metaData.dailyPolicy.missedDayPenalty === false && metaData.dailyPolicy.streaks === false && metaData.dailyPolicy.resetIncompleteProgress === false, 'daily tasks never punish absences or erase unfinished progress');
+  assert(metaData.dailyMissions.every((mission) => mission.target > 0 && !('deadline' in mission) && !('exclusiveReward' in mission)), 'daily tasks are optional, finite actions without an expiry reward');
+});
+
+test('phase 7 engine: battery saver caps the frame rate at 30 and disables shadows', () => {
+  const bus = new EventBus();
+  const engine = new FakeEngine({ config: makeConfig('high'), bus });
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial());
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  engine.addToScene(mesh);
+  const battery = engine.setRuntimeSettings({ qualityTier: 'low', batterySaver: true });
+  assert(battery.frameCap === 30 && engine.frameCap === 30, 'battery saver uses the 30 fps target');
+  assert(battery.shadows === false && engine.shadowMapEnabled === false, 'battery saver turns shadows off');
+  assert(!mesh.castShadow && !mesh.receiveShadow, 'existing scene meshes stop casting and receiving shadows');
+  const futureMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial());
+  futureMesh.castShadow = futureMesh.receiveShadow = true;
+  engine.applyRuntimeSettingsTo(futureMesh);
+  assert(!futureMesh.castShadow && !futureMesh.receiveShadow, 'future meshes inherit battery shadow settings too');
+  engine.setRuntimeSettings({ qualityTier: 'high', batterySaver: false });
+  assert(engine.frameCap === 60 && engine.runtimeQualityTier === 'high', 'normal frame target and quality tier are restored');
+  assert(engine.shadowMapEnabled === true && mesh.castShadow && mesh.receiveShadow, 'high quality can restore scene shadows');
+  mesh.geometry.dispose();
+  mesh.material.dispose();
+  futureMesh.geometry.dispose();
+  futureMesh.material.dispose();
+  engine.dispose();
+});
+
+test('phase 7 meta: real progression events guide construction, harvest and the first lesson', () => {
+  const bus = new EventBus();
+  const state = new GameState({ economy: economyData, quality: { tier: 'medium' } });
+  let now = Date.UTC(2026, 5, 12, 12);
+  const meta = new MetaSystem({ state, bus, metaData, ftueData, now: () => now, qualityTier: 'medium' });
+  meta.onBoot(now);
+  assert(meta.tutorialSnapshot().step.id === 'open-shop', 'new player starts at the shop action');
+
+  bus.emit(EVENTS.SHOP_OPENED, {});
+  assert(meta.tutorialSnapshot().step.id === 'choose-farm', 'opening the shop advances the guide');
+  bus.emit(EVENTS.PLACEMENT_CHANGED, { active: true, def: { id: 'farm' } });
+  assert(meta.tutorialSnapshot().step.id === 'place-farm', 'choosing the farm advances the guide');
+  bus.emit(EVENTS.BUILDING_QUEUED, { job: { kind: 'build', type: 'farm' }, entity: { id: 1, type: 'farm' } });
+  assert(meta.tutorialSnapshot().step.id === 'wait-farm', 'the actual build queue advances the guide');
+  bus.emit(EVENTS.JOB_FINISHED, { job: { kind: 'build', type: 'farm' }, entity: { id: 1, type: 'farm' } });
+  assert(meta.tutorialSnapshot().step.id === 'harvest-first', 'farm completion unlocks the first-harvest step');
+  assert(meta.snapshot().stats.buildingsBuilt === 1 && meta.snapshot().achievements.find((a) => a.id === 'first-building').unlocked, 'building completion grants XP and unlocks a durable achievement');
+
+  bus.emit(EVENTS.RESOURCE_HARVESTED, { moved: 10, type: 'farm', resource: 'rizq' });
+  assert(meta.tutorialSnapshot().step.id === 'first-lesson', 'a successful harvest advances the guide');
+  bus.emit(EVENTS.QURAN_LESSON_COMPLETED, { report: { kind: 'lesson' } });
+  assert(meta.tutorialSnapshot().step.id === 'visit-campaign', 'completing a lesson advances the guide');
+  assert(meta.snapshot().stats.lessonsCompleted === 1, 'lesson completion is counted only from the completion event');
+  bus.emit(EVENTS.CAMPAIGN_PANEL_OPENED, {});
+  bus.emit(EVENTS.SETTINGS_OPENED, {});
+  bus.emit(EVENTS.META_PANEL_OPENED, {});
+  bus.emit(EVENTS.JOB_FINISHED, { job: { kind: 'build', type: 'well' }, entity: { id: 2, type: 'well' } });
+  assert(meta.tutorialSnapshot().step.id === 'free-play', 'the main tutorial has a clear free-play finish');
+  assert(meta.tutorialSnapshot().coreComplete, 'the three requested core milestones are complete');
+
+  state.meta.onboarding.playSeconds = 1799;
+  meta.update(1);
+  assert(state.meta.onboarding.status === 'completed' && state.meta.onboarding.playSeconds === 1800, 'the 30-minute route completes on active play, without an absence timer');
+  assert(meta.snapshot().level >= 2, 'XP raises the player level');
+  const saved = JSON.parse(JSON.stringify(state.serialize()));
+  const restored = new GameState({ economy: economyData });
+  restored.hydrate(saved);
+  assert(restored.meta.achievements['first-building']?.unlockedAt != null, 'achievement survives save/load');
+  assert(restored.meta.onboarding.flags.firstLesson && restored.meta.onboarding.status === 'completed', 'tutorial flags and completion survive save/load');
+  assert(restored.meta.xp === state.meta.xp && restored.meta.level === state.meta.level, 'XP and level survive save/load');
+  meta.dispose();
+});
+
+test('phase 7 FTUE: skip is available and replay walks the same staged guide', () => {
+  const bus = new EventBus();
+  const state = new GameState({ economy: economyData });
+  const meta = new MetaSystem({ state, bus, metaData, ftueData, now: () => Date.UTC(2026, 0, 1) });
+  assert(meta.skipTutorial(), 'player can skip an active FTUE');
+  assert(state.meta.onboarding.status === 'skipped' && !meta.tutorialSnapshot().active, 'skipping does not alter city progress');
+  assert(meta.replayTutorial() && meta.tutorialSnapshot().replaying, 'player can start a full replay from settings');
+  assert(meta.stepReplay(1) && meta.tutorialSnapshot().stepIndex === 1, 'replay advances one step at a time');
+  assert(meta.skipTutorial() && state.meta.onboarding.replayIndex === null, 'replay itself can be skipped');
+  meta.dispose();
+});
+
+test('phase 7 daily + settings: unfinished tasks and preferences persist across days and saves', () => {
+  const bus = new EventBus();
+  const state = new GameState({ economy: economyData });
+  let now = Date.UTC(2026, 0, 1, 12);
+  let persistCalls = 0;
+  let settingsEvent = null;
+  bus.on(EVENTS.SETTINGS_CHANGED, (settings) => { settingsEvent = settings; });
+  const meta = new MetaSystem({ state, bus, metaData, ftueData, persist: () => { persistCalls += 1; }, now: () => now });
+  meta.onBoot(now);
+  const originalMission = meta.dailySnapshot();
+  assert(originalMission && originalMission.progress === 0, 'an optional daily task is assigned');
+  assert(meta.setSetting('qualityTier', 'low'), 'quality preference is changeable');
+  assert(meta.setSetting('batterySaver', true), 'battery saver preference is changeable');
+  assert(meta.setSetting('soundEnabled', false), 'sound preference is changeable');
+  assert(meta.setSetting('language', 'fa-AF'), 'language preference is changeable');
+  assert(settingsEvent.qualityTier === 'low' && settingsEvent.batterySaver && !settingsEvent.soundEnabled && settingsEvent.language === 'fa-AF', 'settings changes emit the complete runtime preference set');
+
+  now += 86_400_000;
+  meta.update(1);
+  assert(meta.dailySnapshot().id === originalMission.id && meta.dailySnapshot().progress === 0, 'an unfinished daily task does not reset after a missed day');
+  const saved = JSON.parse(JSON.stringify(state.serialize()));
+  meta.dispose();
+
+  const restoredBus = new EventBus();
+  const restored = new GameState({ economy: economyData });
+  restored.hydrate(saved);
+  const metaAgain = new MetaSystem({ state: restored, bus: restoredBus, metaData, ftueData, now: () => now });
+  metaAgain.onBoot(now);
+  assert(metaAgain.dailySnapshot().id === originalMission.id && metaAgain.dailySnapshot().progress === 0, 'daily task identity and progress survive save/load');
+  assert(metaAgain.settings.qualityTier === 'low' && metaAgain.settings.batterySaver && !metaAgain.settings.soundEnabled && metaAgain.settings.language === 'fa-AF', 'all preferences survive save/load');
+
+  const eventByTask = {
+    build: () => restoredBus.emit(EVENTS.JOB_FINISHED, { job: { kind: 'build', type: 'farm' }, entity: { id: 7, type: 'farm' } }),
+    harvest: () => restoredBus.emit(EVENTS.RESOURCE_HARVESTED, { moved: 5, type: 'farm', resource: 'rizq' }),
+    lesson: () => restoredBus.emit(EVENTS.QURAN_LESSON_COMPLETED, { report: { kind: 'lesson' } }),
+  };
+  const activeTask = metaAgain.dailySnapshot();
+  eventByTask[activeTask.event]();
+  assert(metaAgain.dailySnapshot().completed, 'only the matching in-game action completes the optional task');
+  const completedId = activeTask.id;
+  now += 86_400_000;
+  metaAgain.update(1);
+  assert(metaAgain.dailySnapshot().id !== completedId, 'a completed task can rotate on a later day');
+  assert(restored.meta.dailyMission.history.some((item) => item.id === completedId), 'completed task history is saved without a streak counter');
+  assert(persistCalls >= 4, 'preference changes and progression request persistence');
+  metaAgain.dispose();
+});
+
 await flushPending();
 
 const pad = (value, width) => String(value).padEnd(width, ' ');
-console.log('\n=== شهر نور — self checks (فازهای ۱، ۳، ۴، ۵ و ۶) ===\n');
+console.log('\n=== شهر نور — self checks (فازهای ۱ تا ۷) ===\n');
 for (const result of results) {
   console.log(`${result.ok ? '✓' : '✗'} ${pad(result.name, 62)}${result.ok ? '' : result.message}`);
 }

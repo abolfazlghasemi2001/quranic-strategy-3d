@@ -37,12 +37,13 @@ export class BattleView {
    * @param {() => import('../../game/battle/BattleSystem.js').BattleSystem} options.getBattle
    * @param {number} [options.seed]
    */
-  constructor({ parent, config, state, rig, buildings = null, battleData, unitsData, getBattle, seed = 1 }) {
+  constructor({ parent, config, state, rig, buildings = null, battleData, unitsData, getBattle, engine = null, seed = 1 }) {
     this.parent = parent;
     this.config = config;
     this.state = state;
     this.rig = rig;
     this.buildings = buildings;
+    this.engine = engine;
     this.battleData = battleData;
     this.unitsData = unitsData;
     this.getBattle = getBattle;
@@ -191,6 +192,7 @@ export class BattleView {
     this.deployRing.visible = false;
     this.group.add(this.deployRing);
 
+    this.engine?.applyRuntimeSettingsTo(this.group);
     this.captureStructures();
     return this;
   }

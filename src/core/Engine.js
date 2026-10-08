@@ -47,6 +47,11 @@ export class Engine {
     this.paused = false;
     this._pauseReasons = new Set();
     this.viewport = { width: 1, height: 1, dpr: 1 };
+    this.runtimeQualityTier = config.quality.tier;
+    this.batterySaver = false;
+    this.frameCap = config.targets?.fps || 60;
+    this.runtimeQuality = { ...config.quality };
+    this._nextFrameAt = 0;
     this.stats = {
       frameMs: 0,
       fps: 0,
@@ -178,7 +183,7 @@ export class Engine {
     const parent = this.canvas.parentElement || document.body;
     const width = Math.max(1, Math.round(parent.clientWidth || window.innerWidth || 1));
     const height = Math.max(1, Math.round(parent.clientHeight || window.innerHeight || 1));
-    const dpr = Math.min(window.devicePixelRatio || 1, this.config.quality.maxPixelRatio);
+    const dpr = Math.min(window.devicePixelRatio || 1, this.runtimeQuality.maxPixelRatio || this.config.quality.maxPixelRatio);
 
     if (this.viewport.width === width && this.viewport.height === height && this.viewport.dpr === dpr) return;
 
@@ -190,6 +195,72 @@ export class Engine {
     this.camera.updateProjectionMatrix();
 
     if (this.bus) this.bus.emit(EVENTS.RESIZE, { ...this.viewport });
+  }
+
+  /**
+   * Apply player-selected quality at runtime. Pixel ratio, fog and actual
+   * shadow casting are changed without rebuilding the WebGL renderer.
+   * Battery saver is an independent 30 FPS cap and always disables shadows.
+   */
+  setRuntimeSettings({ qualityTier = this.runtimeQualityTier, batterySaver = this.batterySaver } = {}) {
+    const qualityData = this.config.sources?.quality || {};
+    const tiers = qualityData.tiers || {};
+    const defaults = qualityData.defaults || this.config.quality;
+    const tier = ['low', 'medium', 'high'].includes(qualityTier) ? qualityTier : this.config.quality.tier;
+    const profile = { ...defaults, ...(tiers[tier] || {}) };
+    const effective = { ...profile, tier, shadows: Boolean(profile.shadows) && !Boolean(batterySaver) };
+
+    this.runtimeQualityTier = tier;
+    this.batterySaver = Boolean(batterySaver);
+    this.runtimeQuality = effective;
+    this.frameCap = this.batterySaver ? 30 : Math.max(1, Number(this.config.targets?.fps) || 60);
+    this._nextFrameAt = 0;
+
+    if (this.renderer) {
+      this.renderer.shadowMap.enabled = effective.shadows;
+      this.renderer.shadowMap.autoUpdate = effective.shadows;
+      if (effective.shadows) this.renderer.shadowMap.needsUpdate = true;
+    }
+    const fogData = this.config.world.fog;
+    this.scene.fog = fogData?.enabled && effective.fog
+      ? new THREE.Fog(new THREE.Color(fogData.color), fogData.near, fogData.far)
+      : null;
+
+    this.applyRuntimeSettingsTo(this.scene);
+    this.scene.traverse((node) => {
+      if (node.isDirectionalLight && node.name === 'sun' && effective.shadows && node.shadow?.mapSize) {
+        const mapSize = Math.max(256, Number(effective.shadowMapSize) || 1024);
+        node.shadow.mapSize.set(mapSize, mapSize);
+        node.shadow.camera?.updateProjectionMatrix?.();
+        node.shadow.needsUpdate = true;
+      }
+    });
+
+    this.resize(); // reads the newly selected DPR cap
+    if (this.bus) {
+      this.bus.emit(EVENTS.QUALITY_CHANGED, {
+        qualityTier: tier,
+        batterySaver: this.batterySaver,
+        frameCap: this.frameCap,
+        maxPixelRatio: effective.maxPixelRatio,
+        shadows: effective.shadows,
+      });
+    }
+    return { qualityTier: tier, batterySaver: this.batterySaver, frameCap: this.frameCap, shadows: effective.shadows };
+  }
+
+  /** Apply the current runtime shadow policy to a subtree created after boot. */
+  applyRuntimeSettingsTo(root) {
+    if (!root?.traverse) return root;
+    const shadows = Boolean(this.runtimeQuality?.shadows && !this.batterySaver);
+    root.traverse((node) => {
+      if (node.isMesh) {
+        node.castShadow = shadows;
+        node.receiveShadow = shadows;
+      }
+      if (node.isDirectionalLight && node.name === 'sun') node.castShadow = shadows;
+    });
+    return root;
   }
 
   /* ---------------------------------------------------------------- loop */
@@ -243,7 +314,10 @@ export class Engine {
     const shouldPause = this._pauseReasons.size > 0;
     if (this.paused === shouldPause) return;
     this.paused = shouldPause;
-    if (!shouldPause) this._clock.getDelta(); // drop the elapsed paused time
+    if (!shouldPause) {
+      this._clock.getDelta(); // drop the elapsed paused time
+      this._nextFrameAt = 0;
+    }
     if (this.bus) this.bus.emit(EVENTS.GAME_PAUSED, { paused: shouldPause, reasons: Array.from(this._pauseReasons) });
   }
 
@@ -252,8 +326,16 @@ export class Engine {
     else this.pause('manual');
   }
 
-  _tick() {
+  _tick(timestamp = 0) {
     this._rafId = window.requestAnimationFrame(this._boundTick);
+
+    const now = Number.isFinite(timestamp) && timestamp > 0
+      ? timestamp
+      : (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    if (!this.paused && this.frameCap > 0) {
+      if (now + 0.25 < this._nextFrameAt) return;
+      this._nextFrameAt = now + (1000 / this.frameCap);
+    }
 
     const dt = Math.min(this._clock.getDelta(), MAX_FRAME_DELTA);
     this.frame += 1;
@@ -293,6 +375,7 @@ export class Engine {
 
   addToScene(object3d) {
     this.scene.add(object3d);
+    this.applyRuntimeSettingsTo(object3d);
     return object3d;
   }
 

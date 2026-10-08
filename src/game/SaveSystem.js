@@ -1,8 +1,8 @@
 /**
  * SaveSystem — IndexedDB persistence with schema versioning + migrations.
  *
- * Record shape (schemaVersion 3):
- *   { id:'main', schemaVersion:2, savedAt:number, payload:{...GameState} }
+ * Record shape (schemaVersion 6):
+ *   { id:'main', schemaVersion:6, savedAt:number, payload:{...GameState} }
  *
  * Migrations are pure functions keyed by the version they upgrade FROM:
  *   1 → 2 : legacy {gold,wood,stone} resources → {rizq,nur,hekmat,gohar},
@@ -11,8 +11,7 @@
  *           reward totals). Old saves keep working with empty progress.
  *   3 → 4 : adds the army / battle layer (garrison, training queue, battle log).
  *   4 → 5 : adds the story campaign (mission stars, unlocks, active run).
- *   3 → 4 : adds the phase-5 army/battle layer (garrison, training queue,
- *           structure health and the last battle records for replay).
+ *   5 → 6 : adds player meta progression, FTUE, daily mission and settings.
  *
  * A record with a NEWER schemaVersion than we understand is preserved as a
  * backup (`main-backup-v{n}`) and the game starts fresh — never crashes.
@@ -21,7 +20,7 @@
  * store is used so the game logic remains fully functional and testable.
  */
 
-export const SAVE_SCHEMA_VERSION = 5;
+export const SAVE_SCHEMA_VERSION = 6;
 export const SAVE_DB_NAME = 'shahr-nur';
 export const SAVE_STORE = 'saves';
 export const SAVE_KEY = 'main';
@@ -30,6 +29,7 @@ export const SAVE_KEY = 'main';
 import { normalizeLearningState } from './quran/LearningState.js';
 import { normalizeCampaignState } from './campaign/MissionState.js';
 import { normalizeArmyState, normalizeBattleState } from './barracks/ArmyState.js';
+import { normalizeMetaState } from './meta/MetaState.js';
 
 export const MIGRATIONS = {
   1(payload) {
@@ -86,6 +86,12 @@ export const MIGRATIONS = {
   4(payload) {
     const next = { ...payload };
     next.campaign = normalizeCampaignState(payload.campaign);
+    return next;
+  },
+  // Phase 7: older cities keep their progress and do not get forced into FTUE.
+  5(payload) {
+    const next = { ...payload };
+    next.meta = normalizeMetaState(payload.meta, { legacySave: true });
     return next;
   },
 };

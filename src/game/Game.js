@@ -8,6 +8,7 @@ import { BattleSystem } from './battle/BattleSystem.js';
 import { createStructureStats } from './battle/StructureStats.js';
 import { CampaignSystem } from './campaign/CampaignSystem.js';
 import { normalizeMissions, validateMissions } from './campaign/MissionData.js';
+import { MetaSystem } from './meta/MetaSystem.js';
 import buildingData from '../data/buildings.json';
 import unitsData from '../data/units.json';
 import defensesData from '../data/defenses.json';
@@ -44,6 +45,15 @@ export class Game {
     this.step = 1 / this.logicHz;
     this.accumulator = 0;
     this.state = new GameState(config);
+
+    // --- phase 7: player progression, optional FTUE, daily mission and settings ---
+    this.meta = new MetaSystem({
+      state: this.state,
+      bus,
+      metaData: config.meta,
+      ftueData: config.ftue,
+      qualityTier: config.quality.tier,
+    });
 
     // --- phase 3 systems (pure logic, JSON driven) ---
     this.economy = new EconomySystem({
@@ -201,7 +211,7 @@ export class Game {
    * Boot hook: hydrate from the save payload (if any), run offline catch-up,
    * seed a fresh town when there is nothing to restore.
    *
-   * @returns {{fresh:boolean, secondsAway:number, jobsDone:number, goharDaily:number}}
+   * @returns {{fresh:boolean, secondsAway:number, jobsDone:number}}
    */
   bootstrap() {
     const now = Date.now();
@@ -215,11 +225,9 @@ export class Game {
 
     let secondsAway = 0;
     let jobsDone = 0;
-    let goharDaily = 0;
 
     if (fresh) {
       this._seedTown(now);
-      this.economy.grantDailyBonus(now);
     } else {
       // Offline progress: pure wall-clock timestamp math (acceptance ⑤).
       // savedAt is injected by SaveSystem on every save → exactly "time since
@@ -231,7 +239,6 @@ export class Game {
       this.economy.catchUp(now); // accrue production from timestamps
       const finished = this.queue.tick(now); // fast-forward the builders
       jobsDone = finished.length;
-      goharDaily = this.economy.grantDailyBonus(now);
 
       const gained = {};
       for (const key of Object.keys(this.state.resources)) {
@@ -245,9 +252,10 @@ export class Game {
           if (res) pending[res] = (pending[res] || 0) + entity.pending;
         }
       }
-      this.offlineReport = { secondsAway, jobsDone, goharDaily, gained, pending };
+      this.offlineReport = { secondsAway, jobsDone, gained, pending };
     }
 
+    this.meta.onBoot(now);
     this.syncStructureHealth();
     this.barracks.emitChanged();
     this.markEconomyDirty();
@@ -273,7 +281,7 @@ export class Game {
         console.warn('[شهر نور] خطاهای اعتبارسنجی مأموریت‌ها:', this.missionValidation.issues.filter((issue) => issue.level === 'error'));
       }
     }
-    return { fresh, secondsAway, jobsDone, goharDaily };
+    return { fresh, secondsAway, jobsDone };
   }
 
   /** Place the initial town center (fresh game only). */
@@ -299,6 +307,7 @@ export class Game {
 
   update(realDt) {
     if (this.state.paused) return;
+    this.meta.update(realDt);
     // شبیه‌ساز نبرد با زمان واقعی گام می‌خورد، ولی منطقش فقط با گام‌های ثابت
     // جلو می‌رود؛ بنابراین نتیجهٔ نبرد به نرخ فریم وابسته نیست.
     this.battle.update(realDt);
@@ -333,11 +342,7 @@ export class Game {
     const accrued = this.economy.accrue(now);
     if (accrued > 0) this.markEconomyDirty();
 
-    const daily = this.economy.grantDailyBonus(now);
-    if (daily > 0) {
-      this.markEconomyDirty();
-      this.bus.emit(EVENTS.UI_TOAST, { message: `پاداش روزانه: +${daily} گوهر`, type: 'info' });
-    }
+    // No daily-login payout: returning after a break never changes progression.
 
     // مأموریت فعال (فاز ۶): فصل‌ها، موج‌ها و آبادانی — پیش از مصرف عمومی.
     if (this.campaign) this.campaign.tick(dt, now);
@@ -470,8 +475,6 @@ export class Game {
       if (job.startedAt != null) job.startedAt -= Math.max(0, ms);
       if (job.endsAt != null) job.endsAt -= Math.max(0, ms);
     }
-    this.state.lastDailyAt = realNow; // the simulation must not grant/steal the daily bonus
-
     const gained = {};
     for (const key of Object.keys(this.state.resources)) {
       const delta = Math.round(this.state.resources[key] - before[key]);
@@ -489,6 +492,7 @@ export class Game {
   /** main.js injects the debounced save function (learning layer asks for saves). */
   attachPersist(fn) {
     this._persistFn = typeof fn === 'function' ? fn : null;
+    this.meta.persist = this._persistFn;
   }
 
   /** Debounced save request — used by systems that live in the logic layer. */
@@ -543,6 +547,7 @@ export class Game {
   }
 
   dispose() {
+    this.meta?.dispose();
     this.campaign?.dispose();
     this.battle.dispose();
     for (const [ev, fn] of this._on) this.bus.off(ev, fn);
