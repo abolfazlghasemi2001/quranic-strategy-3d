@@ -12,6 +12,8 @@ import balanceData from '../data/balance.json';
 import quranLearningData from '../data/quran-learning.json';
 import campaignData from '../data/campaign.json';
 import missionsData from '../data/missions.json';
+import metaData from '../data/meta.json';
+import ftueData from '../data/ftue.json';
 import { hash2i } from './RNG.js';
 import { clamp } from './MathUtils.js';
 
@@ -81,6 +83,8 @@ export class Config {
       quranLearning: quranLearningData,
       campaign: campaignData,
       missions: missionsData,
+      meta: metaData,
+      ftue: ftueData,
     };
 
     this.world = deepFreeze(clone(worldData));
@@ -95,6 +99,10 @@ export class Config {
     this.campaign = deepFreeze(clone(campaignData));
     /** Phase 6 mission definitions — narrative + verse *references* only. */
     this.missions = deepFreeze(clone(missionsData));
+    /** Phase 7 progression policy and XP tuning; UI text remains data-driven. */
+    this.meta = deepFreeze(clone(metaData));
+    /** Phase 7 interactive first-session flow and 30-minute roadmap. */
+    this.ftue = deepFreeze(clone(ftueData));
 
     const requested = new URLSearchParams(search).get('quality');
     this.tier = QUALITY_TIERS.includes(requested) ? requested : detectQualityTier(env);

@@ -22,8 +22,8 @@ export class BuildingSystem {
    * @param {object} options
    * @param {object} options.game — the Game (for state broadcasts + persistence hook)
    */
-  constructor({ config, world, rig, input, bus, state, economy, queue, game, persist }) {
-    Object.assign(this, { config, world, rig, input, bus, state, economy, queue, game });
+  constructor({ config, world, rig, input, bus, state, economy, queue, game, engine = null, persist }) {
+    Object.assign(this, { config, world, rig, input, bus, state, economy, queue, game, engine });
     this.persist = persist || null;
     this.definitions = buildingData.buildings;
     this.byId = new Map(this.definitions.map((d) => [d.id, d]));
@@ -100,6 +100,7 @@ export class BuildingSystem {
     this._placeRoot(root, entity, ready ? entity.level : 1);
     entity.root = root;
     this.group.add(root);
+    this.engine?.applyRuntimeSettingsTo(root);
     for (let r = entity.row; r < entity.row + entity.size[1]; r += 1) {
       for (let c = entity.col; c < entity.col + entity.size[0]; c += 1) this.occupancy.set(`${c}:${r}`, entity.id);
     }
@@ -194,6 +195,14 @@ export class BuildingSystem {
     const result = this.economy.harvest(entity, Date.now());
     const meta = this.economy.data.resources[result.resource] || null;
     if (result.moved > 0) {
+      this.bus.emit(EVENTS.RESOURCE_HARVESTED, {
+        entityId: entity.id,
+        type: entity.type,
+        resource: result.resource,
+        moved: result.moved,
+        at: Date.now(),
+        source: 'player',
+      });
       this.bus.emit(EVENTS.UI_TOAST, `+${formatFa(Math.round(result.moved))} ${meta ? meta.name : ''}`.trim());
       this._afterEconomyChange();
       return true;
@@ -236,6 +245,7 @@ export class BuildingSystem {
     });
     this.placing = { def, preview, col: 0, row: 0, valid: false };
     this.group.add(preview);
+    this.engine?.applyRuntimeSettingsTo(preview);
     this.highlight.visible = true;
     this.input.interactionMode = 'placement';
     this.world.setGridVisible(true);
@@ -308,6 +318,7 @@ export class BuildingSystem {
     this._placeRoot(scaffold, entity, 1);
     entity.root = scaffold;
     this.group.add(scaffold);
+    this.engine?.applyRuntimeSettingsTo(scaffold);
     for (let r = row; r < row + def.size[1]; r += 1) {
       for (let c = col; c < col + def.size[0]; c += 1) this.occupancy.set(`${c}:${r}`, entity.id);
     }
@@ -326,6 +337,7 @@ export class BuildingSystem {
       return false;
     }
 
+    this.bus.emit(EVENTS.BUILDING_QUEUED, { job: result.job, entity });
     this.bus.emit(EVENTS.UI_TOAST, `${def.name} در صف ساخت قرار گرفت.`);
     this.select(entity);
 
@@ -483,6 +495,7 @@ export class BuildingSystem {
       this._placeRoot(root, entity, entity.level);
       entity.root = root;
       this.group.add(root);
+      this.engine?.applyRuntimeSettingsTo(root);
       this.bus.emit(EVENTS.UI_TOAST, `${def.name} ساخته شد.`);
     } else if (job.kind === 'upgrade') {
       entity.root.scale.setScalar(1 + 0.035 * (entity.level - 1));

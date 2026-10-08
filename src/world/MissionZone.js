@@ -29,11 +29,12 @@ export class MissionZone {
    * @param {() => object|null} options.getSnapshot — CampaignSystem.snapshot()
    * @param {import('../core/EventBus.js').EventBus} [options.bus]
    */
-  constructor({ config, parent, getSnapshot, bus = null }) {
+  constructor({ config, parent, getSnapshot, bus = null, engine = null }) {
     this.config = config;
     this.parent = parent;
     this.getSnapshot = getSnapshot;
     this.bus = bus;
+    this.engine = engine;
     this.group = new THREE.Group();
     this.group.name = 'mission-zone';
     this.group.visible = false;
@@ -160,6 +161,7 @@ export class MissionZone {
     }
 
     this.group.visible = true;
+    this.engine?.applyRuntimeSettingsTo(this.group);
     return this.group;
   }
 

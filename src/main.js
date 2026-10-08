@@ -1,5 +1,5 @@
 /**
- * شهر نور — entry point (phase 6: story campaign / قصص قرآن)
+ * شهر نور — entry point (phase 7: meta progression, FTUE and settings)
  *
  * Boot order:
  *   config -> engine -> load save -> Quran dataset -> world -> input/camera ->
@@ -12,6 +12,7 @@ import './ui/hud.css';
 import { Config } from './core/Config.js';
 import { Engine } from './core/Engine.js';
 import { EventBus, EVENTS } from './core/EventBus.js';
+import { SoundManager } from './core/SoundManager.js';
 import { InputManager } from './core/InputManager.js';
 import { OrbitCameraRig } from './core/OrbitCameraRig.js';
 import { World } from './world/World.js';
@@ -30,6 +31,9 @@ import { BattlePanel } from './ui/BattlePanel.js';
 import { BarracksPanel } from './ui/BarracksPanel.js';
 import { MissionZone } from './world/MissionZone.js';
 import { MissionPanel } from './ui/campaign/MissionPanel.js';
+import { MetaPanel } from './ui/MetaPanel.js';
+import { SettingsPanel } from './ui/SettingsPanel.js';
+import { FTUEGuide } from './ui/FTUEGuide.js';
 import { LoadingScreen, ErrorOverlay } from './ui/LoadingScreen.js';
 
 async function boot() {
@@ -95,6 +99,11 @@ async function boot() {
   const world = new World({ config, bus });
   await world.build((step, ratio) => loading.setStep(step, ratio));
   engine.addToScene(world.group);
+  const storedSettings = saveRecord?.payload?.meta?.settings || {};
+  engine.setRuntimeSettings({
+    qualityTier: storedSettings.qualityTier || config.quality.tier,
+    batterySaver: Boolean(storedSettings.batterySaver),
+  });
 
   // -------------------------------------------------------------- camera
   const input = new InputManager(canvas, { config });
@@ -122,6 +131,7 @@ async function boot() {
   });
 
   game.attachPersist(requestSave);
+  const soundManager = new SoundManager({ bus, enabled: game.meta.settings.soundEnabled });
 
   const buildings = new BuildingSystem({
     config, world, rig, input, bus,
@@ -129,6 +139,7 @@ async function boot() {
     economy: game.economy,
     queue: game.queue,
     game,
+    engine,
     persist: requestSave,
   });
   bus.on(EVENTS.JOB_FINISHED, requestSave);
@@ -156,6 +167,7 @@ async function boot() {
     battleData: game.battle.battleData,
     unitsData: game.battle.unitsData,
     getBattle: () => game.battle,
+    engine,
     seed: config.seed,
   });
   const barracksPanel = new BarracksPanel({
@@ -197,6 +209,7 @@ async function boot() {
     config,
     parent: world.group,
     bus,
+    engine,
     getSnapshot: () => game.campaign?.snapshot() || null,
   });
   missionZone.setMissions(game.missions.byId);
@@ -212,6 +225,26 @@ async function boot() {
       buildings.cancelPlacement();
       lessonHub.show();
     },
+  });
+
+  const replayFTUE = () => game.meta.replayTutorial();
+  const settingsPanel = new SettingsPanel({
+    config,
+    bus,
+    metaSystem: game.meta,
+    parent: document.body,
+    onReplay: replayFTUE,
+    onPause: () => engine.pause('settings'),
+    onResume: () => engine.resume('settings'),
+  });
+  const metaPanel = new MetaPanel({
+    config,
+    bus,
+    metaSystem: game.meta,
+    parent: document.body,
+    onReplay: replayFTUE,
+    onPause: () => engine.pause('meta-panel'),
+    onResume: () => engine.resume('meta-panel'),
   });
 
   const hud = new HUD({
@@ -248,6 +281,31 @@ async function boot() {
       buildings.cancelPlacement();
       lessonHub.show();
     },
+    onOpenSettings: () => {
+      buildings.cancelPlacement();
+      settingsPanel.show();
+    },
+    onOpenMeta: () => {
+      buildings.cancelPlacement();
+      metaPanel.show();
+    },
+  });
+  const modalIsVisible = (panel) => Boolean(panel?.root && !panel.root.classList.contains('is-hidden'));
+  const ftueGuide = new FTUEGuide({
+    config,
+    bus,
+    metaSystem: game.meta,
+    engine,
+    hud,
+    buildings,
+    rig,
+    parent: document.body,
+    isModalOpen: () => [settingsPanel, metaPanel, lessonHub, quranPanel, missionPanel, battlePanel, barracksPanel].some(modalIsVisible),
+  });
+  bus.on(EVENTS.SETTINGS_CHANGED, (settings) => {
+    engine.setRuntimeSettings(settings);
+    soundManager.setEnabled(settings.soundEnabled);
+    saveNow();
   });
   const devPanel = new DevPanel({
     config,
@@ -301,6 +359,7 @@ async function boot() {
   engine.addUpdatable(battlePanel, 96);
   engine.addUpdatable(barracksPanel, 97);
   engine.addUpdatable(hud, 100);
+  engine.addUpdatable(ftueGuide, 105);
   engine.addUpdatable(devPanel, 110);
 
   engine.start();
@@ -312,6 +371,7 @@ async function boot() {
     config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel,
     lessonHub, datasetLoader, quran, saveSystem, saveNow,
     battleView, battlePanel, barracksPanel, missionZone, missionPanel,
+    metaSystem: game.meta, metaPanel, settingsPanel, ftueGuide, soundManager,
   };
 
   window.addEventListener('pagehide', (event) => {
@@ -320,6 +380,10 @@ async function boot() {
     window.clearTimeout(saveTimer);
     saveNow();
     devPanel.dispose();
+    ftueGuide.dispose();
+    settingsPanel.dispose();
+    metaPanel.dispose();
+    soundManager.dispose();
     hud.dispose();
     quranPanel.dispose();
     lessonHub.dispose();
@@ -339,7 +403,7 @@ async function boot() {
   });
 
   console.info(
-    `[شهر نور] فاز ۶ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
+    `[شهر نور] فاز ۷ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
     `ذخیره: ${saveRecord ? `بازیابی (${bootInfo.secondsAway}s غیبت)` : 'جدید'}، ` +
     `صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}، ` +
     `دیتاست قرآن: ${quran.dataset.stats.datasetId} (آیه ${quran.dataset.stats.verseCount}، درس ${quran.dataset.stats.lessonCount}، بازبینی‌شده ${quran.dataset.stats.reviewedVerseCount})، ` +

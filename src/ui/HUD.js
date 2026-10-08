@@ -26,9 +26,11 @@ export class HUD {
    * @param {import('../game/EconomySystem.js').EconomySystem} options.economy
    * @param {import('../game/BuildQueue.js').BuildQueue} options.queue
    */
-  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, game = null, learning = null, onOpenQuran, onOpenStudy, onOpenBattle, onOpenBarracks, onOpenMissions }) {
+  constructor({ config, engine, bus, monitor, rig, buildings, economy, queue, game = null, learning = null, onOpenQuran, onOpenStudy, onOpenBattle, onOpenBarracks, onOpenMissions, onOpenSettings, onOpenMeta }) {
     Object.assign(this, { config, engine, bus, monitor, rig, buildings, economy, queue, game, learning });
     this.onOpenStudy = onOpenStudy;
+    this.onOpenSettings = onOpenSettings;
+    this.onOpenMeta = onOpenMeta;
     this.onOpenMissions = onOpenMissions;
     this.onOpenBattle = onOpenBattle;
     this.onOpenBarracks = onOpenBarracks;
@@ -41,10 +43,23 @@ export class HUD {
       this.chips[key] = resourceChip(meta.icon, meta.name);
     }
 
-    this.player = el('div', {
+    this.playerLevelValue = el('b', { text: '۱' });
+    this.playerXpText = el('small', { className: 'game-player__xp-text', text: '۰ XP' });
+    this.playerXpFill = el('i');
+    this.playerXpBar = el('div', { className: 'game-player__xp-bar', children: [this.playerXpFill] });
+    this.player = el('button', {
       className: 'game-player',
-      children: [el('span', { className: 'game-avatar', text: 'ن' }), el('div', { children: [el('small', { text: 'سطح شهر' }), this.levelValue] })],
+      attrs: { type: 'button', 'aria-label': 'بازکردن کارنامهٔ بازیکن', title: 'کارنامه، XP، دستاوردها و مأموریت اختیاری' },
+      children: [
+        el('span', { className: 'game-avatar', text: 'ن' }),
+        el('div', { className: 'game-player__info', children: [
+          el('small', { text: 'سطح شهر' }), this.levelValue,
+          el('small', { className: 'game-player__meta-label', text: 'سطح بازیکن' }), this.playerLevelValue,
+          this.playerXpText, this.playerXpBar,
+        ] }),
+      ],
     });
+    this.player.addEventListener('click', () => this.onOpenMeta?.());
     this.buildersView = el('div', {
       className: 'game-builders',
       children: [el('span', { text: '⚒' }), el('div', { children: [el('small', { text: t('economy.builders', 'بنّاها') }), this.builderValue] })],
@@ -90,6 +105,8 @@ export class HUD {
     });
     this.shopButton = button('ساخت‌وساز', { className: 'game-corner-btn game-shop-btn', onClick: () => this.toggleShop() });
     this.shopButton.prepend(el('span', { text: '🏛' }));
+    this.settingsButton = button('تنظیمات', { className: 'game-corner-btn game-settings-btn', onClick: () => this.onOpenSettings?.() });
+    this.settingsButton.prepend(el('span', { text: '⚙' }));
     // Phase 6: دروازهٔ کمپین قصص (نشان = شمار ستاره‌ها و مأموریت باز).
     this.questBadge = el('span', { className: 'game-corner-badge game-corner-badge--quest', text: '★۰' });
     this.questButton = button(t('campaign.button', 'قصه‌ها'), {
@@ -187,6 +204,7 @@ export class HUD {
         this.resourcesView,
         this.missionChip,
         this.shopButton,
+        this.settingsButton,
         this.questButton,
         this.studyButton,
         this.armyButton,
@@ -217,6 +235,11 @@ export class HUD {
       bus.on(EVENTS.ARMY_CHANGED, (readiness) => this.renderArmyBadge(readiness)),
       bus.on(EVENTS.CAMPAIGN_CHANGED, (snapshot) => this.renderCampaign(snapshot)),
       bus.on(EVENTS.MISSION_PROGRESS, (active) => this.renderMissionProgress(active)),
+      bus.on(EVENTS.META_CHANGED, (snapshot) => this.renderMeta(snapshot)),
+      bus.on(EVENTS.META_XP_AWARDED, ({ amount } = {}) => this.toast(`تجربهٔ بازیکن +${formatFa(amount || 0)} XP`)),
+      bus.on(EVENTS.META_LEVEL_UP, ({ level } = {}) => this.toast(`سطح بازیکن به ${formatFa(level || 1)} رسید.`)),
+      bus.on(EVENTS.META_ACHIEVEMENT_UNLOCKED, ({ achievement } = {}) => this.toast(`دستاورد «${achievement?.title || ''}» ثبت شد.`)),
+      bus.on(EVENTS.DAILY_MISSION_COMPLETED, () => this.toast('مأموریت اختیاری انجام شد؛ XP ثبت شد.')),
       bus.on(EVENTS.BATTLE_STARTED, () => this.setBattleLive(true)),
       bus.on(EVENTS.BATTLE_SESSION_CLOSED, () => this.setBattleLive(false)),
       bus.on(EVENTS.BATTLE_PROGRESS, (status) => this.renderBattleBadge(status)),
@@ -231,10 +254,14 @@ export class HUD {
         }
       }),
     ];
+    if (this.game?.meta) this.renderMeta(this.game.meta.snapshot());
   }
 
   toggleShop(force) {
-    this.shop.classList.toggle('is-hidden', force === undefined ? !this.shop.classList.contains('is-hidden') : !force);
+    const wasHidden = this.shop.classList.contains('is-hidden');
+    const show = force === undefined ? wasHidden : Boolean(force);
+    this.shop.classList.toggle('is-hidden', !show);
+    if (show && wasHidden) this.bus.emit(EVENTS.SHOP_OPENED, {});
   }
 
   /* ------------------------------------------------------------ economy */
@@ -530,6 +557,18 @@ export class HUD {
       : 'درس و مرور فاصله‌دار';
   }
 
+  /** سطح، XP و نوار پیشرفت بازیکن در نشان کارنامه. */
+  renderMeta(snapshot) {
+    if (!snapshot) return;
+    this.playerLevelValue.textContent = formatFa(snapshot.level || 1);
+    const xpLine = snapshot.nextXp == null
+      ? `${formatFa(snapshot.xp)} XP · بیشینه`
+      : `${formatFa(snapshot.xp)} / ${formatFa(snapshot.nextXp)} XP`;
+    this.playerXpText.textContent = xpLine;
+    this.playerXpFill.style.setProperty('--progress', `${Math.round((snapshot.progress || 0) * 100)}%`);
+    this.player.setAttribute('aria-label', `کارنامهٔ بازیکن، سطح ${formatFa(snapshot.level || 1)}، ${formatFa(snapshot.xp)} XP`);
+  }
+
   /* -------------------------------------------------------------- toast */
 
   toast(text) {
@@ -543,8 +582,8 @@ export class HUD {
   /** Welcome-back summary: «در غیبت شما…». */
   showOfflineReport(report) {
     if (!report) return;
-    const { secondsAway, jobsDone, goharDaily, gained } = report;
-    const interesting = secondsAway >= 60 || jobsDone > 0 || goharDaily > 0;
+    const { secondsAway, jobsDone, gained } = report;
+    const interesting = secondsAway >= 60 || jobsDone > 0 || Object.values(gained || {}).some((value) => value > 0);
     if (!interesting) return;
     const parts = [];
     if (secondsAway >= 60) {
@@ -558,7 +597,6 @@ export class HUD {
       .join('، ');
     if (gainedText) parts.push(`${gainedText} تولید شد`);
     if (jobsDone > 0) parts.push(`${formatFa(jobsDone)} ساختمان کامل شد`);
-    if (goharDaily > 0) parts.push(`+${formatFa(goharDaily)} گوهر`);
     this.toast(`${this.config.t('economy.offline', 'در غیبت شما')}: ${parts.join('، ')}`);
   }
 

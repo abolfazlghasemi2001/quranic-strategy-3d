@@ -61,7 +61,7 @@ export class DevPanel {
       }),
     );
 
-    this.tierValue = TIER_LABEL[config.quality.tier] || config.quality.tier;
+    this.tierValue = TIER_LABEL[engine.runtimeQualityTier || config.quality.tier] || config.quality.tier;
 
     this.saveButton = button(t('hud.saveNow', 'ذخیرهٔ فوری'), {
       className: 'ui-btn',
@@ -187,7 +187,9 @@ export class DevPanel {
     this.rows.geometries.textContent = String(snapshot.geometries);
     this.rows.textures.textContent = String(snapshot.textures);
     this.rows.programs.textContent = String(snapshot.programs);
-    this.rows.tier.textContent = this.tierValue;
+    const tier = this.engine.runtimeQualityTier || this.config.quality.tier;
+    const tierLabel = TIER_LABEL[tier] || tier;
+    this.rows.tier.textContent = this.engine.batterySaver ? `${tierLabel} · صرفه‌جویی` : tierLabel;
     this.rows.seed.textContent = String(this.config.seed);
     this.rows.camera.textContent = `${this.rig.distance.toFixed(1)} / ${Math.round((this.rig.yaw * 180) / Math.PI)}°`;
 

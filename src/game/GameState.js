@@ -2,6 +2,7 @@ import { clamp } from '../core/MathUtils.js';
 import { createLearningState, normalizeLearningState } from './quran/LearningState.js';
 import { createCampaignState, normalizeCampaignState } from './campaign/MissionState.js';
 import { createArmyState, createBattleState, normalizeArmyState, normalizeBattleState } from './barracks/ArmyState.js';
+import { createMetaState, normalizeMetaState } from './meta/MetaState.js';
 
 /**
  * GameState — pure data model for the fixed-timestep logic layer.
@@ -9,7 +10,7 @@ import { createArmyState, createBattleState, normalizeArmyState, normalizeBattle
  */
 export class GameState {
   constructor(config) {
-    this.version = 6; // logic schema (save schema handled by SaveSystem)
+    this.version = 7; // logic schema (save schema handled by SaveSystem)
     this.tick = 0;
     this.elapsed = 0;
     this.paused = false;
@@ -21,8 +22,10 @@ export class GameState {
     this.resources = { ...starting };
     this.jobs = []; // build queue (see BuildQueue)
     this.lastAccrualAt = Date.now(); // global resync marker (per-entity ts is authoritative)
-    this.lastDailyAt = 0; // timestamp of last daily-gohar check
-    this.dailyGranted = false; // starting gohar covers day one
+    // Legacy save fields only: retained for old-save migration compatibility;
+    // they are never read for rewards or daily-login progression in phase 7.
+    this.lastDailyAt = 0;
+    this.dailyGranted = false;
     this.nextEntityId = 1;
     this.nextJobId = 1;
 
@@ -35,6 +38,9 @@ export class GameState {
 
     // --- campaign layer (phase 6): missions, stars and the active run ---
     this.campaign = createCampaignState();
+
+    // --- meta layer (phase 7): XP, achievements, daily task, FTUE + settings ---
+    this.meta = createMetaState({ qualityTier: config?.quality?.tier || 'medium' });
 
     this.entities = new Map();
     this.entitySeq = 1;
@@ -114,6 +120,7 @@ export class GameState {
       campaign: JSON.parse(JSON.stringify(this.campaign)),
       army: JSON.parse(JSON.stringify(this.army)),
       battles: JSON.parse(JSON.stringify(this.battles)),
+      meta: JSON.parse(JSON.stringify(this.meta)),
       nextEntityId: this.nextEntityId,
       nextJobId: this.nextJobId,
       entitySeq: this.entitySeq,
@@ -157,6 +164,10 @@ export class GameState {
     this.campaign = normalizeCampaignState(payload.campaign);
     this.army = normalizeArmyState(payload.army);
     this.battles = normalizeBattleState(payload.battles, { keep: 3 });
+    this.meta = normalizeMetaState(payload.meta, {
+      qualityTier: this.meta?.settings?.qualityTier || 'medium',
+      legacySave: !payload.meta && Array.isArray(payload.entities) && payload.entities.length > 0,
+    });
     this.entities = new Map();
     this.entitySeq = payload.entitySeq ?? 1;
     for (const data of payload.entities || []) {

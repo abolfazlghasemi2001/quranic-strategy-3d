@@ -242,6 +242,8 @@ async function teardown() {
 /* ============================================================ phase A: fresh boot */
 
 let nur = null;
+let expectedGoharAfterOffline = null;
+const toFaDigits = (value) => String(value).replace(/[0-9]/g, (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]);
 
 await test('boot: fresh game starts in jsdom with no runtime errors', async () => {
   nur = await boot();
@@ -250,11 +252,76 @@ await test('boot: fresh game starts in jsdom with no runtime errors', async () =
   assert(document.querySelector('.ui-error').classList.contains('is-hidden'), 'error overlay stays hidden');
   // offline welcome-back toast must NOT appear on a fresh boot
   assert(!nur.hud.toastNode.classList.contains('is-visible'), 'no offline toast on boot 1');
+  assert(nur.metaSystem.tutorialSnapshot().step.id === 'open-shop', 'new player gets the first guided action');
+  assert(!nur.ftueGuide.root.classList.contains('is-hidden'), 'FTUE card is visible on a fresh save');
   await waitFor(() => !document.querySelector('.ui-loading'), 5000, 'loading screen removed');
   assert(logs.jsdom.length === 0, `jsdom errors: ${logs.jsdom[0]}`);
 });
 
 if (!nur) await teardown();
+
+await test('phase 7: settings affect engine, sound, locale, and the FTUE can be replayed', () => {
+  nur.hud.settingsButton.click();
+  assert(nur.settingsPanel.open && !nur.settingsPanel.root.classList.contains('is-hidden'), 'settings panel opens from the HUD');
+  assert(nur.engine.paused, 'settings modal pauses gameplay safely');
+
+  nur.settingsPanel.qualitySelect.value = 'low';
+  nur.settingsPanel.qualitySelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.batteryToggle.checked = true;
+  nur.settingsPanel.batteryToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.soundToggle.checked = false;
+  nur.settingsPanel.soundToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.languageSelect.value = 'fa-AF';
+  nur.settingsPanel.languageSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert(nur.engine.runtimeQualityTier === 'low', 'quality selection changes the live quality tier');
+  assert(nur.engine.frameCap === 30 && !nur.engine.shadowMapEnabled, 'battery saver applies the 30 fps cap and disables shadows');
+  assert(nur.soundManager.enabled === false, 'sound toggle reaches the sound manager');
+  assert(document.documentElement.lang === 'fa-AF' && document.documentElement.dir === 'rtl', 'language choice updates the Persian locale metadata without changing RTL');
+
+  nur.settingsPanel.qualitySelect.value = 'medium';
+  nur.settingsPanel.qualitySelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.batteryToggle.checked = false;
+  nur.settingsPanel.batteryToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.soundToggle.checked = true;
+  nur.settingsPanel.soundToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.languageSelect.value = 'fa-IR';
+  nur.settingsPanel.languageSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert(nur.engine.frameCap === 60 && nur.soundManager.enabled, 'normal frame rate and sound are restored');
+  nur.settingsPanel.qualitySelect.value = 'low';
+  nur.settingsPanel.qualitySelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.batteryToggle.checked = true;
+  nur.settingsPanel.batteryToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.soundToggle.checked = false;
+  nur.settingsPanel.soundToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.languageSelect.value = 'fa-AF';
+  nur.settingsPanel.languageSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.close();
+  assert(!nur.engine.paused, 'closing settings resumes gameplay');
+  tick(nur);
+
+  nur.hud.settingsButton.click();
+  const replayButton = [...nur.settingsPanel.card.querySelectorAll('button')].find((node) => node.textContent.includes('نمایش دوباره'));
+  assert(replayButton, 'settings expose a replay button');
+  replayButton.click();
+  assert(nur.metaSystem.tutorialSnapshot().replaying && nur.metaSystem.tutorialSnapshot().stepIndex === 0, 'FTUE replay starts at the first step');
+  const next = [...nur.ftueGuide.card.querySelectorAll('button')].find((node) => node.textContent.includes('بعدی'));
+  assert(next, 'replay can advance step by step');
+  next.click();
+  assert(nur.metaSystem.tutorialSnapshot().stepIndex === 1, 'replay advances to the next guide step');
+  const closeReplay = [...nur.ftueGuide.card.querySelectorAll('button')].find((node) => node.textContent.includes('بستن بازبینی'));
+  assert(closeReplay, 'replay can be closed before its final step');
+  closeReplay.click();
+  assert(!nur.metaSystem.tutorialSnapshot().replaying, 'closing replay returns to the current live guide state');
+  tick(nur);
+
+  nur.hud.player.click();
+  assert(nur.metaPanel.open && !nur.metaPanel.root.classList.contains('is-hidden'), 'player profile opens from the HUD');
+  assert(nur.metaPanel.card.textContent.includes('XP') && nur.metaPanel.card.textContent.includes('نقشهٔ ۳۰ دقیقه'), 'profile shows player progression and first-30-minute route');
+  assert(nur.metaPanel.card.textContent.includes('بی‌مهلت') && nur.metaPanel.card.textContent.includes('زنجیرهٔ ورود'), 'daily task explicitly has no deadline or login streak');
+  nur.metaPanel.close();
+  tick(nur);
+  assert(!nur.engine.paused, 'closing the profile resumes the city');
+});
 
 await test('HUD: starting economy renders in Persian (۶۰۰/۸۰۰ …)', () => {
   assert(chip(nur, 'rizq') === '۶۰۰/۸۰۰', `rizq chip: ${chip(nur, 'rizq')}`);
@@ -287,10 +354,14 @@ await test('acceptance ①/③: confirm farm → active job, queue visible insta
   // on screen (_afterEconomyChange → emitQueue, Bug A fix).
   assert(!nur.hud.queuePanel.classList.contains('is-hidden'), 'queue panel visible immediately after confirm');
   assert(nur.hud.queueList.querySelectorAll('.queue-row--active').length === 1, 'one active job');
+  const shadowingMeshes = [];
+  nur.engine.scene.traverse((node) => { if (node.isMesh && (node.castShadow || node.receiveShadow)) shadowingMeshes.push(node.name); });
+  assert(shadowingMeshes.length === 0, `new building meshes also obey battery saver (${shadowingMeshes.length} shadow-enabled)`);
   assert(nur.hud.queueBadge.textContent === '۱/۲', `builders badge: ${nur.hud.queueBadge.textContent}`);
   assert(chip(nur, 'rizq') === '۴۰۰/۸۰۰', `farm cost paid (rizq ${chip(nur, 'rizq')})`);
   assert(chip(nur, 'nur') === '۳۲۰/۶۰۰', `farm cost paid (nur ${chip(nur, 'nur')})`);
   assert(chip(nur, 'hekmat') === '۲۳۰/۴۰۰', `farm cost paid (hekmat ${chip(nur, 'hekmat')})`);
+  assert(nur.metaSystem.tutorialSnapshot().step.id === 'wait-farm', 'first-farm placement advances the FTUE into the construction step');
   assert(toastText(nur).includes('در صف ساخت'), `toast: ${toastText(nur)}`);
   assert(!nur.hud.selection.classList.contains('is-hidden'), 'confirmed building gets selected');
   assert(nur.hud.selection.textContent.includes('در حال ساخت'), 'selection shows building state');
@@ -341,6 +412,8 @@ await test('speedup (گوهر): finishes the farm instantly and promotes the wal
   btn.click();
   assert(nur.game.state.resources.gohar === goharBefore - 1, 'exactly one gohar spent');
   assert(entity(nur, 'farm').status === 'ready', 'farm finished');
+  assert(nur.game.state.meta.stats.buildingsBuilt === 1 && nur.game.state.meta.achievements['first-building']?.unlockedAt != null, 'real job completion grants the first-building achievement');
+  assert(nur.metaSystem.tutorialSnapshot().step.id === 'harvest-first', 'first farm completion advances the FTUE to harvesting');
   assert(!nur.game.queue.jobs.some((j) => j.type === 'farm'), 'farm job removed');
   assert(nur.hud.queueList.querySelectorAll('.queue-row--active').length === 2, 'spring+wall active after promotion');
   assert(nur.hud.queueList.querySelectorAll('.queue-waiting').length === 0, 'no queued rows left');
@@ -362,6 +435,7 @@ await test('acceptance ①: tap on the ready farm harvests up to the storage cei
   assert(cell.col === farm.col + 1 && cell.row === farm.row + 1, `tap cell: ${JSON.stringify(cell)} (farm at ${farm.col},${farm.row})`);
   const harvested = Math.floor(nur.game.state.resources.rizq) - rizqBefore;
   assert(harvested > 0, 'something was harvested');
+  assert(nur.game.state.meta.stats.harvests === 1 && nur.metaSystem.tutorialSnapshot().step.id === 'first-lesson', 'real harvest completes the next FTUE milestone');
   assert(Math.floor(nur.game.state.resources.rizq) === 800, `storage ceiling respected (got ${Math.floor(nur.game.state.resources.rizq)})`);
   assert(toastText(nur).includes('رزق'), `harvest toast: ${toastText(nur)}`);
   assert(!nur.hud.selection.classList.contains('is-hidden'), 'tap selects the farm');
@@ -435,7 +509,7 @@ await test('dev panel: instant save and one-hour offline simulation', async () =
   assert(toastText(nur).includes('بازی ذخیره شد'), `save toast: ${toastText(nur)}`);
   nur.devPanel.offlineButton.click();
   assert(toastText(nur).includes('شبیه‌سازی شد'), `offline toast: ${toastText(nur)}`);
-  assert(nur.game.state.resources.gohar === 19, `no double daily bonus (gohar ${nur.game.state.resources.gohar})`);
+  assert(nur.game.state.resources.gohar === 19, `gohar changes only by the paid speed-up (now ${nur.game.state.resources.gohar})`);
 });
 
 await test('pause: «راهنمای متن» opens the Quran panel and freezes the clock', () => {
@@ -483,9 +557,10 @@ await test('acceptance ④: pagehide persists the game, clock rewound 2 h for of
 
   const T = Date.now();
   const payload = JSON.parse(JSON.stringify(record.payload));
+  expectedGoharAfterOffline = payload.resources.gohar;
   payload.savedAt = T - 2 * 3600 * 1000;
   payload.lastAccrualAt = T - 2 * 3600 * 1000;
-  payload.lastDailyAt = T - 48 * 3600 * 1000; // previous day → daily bonus should fire
+  payload.lastDailyAt = T - 48 * 3600 * 1000; // a legacy timestamp must never grant a login reward
   for (const e of payload.entities) {
     if (e.type === 'farm' || e.type === 'light-spring') e.lastAccrualAt = T - 2 * 3600 * 1000;
   }
@@ -494,6 +569,9 @@ await test('acceptance ④: pagehide persists the game, clock rewound 2 h for of
 
 await test('acceptance ④/⑤: reload restores state, gains from 2 h offline, capped', async () => {
   nur = await boot(); // second boot (?run=2) over the backdated record
+  assert(nur.metaSystem.settings.qualityTier === 'low' && nur.metaSystem.settings.batterySaver, 'non-default visual settings survive save/load');
+  assert(nur.metaSystem.settings.language === 'fa-AF' && !nur.metaSystem.settings.soundEnabled, 'language and sound preferences survive save/load');
+  assert(nur.engine.frameCap === 30 && !nur.engine.shadowMapEnabled, 'battery saver is applied again during boot');
   // secondsAway log line first (toast disappears after 2.4 s)
   const bootLog = logs.info.filter((l) => /\[شهر نور\] فاز [\d۰-۹]+ آماده شد/.test(l)).pop();
   const m = bootLog && bootLog.match(/بازیابی \((\d+)s غیبت\)/);
@@ -511,12 +589,12 @@ await test('acceptance ④/⑤: reload restores state, gains from 2 h offline, c
   assert(chip(nur, 'rizq') === '۸۰۰/۸۰۰', `rizq capped at ceiling (got ${chip(nur, 'rizq')})`);
   assert(chip(nur, 'nur') === '۶۰۰/۶۰۰', `nur capped at ceiling (got ${chip(nur, 'nur')})`);
   assert(chip(nur, 'hekmat') === '۳۰/۴۰۰', `hekmat unchanged (got ${chip(nur, 'hekmat')})`);
-  assert(chip(nur, 'gohar') === '۲۴', `daily bonus +5 (got ${chip(nur, 'gohar')})`);
+  assert(expectedGoharAfterOffline != null && chip(nur, 'gohar') === toFaDigits(expectedGoharAfterOffline), `no login reward is added during absence (got ${chip(nur, 'gohar')})`);
 
   const rep = nur.game.offlineReport;
   assert(rep && rep.secondsAway === away, 'report secondsAway matches the log');
   assert(rep.gained && rep.gained.rizq > 0 && rep.gained.nur > 0, `offline gains: ${JSON.stringify(rep.gained)}`);
-  assert(rep.goharDaily === 5, `daily bonus reported (got ${rep.goharDaily})`);
+  assert(!Object.hasOwn(rep, 'goharDaily'), 'offline report has no daily login-reward field');
   assert(rep.jobsDone === 0, 'watchtower still building (not fast-forwarded)');
 
   assert(nur.game.state.entities.size === 5, `entities restored (got ${nur.game.state.entities.size})`);
@@ -735,6 +813,7 @@ await test('phase 4 ①/②: the full lesson runs all three minigames and pays n
   assert(after.rizq >= before.rizq && after.gohar >= before.gohar, 'other resources never decrease');
   const learning = nur.game.learning;
   assert(learning.progress.lessons['lesson-basics'].completions === 1, 'lesson completion recorded');
+  assert(nur.game.state.meta.stats.lessonsCompleted === 1 && nur.metaSystem.tutorialSnapshot().step.id === 'visit-campaign', 'completed lesson advances meta progression and the FTUE');
   assert(nur.lessonHub.card.querySelector('.reward-grid'), 'reward summary rendered');
   assert(nur.lessonHub.card.textContent.includes('نور'), 'reward summary names nur');
   const speedup = learning.totals.speedupSecondsUsed + learning.speedupPoolSeconds();

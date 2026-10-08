@@ -11,8 +11,8 @@
  *   - Harvest (tap) moves min(pending, freeCapacity) into storage.
  *   - Offline progress uses wall-clock timestamps (lastAccrualAt per producer),
  *     clamped to offline.maxHours and never below zero (clock moved back).
- *   - Gohar (premium-ish currency) is earned ONLY from in-game paths:
- *     daily bonus + town-center level rewards. No purchases, no chance.
+ *   - Gohar (in-game currency) is earned from town-center level rewards and
+ *     other explicit gameplay rewards. There is no login/day-visit payout or purchase path.
  *
  * All time math is timestamp-driven so closing/reopening the page and manual
  * system-clock changes behave deterministically.
@@ -341,25 +341,13 @@ export class EconomySystem {
   /* -------------------------------------------------- gohar (in-game only) */
 
   /**
-   * Daily visit bonus — deterministic, once per calendar day (local time),
-   * derived purely from the stored timestamp. No randomness, no purchase.
+   * Deprecated compatibility hook. Phase 7 removes login/day-visit payouts so
+   * returning after a break never grants or withholds progression.
    */
-  grantDailyBonus(now = Date.now()) {
-    const dayKey = this.dayKey(now);
-    if (this.state.lastDailyAt && this.dayKey(this.state.lastDailyAt) === dayKey) return 0;
-    this.state.lastDailyAt = now;
-    if (!this.state.dailyGranted) {
-      // First day is covered by the starting grant; only later days pay out.
-      this.state.dailyGranted = true;
-      return 0;
-    }
-    return this.earnGohar(this.data.goharSources.dailyBonus);
+  grantDailyBonus(_now = Date.now()) {
+    return 0;
   }
 
-  dayKey(ms) {
-    const d = new Date(ms);
-    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-  }
 
   /** Reward granted when the town center finishes an upgrade. */
   townCenterReward() {
@@ -369,6 +357,8 @@ export class EconomySystem {
   /* ------------------------------------------------------------ serialize */
 
   toJSON() {
+    // Keep legacy fields so older save readers/migrations remain compatible;
+    // phase 7 never interprets them as a reward timer.
     return {
       resources: { ...this.resources },
       lastDailyAt: this.state.lastDailyAt,
