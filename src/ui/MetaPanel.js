@@ -19,6 +19,7 @@ export class MetaPanel {
     this.onPause = onPause;
     this.onResume = onResume;
     this.open = false;
+    this._extraActions = [];
 
     this.card = el('div', { className: 'ui-modal__card meta-card' });
     this.root = el('div', {
@@ -39,6 +40,17 @@ export class MetaPanel {
       }),
     ];
     parent.append(this.root);
+  }
+
+  /**
+   * Secondary entry points owned by the HUD (پادگان / نبرد / راهنمای متن).
+   * They live here instead of floating over the map: the top bar stays status
+   * only and the action dock keeps its five thumb-zone slots. The nodes are
+   * reused (not cloned) so badges keep updating in place.
+   */
+  setExtraActions(nodes = []) {
+    this._extraActions = nodes.filter(Boolean);
+    if (this.open) this.render();
   }
 
   show() {
@@ -157,7 +169,21 @@ export class MetaPanel {
         ],
       }),
       guideButton,
-    );
+      ...(this._extraActions.length
+        ? [el('section', {
+          className: 'meta-section meta-actions-section',
+          dataset: { hudRegion: 'meta-actions' },
+          children: [
+            el('h3', { className: 'meta-section__title', text: 'سپاه، نبرد و متن‌ها' }),
+            el('small', {
+              className: 'meta-copy',
+              text: 'این کنش‌ها از نوار بالای صفحه برداشته شدند تا روی گوشی در دسترس شست باشند.',
+            }),
+            el('div', { className: 'meta-actions-grid', children: [...this._extraActions] }),
+          ],
+        })]
+        : []),
+    );   // spread, never a bare `null` slot: replaceChildren() would stringify it
   }
 
   dispose() {

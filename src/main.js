@@ -303,15 +303,20 @@ async function boot() {
       buildings.cancelPlacement();
       missionPanel.show();
     },
+    // پادگان/نبرد/راهنمای متن از کارنامه باز می‌شوند؛ پیش از بازکردن، کارنامه
+    // بسته می‌شود تا توقف موتور (pause('meta-panel')) با پنل بعدی قاطی نشود.
     onOpenBattle: () => {
       buildings.cancelPlacement();
+      metaPanel.close();
       battlePanel.show();
     },
     onOpenBarracks: () => {
       buildings.cancelPlacement();
+      metaPanel.close();
       barracksPanel.show();
     },
     onOpenQuran: () => {
+      metaPanel.close();
       quranPanel.show();
       engine.pause('modal');
     },
@@ -327,9 +332,13 @@ async function boot() {
     },
     onOpenMeta: () => {
       buildings.cancelPlacement();
+      metaPanel.close(); // دکمهٔ «کارنامه» همان لحظه باز و بسته نشود
       metaPanel.show();
     },
   });
+  // کنش‌های ثانویهٔ HUD (پادگان، نبرد، راهنمای متن) در کارنامه جا می‌گیرند:
+  // نوار بالا فقط وضعیت است و داک پایین پنج کنش شست‌رس دارد.
+  metaPanel.setExtraActions([hud.armyButton, hud.battleButton, hud.policyButton]);
   const modalIsVisible = (panel) => Boolean(panel?.root && !panel.root.classList.contains('is-hidden'));
   const ftueGuide = new FTUEGuide({
     config,
