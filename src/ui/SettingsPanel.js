@@ -6,6 +6,11 @@ const QUALITY_OPTIONS = [
   ['medium', 'متوسط'],
   ['high', 'بالا'],
 ];
+const FONT_OPTIONS = [
+  ['normal', 'معمولی'],
+  ['large', 'درشت'],
+  ['larger', 'درشت‌تر'],
+];
 
 function option(value, label) {
   return el('option', { text: label, attrs: { value } });
@@ -57,8 +62,24 @@ export class SettingsPanel {
     });
     this.qualitySelect.addEventListener('change', () => this.metaSystem.setSetting('qualityTier', this.qualitySelect.value));
 
-    this.soundToggle = el('input', { className: 'settings-toggle', attrs: { type: 'checkbox', 'aria-label': 'صدای رابط' } });
+    this.soundToggle = el('input', { className: 'settings-toggle', attrs: { type: 'checkbox', 'aria-label': 'صدای رابط و محیط' } });
     this.soundToggle.addEventListener('change', () => this.metaSystem.setSetting('soundEnabled', this.soundToggle.checked));
+
+    this.recitationToggle = el('input', { className: 'settings-toggle', attrs: { type: 'checkbox', 'aria-label': 'پخش تلاوت قرآن' } });
+    this.recitationToggle.addEventListener('change', () => this.metaSystem.setSetting('recitationEnabled', this.recitationToggle.checked));
+
+    this.fontSelect = el('select', {
+      className: 'settings-select',
+      attrs: { 'aria-label': 'اندازهٔ نوشته‌ها' },
+      children: FONT_OPTIONS.map(([value, label]) => option(value, label)),
+    });
+    this.fontSelect.addEventListener('change', () => this.metaSystem.setSetting('fontScale', this.fontSelect.value));
+
+    this.contrastToggle = el('input', { className: 'settings-toggle', attrs: { type: 'checkbox', 'aria-label': 'کنتراست بالا' } });
+    this.contrastToggle.addEventListener('change', () => this.metaSystem.setSetting('highContrast', this.contrastToggle.checked));
+
+    this.motionToggle = el('input', { className: 'settings-toggle', attrs: { type: 'checkbox', 'aria-label': 'کاهش حرکت' } });
+    this.motionToggle.addEventListener('change', () => this.metaSystem.setSetting('reduceMotion', this.motionToggle.checked));
 
     this.batteryToggle = el('input', { className: 'settings-toggle', attrs: { type: 'checkbox', 'aria-label': 'صرفه‌جویی باتری' } });
     this.batteryToggle.addEventListener('change', () => this.metaSystem.setSetting('batterySaver', this.batteryToggle.checked));
@@ -78,7 +99,11 @@ export class SettingsPanel {
         children: [el('h2', { className: 'ui-modal__title', text: 'تنظیمات' }), button('×', { className: 'ui-icon-btn', title: 'بستن', onClick: () => this.close() })],
       }),
       settingRow('زبان و منطقه', 'رابط در همهٔ حالت‌ها فارسی و راست‌چین می‌ماند.', this.languageSelect),
-      settingRow('صدا', 'بازخوردهای کوتاه و ساخته‌شده با Web Audio؛ بدون فایل صوتی بیرونی.', this.soundToggle),
+      settingRow('صدا و محیط', 'باد، آب، آواز کوتاه پرندگان و بازخوردهای ساخته‌شده با Web Audio؛ بدون موسیقی و فایل صوتی بیرونی.', this.soundToggle),
+      settingRow('تلاوت قرآن', 'اختیاری و خاموش پیش‌فرض؛ فقط صوتی که در داده‌ها صریحاً مجوز و منبع دارد پخش می‌شود.', this.recitationToggle),
+      settingRow('اندازهٔ نوشته‌ها', 'سه اندازه برای خوانایی بهتر در پنل‌ها و رابط.', this.fontSelect),
+      settingRow('کنتراست بالا', 'مرزها، نوشته‌ها و کنترل‌ها با کنتراست تقویت‌شده نمایش داده می‌شوند.', this.contrastToggle),
+      settingRow('کاهش حرکت', 'حرکت پس‌زمینه و جابه‌جایی‌های تزئینی کم می‌شود.', this.motionToggle),
       settingRow('کیفیت گرافیک', 'تغییر فوری وضوح، سایه و مه؛ کیفیت اولیهٔ ضد‌دندانه‌سازی پس از بارگذاری ثابت می‌ماند.', this.qualitySelect),
       settingRow('صرفه‌جویی باتری', '۳۰ فریم در ثانیه و خاموش‌کردن سایه‌ها؛ هر زمان قابل بازگشت است.', this.batteryToggle),
       this.performanceHint,
@@ -98,6 +123,10 @@ export class SettingsPanel {
     this.languageSelect.value = settings.language || 'fa-IR';
     this.qualitySelect.value = settings.qualityTier || this.config.quality.tier;
     this.soundToggle.checked = Boolean(settings.soundEnabled);
+    this.recitationToggle.checked = Boolean(settings.recitationEnabled);
+    this.fontSelect.value = settings.fontScale || 'normal';
+    this.contrastToggle.checked = Boolean(settings.highContrast);
+    this.motionToggle.checked = Boolean(settings.reduceMotion);
     this.batteryToggle.checked = Boolean(settings.batterySaver);
     const tierName = QUALITY_OPTIONS.find(([key]) => key === settings.qualityTier)?.[1] || 'متوسط';
     const frameRate = settings.batterySaver ? 30 : (this.config.targets.fps || 60);

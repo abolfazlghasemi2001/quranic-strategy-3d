@@ -33,7 +33,15 @@ function shuffle(list, rng) {
 export function buildPairs({ wordBank = [], verses = [] } = {}) {
   const clean = wordBank
     .filter((pair) => pair && pair.term && pair.meaning)
-    .map((pair, index) => ({ id: `term-${index}`, term: pair.term, meaning: pair.meaning, kind: 'word' }));
+    .map((pair, index) => ({
+      id: `term-${index}`,
+      term: pair.term,
+      meaning: pair.meaning,
+      kind: 'word',
+      source: pair.source || null,
+      reviewed: pair.reviewed === true,
+      placeholder: pair.placeholder === true,
+    }));
   if (clean.length >= 2) return { pairs: clean, mode: 'word-bank' };
 
   const versesPairs = verses
@@ -142,12 +150,18 @@ export class WordMatchGame {
         selected: this.selectedTerm === id,
         tricky: this.tricky().includes(id),
         kind: byId.get(id)?.kind || 'word',
+        source: byId.get(id)?.source || null,
+        reviewed: byId.get(id)?.reviewed === true,
+        placeholder: byId.get(id)?.placeholder === true,
       })),
       meanings: this.meanings.map((id) => ({
         id,
         label: byId.get(id)?.meaning || '',
         matched: this.matched.has(id),
         tricky: this.tricky().includes(id),
+        source: byId.get(id)?.source || null,
+        reviewed: byId.get(id)?.reviewed === true,
+        placeholder: byId.get(id)?.placeholder === true,
       })),
       matchedCount: this.matched.size,
       total: this.total,

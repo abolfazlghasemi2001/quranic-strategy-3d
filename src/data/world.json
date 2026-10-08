@@ -53,6 +53,44 @@
     "ambient": {
       "color": "#fff4e2",
       "intensity": 0.12
+    },
+    "dayCycle": {
+      "enabled": true,
+      "durationSeconds": 900,
+      "startPhase": 0.18,
+      "sunAzimuthDeg": 122,
+      "sunIntensityNight": 0.1,
+      "sunIntensityDay": 2.25,
+      "hemisphereIntensityNight": 0.3,
+      "hemisphereIntensityDay": 0.72,
+      "ambientIntensityNight": 0.22,
+      "ambientIntensityDay": 0.12,
+      "shadowRefreshSeconds": 1.5,
+      "colors": {
+        "sunDay": "#fff0cd",
+        "sunTwilight": "#ffb46e",
+        "sunNight": "#a9c8ff",
+        "hemisphereSkyDay": "#bcd8ff",
+        "hemisphereSkyNight": "#263d68",
+        "hemisphereGroundDay": "#8b7a58",
+        "hemisphereGroundNight": "#202738",
+        "ambientDay": "#fff4e2",
+        "ambientNight": "#8698c2",
+        "skyZenithDay": "#2b6cc4",
+        "skyZenithNight": "#101b39",
+        "skyHorizonDay": "#ffe8bd",
+        "skyHorizonNight": "#283b5c",
+        "skyHorizonTwilight": "#df886b",
+        "skyBelowDay": "#cdb894",
+        "skyBelowNight": "#18233e",
+        "skyGlowDay": "#fff3d0",
+        "skyGlowNight": "#7998c7",
+        "skyGlowTwilight": "#ffc078",
+        "fogDay": "#d8d3bd",
+        "fogNight": "#18243a",
+        "waterDay": "#3a93a8",
+        "waterNight": "#142b4b"
+      }
     }
   },
   "sky": {

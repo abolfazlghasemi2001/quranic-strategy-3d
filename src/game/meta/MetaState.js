@@ -1,5 +1,6 @@
 const LEVELS = ['low', 'medium', 'high'];
 const LANGUAGES = ['fa-IR', 'fa-AF'];
+const FONT_SCALES = ['normal', 'large', 'larger'];
 const TUTORIAL_STATUSES = ['active', 'skipped', 'completed'];
 const STAT_KEYS = [
   'buildingsBuilt',
@@ -61,8 +62,12 @@ export function createMetaState({ now = Date.now(), qualityTier = 'medium', tuto
     settings: {
       language: 'fa-IR',
       soundEnabled: true,
+      recitationEnabled: false,
       qualityTier: LEVELS.includes(qualityTier) ? qualityTier : 'medium',
       batterySaver: false,
+      fontScale: 'normal',
+      highContrast: false,
+      reduceMotion: false,
     },
   };
 }
@@ -126,8 +131,12 @@ export function normalizeMetaState(raw, {
     settings: {
       language: LANGUAGES.includes(settings.language) ? settings.language : fallback.settings.language,
       soundEnabled: settings.soundEnabled == null ? fallback.settings.soundEnabled : Boolean(settings.soundEnabled),
+      recitationEnabled: Boolean(settings.recitationEnabled),
       qualityTier: LEVELS.includes(settings.qualityTier) ? settings.qualityTier : fallback.settings.qualityTier,
       batterySaver: Boolean(settings.batterySaver),
+      fontScale: FONT_SCALES.includes(settings.fontScale) ? settings.fontScale : fallback.settings.fontScale,
+      highContrast: Boolean(settings.highContrast),
+      reduceMotion: Boolean(settings.reduceMotion),
     },
   };
 
@@ -152,5 +161,9 @@ export function metaSettingsAreValid(settings = {}) {
   return LEVELS.includes(settings.qualityTier)
     && LANGUAGES.includes(settings.language)
     && typeof settings.soundEnabled === 'boolean'
-    && typeof settings.batterySaver === 'boolean';
+    && typeof settings.recitationEnabled === 'boolean'
+    && typeof settings.batterySaver === 'boolean'
+    && FONT_SCALES.includes(settings.fontScale)
+    && typeof settings.highContrast === 'boolean'
+    && typeof settings.reduceMotion === 'boolean';
 }

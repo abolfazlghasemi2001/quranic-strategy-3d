@@ -11,6 +11,8 @@ export function tokensPool(dataset, { excludeVerseId = null, limit = 60 } = {}) 
   const pool = [];
   for (const verse of dataset?.verseList || []) {
     if (excludeVerseId && verse.id === excludeVerseId) continue;
+    // Never borrow unreviewed or placeholder scripture fragments as distractors.
+    if (!verse.reviewed || verse.placeholder) continue;
     for (const token of verse.tokens || []) {
       if (seen.has(token)) continue;
       seen.add(token);
@@ -45,6 +47,9 @@ export function wordMatchPairsFor({ lesson, dataset, config = {}, focusTerm = nu
       term: pair.term,
       meaning: pair.meaning,
       kind: 'word',
+      source: pair.source || null,
+      reviewed: pair.reviewed === true,
+      placeholder: pair.placeholder === true,
     }))
     .filter((pair) => pair.term && pair.meaning);
 
@@ -67,6 +72,9 @@ export function wordMatchPairsFor({ lesson, dataset, config = {}, focusTerm = nu
     meaning: verse.translationFa,
     kind: 'ayah',
     verseId: verse.id,
+    source: verse.source || null,
+    reviewed: verse.reviewed === true,
+    placeholder: verse.placeholder === true,
   }));
 
   if (focusTerm) {

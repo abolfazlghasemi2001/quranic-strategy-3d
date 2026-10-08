@@ -47,18 +47,30 @@ export function tokenize(text) {
     .filter(Boolean);
 }
 
+function safeWebUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const candidate = value.trim();
+  try {
+    const parsed = new URL(candidate, 'https://shahr-nur.invalid/');
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 function normalizeAudio(audio) {
   if (!audio || typeof audio !== 'object') return null;
-  const url = typeof audio.url === 'string' && audio.url.trim() ? audio.url.trim() : null;
+  const url = safeWebUrl(audio.url);
   if (!url) return null;
   const license = typeof audio.license === 'string' && audio.license.trim() ? audio.license.trim() : null;
+  const licenseUrl = safeWebUrl(audio.licenseUrl);
   return {
     url,
-    // Audio without an explicit license is never played (project rule).
+    // Audio without a named license and an attribution URL is never played.
     license,
-    licenseUrl: typeof audio.licenseUrl === 'string' ? audio.licenseUrl : null,
+    licenseUrl,
     reciter: typeof audio.reciter === 'string' ? audio.reciter : null,
-    playable: license != null,
+    playable: license != null && licenseUrl != null,
   };
 }
 
@@ -121,7 +133,22 @@ function cloneLesson(lesson, datasetStats) {
     theme: lesson.theme || '',
     order: Number(lesson.order) || 0,
     ayahIds: Array.isArray(lesson.ayahIds) ? [...lesson.ayahIds] : [],
-    wordBank: Array.isArray(lesson.wordBank) ? lesson.wordBank.map((pair) => ({ ...pair })) : [],
+    wordBank: Array.isArray(lesson.wordBank) ? lesson.wordBank.map((rawPair) => {
+      const pair = rawPair && typeof rawPair === 'object' ? rawPair : {};
+      const rawSource = pair.source && typeof pair.source === 'object' ? pair.source : {};
+      return {
+        ...pair,
+        source: {
+          datasetId: rawSource.datasetId || datasetStats.datasetId || 'unknown',
+          version: rawSource.version || datasetStats.version || null,
+          url: rawSource.url || datasetStats.sourceUrl || null,
+          provider: rawSource.provider || datasetStats.source || null,
+          license: rawSource.license || datasetStats.license || null,
+        },
+        reviewed: pair.reviewed === true,
+        placeholder: pair.placeholder === true || datasetStats.placeholder === true,
+      };
+    }) : [],
     steps,
     targetSeconds: Number(lesson.targetSeconds) || stepsSeconds || 0,
     source: lesson.source || datasetStats.datasetId,
@@ -273,8 +300,8 @@ export function validateDataset(dataset) {
     } else {
       issues.push({ level: 'info', code: 'unreviewed', ref, message: `آیهٔ ${ref} بازبینی نشده و با نشان «${REVIEW_PENDING_LABEL}» نمایش داده می‌شود.` });
     }
-    if (verse.audio && !verse.audio.license) {
-      issues.push({ level: 'warn', code: 'audio-without-license', ref, message: `صوت آیهٔ ${ref} مجوز ندارد و پخش نمی‌شود.` });
+    if (verse.audio && (!verse.audio.license || !verse.audio.licenseUrl)) {
+      issues.push({ level: 'warn', code: 'audio-without-license', ref, message: `صوت آیهٔ ${ref} نام مجوز یا نشانی انتساب ندارد و پخش نمی‌شود.` });
     }
   }
 
@@ -290,9 +317,19 @@ export function validateDataset(dataset) {
         message: `طول درس ${lesson.id} خارج از بازهٔ ۲ تا ۳ دقیقه است (${lesson.targetSeconds} ثانیه).`,
       });
     }
-    for (const pair of lesson.wordBank) {
+    for (const [index, pair] of lesson.wordBank.entries()) {
+      const ref = `${lesson.id}:word:${index + 1}`;
       if (!pair.term || !pair.meaning) {
-        issues.push({ level: 'warn', code: 'wordbank-incomplete', ref: lesson.id, message: `جفت واژهٔ ناقص در درس ${lesson.id}.` });
+        issues.push({ level: 'warn', code: 'wordbank-incomplete', ref, message: `جفت واژهٔ ناقص در درس ${lesson.id}.` });
+      }
+      if (!pair.source?.datasetId) {
+        issues.push({ level: 'warn', code: 'wordbank-no-source', ref, message: `منبع واژهٔ درس ${lesson.id} ثبت نشده است.` });
+      }
+      if (pair.placeholder) {
+        issues.push({ level: 'info', code: 'wordbank-placeholder', ref, message: `واژهٔ ${ref} نمونه و جای‌نگهدار است.` });
+      }
+      if (!pair.reviewed) {
+        issues.push({ level: 'info', code: 'wordbank-unreviewed', ref, message: `واژهٔ ${ref} بازبینی نشده است و باید با برچسب نمایش داده شود.` });
       }
     }
   }

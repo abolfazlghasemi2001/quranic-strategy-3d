@@ -277,6 +277,27 @@ await test('phase 7: settings affect engine, sound, locale, and the FTUE can be 
   assert(nur.engine.frameCap === 30 && !nur.engine.shadowMapEnabled, 'battery saver applies the 30 fps cap and disables shadows');
   assert(nur.soundManager.enabled === false, 'sound toggle reaches the sound manager');
   assert(document.documentElement.lang === 'fa-AF' && document.documentElement.dir === 'rtl', 'language choice updates the Persian locale metadata without changing RTL');
+  nur.settingsPanel.fontSelect.value = 'larger';
+  nur.settingsPanel.fontSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.contrastToggle.checked = true;
+  nur.settingsPanel.contrastToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.motionToggle.checked = true;
+  nur.settingsPanel.motionToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.recitationToggle.checked = true;
+  nur.settingsPanel.recitationToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert(document.documentElement.style.getPropertyValue('--ui-font-scale') === '1.28', 'font size choice updates the UI scale');
+  assert(document.documentElement.classList.contains('is-high-contrast'), 'high contrast class is applied');
+  assert(document.documentElement.classList.contains('is-reduced-motion') && nur.world.reducedMotion, 'reduced motion reaches both CSS and world animation');
+  assert(nur.game.meta.settings.recitationEnabled === true, 'optional recitation preference is saved');
+
+  nur.settingsPanel.fontSelect.value = 'normal';
+  nur.settingsPanel.fontSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.contrastToggle.checked = false;
+  nur.settingsPanel.contrastToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.motionToggle.checked = false;
+  nur.settingsPanel.motionToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+  nur.settingsPanel.recitationToggle.checked = false;
+  nur.settingsPanel.recitationToggle.dispatchEvent(new window.Event('change', { bubbles: true }));
 
   nur.settingsPanel.qualitySelect.value = 'medium';
   nur.settingsPanel.qualitySelect.dispatchEvent(new window.Event('change', { bubbles: true }));
@@ -629,6 +650,10 @@ function buttonsIn(scope, selector) {
   return [...scope.querySelectorAll(selector)];
 }
 
+function buttonLabel(node) {
+  return node.querySelector('.ui-btn__label')?.textContent.trim() ?? node.textContent.trim();
+}
+
 function clickByText(scope, selector, text) {
   const node = buttonsIn(scope, selector).find((btn) => btn.textContent.trim() === text);
   assert(node, `button "${text}" exists (${selector})`);
@@ -774,6 +799,7 @@ await test('phase 4 ①/②: the full lesson runs all three minigames and pays n
     const game = step.game;
     played.add(game.gameId);
     if (game.gameId === 'ayah-completion') {
+      assert(nur.lessonHub.card.querySelector('.quran-provenance')?.textContent.includes(LEARNING_LABEL), 'completion text shows its placeholder provenance');
       let inner = 0;
       while (!game.done && inner < 60) {
         inner += 1;
@@ -787,14 +813,18 @@ await test('phase 4 ①/②: the full lesson runs all three minigames and pays n
       while (!game.done && inner < 60) {
         inner += 1;
         const pair = game.pairs.find((p) => !game.matched.has(p.id));
-        const termChip = buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => b.textContent.trim() === pair.term);
+        const termChip = buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => buttonLabel(b) === pair.term);
         assert(termChip, `term chip rendered (${pair.term})`);
+        assert(termChip.textContent.includes(LEARNING_LABEL) && termChip.textContent.includes(PENDING_LABEL), 'word chip visibly carries placeholder and review labels');
+        assert(termChip.getAttribute('aria-label').includes(PENDING_LABEL), 'screen reader receives the review label');
         termChip.click();
-        const meaningChip = buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => b.textContent.trim() === pair.meaning);
+        const meaningChip = buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => buttonLabel(b) === pair.meaning);
         assert(meaningChip, 'meaning chip rendered');
         meaningChip.click();
       }
     } else {
+      const cardLabels = buttonsIn(nur.lessonHub.card, '.ao-card .quran-provenance');
+      assert(cardLabels.length > 0 && cardLabels.every((node) => node.textContent.includes(LEARNING_LABEL) && node.textContent.includes(PENDING_LABEL)), 'order cards label each unreviewed verse');
       let inner = 0;
       while (!game.done && inner < 60) {
         inner += 1;
@@ -857,9 +887,9 @@ await test('phase 4 ①/④: a review session runs, re-shows a mistaken item and
     buttonsIn(nur.lessonHub.card, '.mcg-option').find((b) => b.textContent.trim() === wrong.label).click();
   } else {
     const pair = game.pairs.find((p) => !game.matched.has(p.id));
-    buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => b.textContent.trim() === pair.term).click();
+    buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => buttonLabel(b) === pair.term).click();
     const other = game.pairs.find((p) => p.id !== pair.id);
-    buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => b.textContent.trim() === other.meaning).click();
+    buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => buttonLabel(b) === other.meaning).click();
   }
   assert(session.mistakes >= 1, 'mistake registered in the review session');
 
@@ -885,10 +915,10 @@ await test('phase 4 ①/④: a review session runs, re-shows a mistaken item and
         inner += 1;
         const pair = currentGame.pairs.find((p) => !currentGame.matched.has(p.id));
         if (!pair) break;
-        const termChip = buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => b.textContent.trim() === pair.term);
+        const termChip = buttonsIn(nur.lessonHub.card, '.wm-chip--term').find((b) => buttonLabel(b) === pair.term);
         if (!termChip) break;
         termChip.click();
-        const meaningChip = buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => b.textContent.trim() === pair.meaning);
+        const meaningChip = buttonsIn(nur.lessonHub.card, '.wm-chip--meaning').find((b) => buttonLabel(b) === pair.meaning);
         if (!meaningChip) break;
         meaningChip.click();
       }

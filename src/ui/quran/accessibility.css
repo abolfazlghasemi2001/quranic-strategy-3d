@@ -1,0 +1,47 @@
+/* Review labels stay visible beside every Qur'anic/placeholder fragment in study games. */
+.quran-provenance {
+  display: block;
+  margin: 4px 0 0;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: calc(9.5px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.wm-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.wm-chip .quran-provenance {
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+  text-align: start;
+}
+
+.ao-card__body .quran-provenance {
+  text-align: start;
+}
+
+html.is-high-contrast .quran-provenance {
+  color: #ffffff;
+}
+
+.verse-card__audio-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.verse-card__license {
+  color: var(--accent-2);
+  font-family: var(--font-ui);
+  font-size: calc(10px * var(--ui-font-scale, 1));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

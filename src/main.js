@@ -1,5 +1,5 @@
 /**
- * شهر نور — entry point (phase 7: meta progression, FTUE and settings)
+ * شهر نور — entry point (phase 9: performance, PWA, audio and accessibility)
  *
  * Boot order:
  *   config -> engine -> load save -> Quran dataset -> world -> input/camera ->
@@ -8,6 +8,7 @@
  * references handed over here, so later phases can add systems without rewrites.
  */
 import './ui/hud.css';
+import './ui/quran/accessibility.css';
 
 import { Config } from './core/Config.js';
 import { Engine } from './core/Engine.js';
@@ -36,8 +37,31 @@ import { SettingsPanel } from './ui/SettingsPanel.js';
 import { JamaatPanel } from './ui/social/JamaatPanel.js';
 import { FTUEGuide } from './ui/FTUEGuide.js';
 import { LoadingScreen, ErrorOverlay } from './ui/LoadingScreen.js';
+import { setRecitationEnabled, stopRecitation } from './ui/quran/RecitationAudio.js';
+
+function registerPwa() {
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+    .then(() => console.info('[شهر نور] پوستهٔ آفلاین آماده است.'))
+    .catch((error) => console.warn('[شهر نور] ثبت PWA ناموفق بود؛ بازی آنلاین همچنان اجرا می‌شود.', error));
+}
+
+function applyAccessibilitySettings(settings = {}) {
+  const root = document.documentElement;
+  const scales = { normal: 1, large: 1.14, larger: 1.28 };
+  root.dataset.fontScale = scales[settings.fontScale] ? settings.fontScale : 'normal';
+  root.style.setProperty('--ui-font-scale', String(scales[settings.fontScale] || scales.normal));
+  root.classList.toggle('is-high-contrast', Boolean(settings.highContrast));
+  const systemReduceMotion = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduceMotion = Boolean(settings.reduceMotion || systemReduceMotion);
+  root.classList.toggle('is-reduced-motion', reduceMotion);
+  return reduceMotion;
+}
 
 async function boot() {
+  registerPwa();
   const canvas = document.getElementById('scene');
   const config = new Config({ search: window.location.search });
   const bus = new EventBus();
@@ -133,6 +157,8 @@ async function boot() {
 
   game.attachPersist(requestSave);
   const soundManager = new SoundManager({ bus, enabled: game.meta.settings.soundEnabled });
+  setRecitationEnabled(game.meta.settings.recitationEnabled);
+  world.setReducedMotion(applyAccessibilitySettings(game.meta.settings));
 
   const buildings = new BuildingSystem({
     config, world, rig, input, bus,
@@ -319,6 +345,8 @@ async function boot() {
   bus.on(EVENTS.SETTINGS_CHANGED, (settings) => {
     engine.setRuntimeSettings(settings);
     soundManager.setEnabled(settings.soundEnabled);
+    setRecitationEnabled(settings.recitationEnabled);
+    world.setReducedMotion(applyAccessibilitySettings(settings));
     saveNow();
   });
   const devPanel = new DevPanel({
@@ -408,6 +436,7 @@ async function boot() {
     metaPanel.dispose();
     jamaatPanel.dispose();
     soundManager.dispose();
+    stopRecitation();
     hud.dispose();
     quranPanel.dispose();
     lessonHub.dispose();

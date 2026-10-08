@@ -163,13 +163,27 @@ export class AyahCompletionGame {
   snapshot() {
     const round = this.current;
     if (!round) {
-      return { gameId: this.gameId, done: true, parts: this.tokens.map((text) => ({ type: 'text', text })), options: [], solvedCount: this.solvedCount, total: this.total, mistakes: this.mistakes.length };
+      return {
+        gameId: this.gameId,
+        done: true,
+        parts: this.tokens.map((text) => ({ type: 'text', text })),
+        options: [],
+        solvedCount: this.solvedCount,
+        total: this.total,
+        mistakes: this.mistakes.length,
+        reviewed: this.verse.reviewed === true,
+        placeholder: this.verse.placeholder === true,
+        source: this.verse.source || null,
+      };
     }
     return {
       gameId: this.gameId,
       done: this.done,
       verseId: this.verse.id,
       parts: this.parts(round),
+      reviewed: this.verse.reviewed === true,
+      placeholder: this.verse.placeholder === true,
+      source: this.verse.source || null,
       options: round.options.map((o) => ({ id: o.id, label: o.label, disabled: round.disabled.includes(o.id) })),
       solvedCount: this.solvedCount,
       total: this.total,

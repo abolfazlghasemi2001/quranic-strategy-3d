@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { createRockGeometry, createShrubGeometry, createTreeGeometries } from '../core/GeometryUtils.js';
 import { mulberry32 } from '../core/RNG.js';
+import { applyWindShader, setWindTime } from './WindShader.js';
 
 export class Decor {
   /**
@@ -46,6 +47,7 @@ export class Decor {
     const foliageMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, metalness: 0, flatShading: true });
     trunkMaterial.name = 'tree-trunk-material';
     foliageMaterial.name = 'tree-foliage-material';
+    applyWindShader(foliageMaterial, { strength: 0.12, heightStart: 1.1, heightSpan: 1.7 });
     this._disposables.push(trunkMaterial, foliageMaterial);
 
     const trunks = new THREE.InstancedMesh(trunk, trunkMaterial, trees.length);
@@ -122,6 +124,7 @@ export class Decor {
 
     const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0, flatShading: true });
     material.name = 'shrub-material';
+    applyWindShader(material, { strength: 0.055, heightStart: 0.08, heightSpan: 0.22 });
     this._disposables.push(material);
 
     const mesh = new THREE.InstancedMesh(geometry, material, shrubs.length);
@@ -160,6 +163,12 @@ export class Decor {
     mesh.matrixAutoUpdate = false;
     mesh.updateMatrix();
     this.meshes.push(mesh);
+  }
+
+  update(time) {
+    for (const resource of this._disposables) {
+      if (resource?.isMaterial && resource.userData?.shahrWindApplied) setWindTime(resource, time);
+    }
   }
 
   getInstanceCounts() {

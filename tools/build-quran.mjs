@@ -88,7 +88,7 @@ for (const [s, list] of surahMap) {
   const ayahLines = list.map((a) =>
     '        ' + JSON.stringify({ index: a, textUthmani: uth.verses.get(`${s}:${a}`), translationFa: tr.verses.get(`${s}:${a}`) }));
   surahChunks.push(
-    `    {\n      "index": ${s},\n      "name": ${JSON.stringify(`سورهٔ ${s}`)},\n      "ayahCount": ${list.length},\n      "ayahs": [\n${ayahLines.join(',\n')}\n      ]\n    }`);
+    `    {\n      "index": ${s},\n      "name": ${JSON.stringify(`سورهٔ ${s}`)},\n      "namePlaceholder": true,\n      "ayahCount": ${list.length},\n      "ayahs": [\n${ayahLines.join(',\n')}\n      ]\n    }`);
 }
 parts.push(surahChunks.join(',\n'));
 parts.push('\n  ]\n}\n');

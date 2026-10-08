@@ -218,7 +218,8 @@ export class Engine {
 
     if (this.renderer) {
       this.renderer.shadowMap.enabled = effective.shadows;
-      this.renderer.shadowMap.autoUpdate = effective.shadows;
+      // World.markShadowDirty controls a bounded refresh cadence for the moving sun.
+      this.renderer.shadowMap.autoUpdate = false;
       if (effective.shadows) this.renderer.shadowMap.needsUpdate = true;
     }
     const fogData = this.config.world.fog;

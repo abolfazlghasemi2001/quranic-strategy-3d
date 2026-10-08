@@ -10,25 +10,36 @@
  */
 import { el, faDigits } from '../dom.js';
 import { verseBadges, verseReference } from '../../game/quran/QuranDataset.js';
+import { isRecitationEnabled, playRecitation } from './RecitationAudio.js';
 
 /** صوت فقط در صورت داشتن مجوز مشخص پخش می‌شود. */
 function audioNode(verse) {
   const audio = verse.audio;
   if (audio && audio.playable) {
+    const enabled = isRecitationEnabled();
     const btn = el('button', {
-      className: 'verse-card__audio is-enabled',
-      attrs: { type: 'button' },
-      text: `🎧 پخش تلاوت${audio.reciter ? ` — ${audio.reciter}` : ''} (${audio.license})`,
+      className: `verse-card__audio${enabled ? ' is-enabled' : ''}`,
+      attrs: {
+        type: 'button',
+        disabled: !enabled,
+        title: enabled ? `مجوز صوت: ${audio.license}` : 'برای پخش تلاوت، آن را از تنظیمات فعال کنید',
+      },
+      text: enabled
+        ? `🎧 پخش تلاوت${audio.reciter ? ` — ${audio.reciter}` : ''} (${audio.license})`
+        : '🎧 تلاوت خاموش است — فعال‌سازی از تنظیمات',
     });
-    btn.addEventListener('click', () => {
-      try {
-        const player = new Audio(audio.url);
-        player.play().catch(() => {});
-      } catch {
-        /* بی‌صدا در محیط‌هایی که Audio ندارند (آزمون) */
-      }
+    btn.addEventListener('click', () => playRecitation(audio));
+    return el('div', {
+      className: 'verse-card__audio-group',
+      children: [
+        btn,
+        el('a', {
+          className: 'verse-card__license',
+          attrs: { href: audio.licenseUrl, target: '_blank', rel: 'noopener noreferrer' },
+          text: `مجوز صوت: ${audio.license}`,
+        }),
+      ],
     });
-    return btn;
   }
   return el('button', {
     className: 'verse-card__audio',
