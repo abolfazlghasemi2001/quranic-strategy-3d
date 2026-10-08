@@ -12,10 +12,12 @@
     "test": "node tools/check.mjs && npm run test:unit",
     "test:unit": "vitest run",
     "test:pwa": "node tools/pwa-check.mjs",
+    "test:hud": "node tools/hud-layout.mjs",
     "check": "npm run test",
     "smoke": "node tools/smoke.mjs",
     "server": "node server/src/index.js",
-    "server:start": "node server/src/index.js"
+    "server:start": "node server/src/index.js",
+    "hud:screenshots": "node tools/hud-layout.mjs --shots docs/hud-redesign/after"
   },
   "keywords": [
     "threejs",
@@ -29,6 +31,7 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.1.2",
     "vite": "^7.3.7",

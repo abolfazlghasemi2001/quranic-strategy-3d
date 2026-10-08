@@ -1,6 +1,55 @@
+/**
+ * HUD — the in-game shell (status bar on top, action dock at the bottom).
+ *
+ * Layout contract (phase 10 redesign):
+ *   .hud-topbar   status ONLY: player/level chip · resource chips · settings gear
+ *   .hud-dock     thumb-reachable actions (≥48 px), Construction first (RTL inline-start)
+ *   .hud-bottom   bottom stack: build queue → selection menu → placement bar → dock
+ * Every region carries `data-hud-region` so the layout tests can measure it, and
+ * every interactive node carries `data-hud-action` so FTUE/smoke/dev tooling can
+ * target it by role instead of by pixel position.
+ *
+ * No game logic lives here: the HUD only renders state it is handed through the
+ * event bus and calls back into the systems it was given.
+ */
 import buildingData from '../data/buildings.json';
 import { el, button, formatFa, faDigits } from './dom.js';
 import { EVENTS } from '../core/EventBus.js';
+
+/**
+ * Text-glyph icon set. The project ships ZERO external assets, so the HUD uses
+ * a small, consistent glyph vocabulary instead of image icons or emoji soup.
+ * The big emoji are kept as secondary marks only where they were already used
+ * in the world markers (see Markers.js) — never as the primary affordance.
+ */
+const ICON = {
+  builders: '⚒',
+  level: '★',
+  settings: '⚙',
+  build: '⚒',        // hammer & pick: «ساخت‌وساز» (the builder badge sits on it)
+  study: '❖',       // «دارالقرآن» — a plain diamond; U+06DE (۞) is missing from
+  missions: '☼',     // many phone fonts, so it is not used as a HUD affordance
+  community: '◈',
+  report: '☰',
+};
+
+/**
+ * Font-safety net for data-driven icons. Every entry is a glyph covered by the
+ * UI font stack (Vazirmatn / IRANSans / Noto Sans Arabic / DejaVu), so a chip
+ * can never degrade into a .notdef box on a device without an emoji font.
+ */
+const ICON_OVERRIDES = {
+  '💎': '⬢', // gohar
+  '🏛': '⚒',
+  '🛡': '⛨',
+  '🪙': '◉',
+};
+const safeIcon = (icon) => ICON_OVERRIDES[icon] || icon;
+
+/** Small count bubble that can sit on any dock action or status chip. */
+function badge(className, text = '۰') {
+  return el('span', { className: `hud-badge${className ? ` ${className}` : ''}`, text, attrs: { 'aria-hidden': 'true' } });
+}
 
 /** mm:ss (Persian digits) countdown, or h:mm:ss past an hour. */
 export function formatCountdown(ms) {
@@ -15,7 +64,7 @@ export function formatCountdown(ms) {
 function resourceChip(icon, label) {
   return el('div', {
     className: 'game-resource',
-    children: [el('span', { text: icon }), el('b', { text: '۰' }), el('small', { text: label })],
+    children: [el('span', { text: safeIcon(icon) }), el('b', { text: '۰' }), el('small', { text: label })],
   });
 }
 
@@ -39,32 +88,36 @@ export class HUD {
 
     this.levelValue = el('b', { text: '۱' });
     this.builderValue = el('b', { text: '۰/۰' });
+    this.buildersBadge = badge('hud-builders-badge', '۰/۰');
     this.chips = {};
     for (const [key, meta] of Object.entries(economy.data.resources)) {
       this.chips[key] = resourceChip(meta.icon, meta.name);
     }
 
     this.playerLevelValue = el('b', { text: '۱' });
+    // Mirrors `levelValue`: the profile chip collapses to the avatar at ≤400 px
+    // and the city level must stay readable (see hud.css).
+    this.avatarLevel = el('span', { className: 'hud-badge game-avatar__badge', text: '۱', attrs: { 'aria-hidden': 'true' } });
     this.playerXpText = el('small', { className: 'game-player__xp-text', text: '۰ XP' });
     this.playerXpFill = el('i');
     this.playerXpBar = el('div', { className: 'game-player__xp-bar', children: [this.playerXpFill] });
     this.player = el('button', {
       className: 'game-player',
+      dataset: { hudAction: 'meta' },
       attrs: { type: 'button', 'aria-label': 'بازکردن کارنامهٔ بازیکن', title: 'کارنامه، XP، دستاوردها و مأموریت اختیاری' },
       children: [
-        el('span', { className: 'game-avatar', text: 'ن' }),
+        el('span', {
+          className: 'game-avatar',
+          children: [el('span', { text: 'ن' }), this.avatarLevel],
+        }),
         el('div', { className: 'game-player__info', children: [
-          el('small', { text: 'سطح شهر' }), this.levelValue,
-          el('small', { className: 'game-player__meta-label', text: 'سطح بازیکن' }), this.playerLevelValue,
+          el('span', { className: 'game-player__cell', children: [el('small', { text: 'سطح شهر' }), el('span', { className: 'game-player__stat', children: [el('i', { className: 'game-player__icon', text: ICON.level, attrs: { 'aria-hidden': 'true' } }), this.levelValue] })] }),
+          el('span', { className: 'game-player__cell game-player__cell--player', children: [el('small', { className: 'game-player__meta-label', text: 'سطح بازیکن' }), this.playerLevelValue] }),
           this.playerXpText, this.playerXpBar,
         ] }),
       ],
     });
     this.player.addEventListener('click', () => this.onOpenMeta?.());
-    this.buildersView = el('div', {
-      className: 'game-builders',
-      children: [el('span', { text: '⚒' }), el('div', { children: [el('small', { text: t('economy.builders', 'بنّاها') }), this.builderValue] })],
-    });
     this.resourcesView = el('div', { className: 'game-resources', children: Object.values(this.chips) });
 
     /* ---------------------------------------------------------- shop */
@@ -92,6 +145,7 @@ export class HUD {
           }),
         ],
       });
+      item.querySelector('.shop-item__icon').textContent = safeIcon(def.icon);
       item.addEventListener('click', () => {
         if (buildings.startPlacement(def.id)) this.toggleShop(false);
       });
@@ -104,64 +158,101 @@ export class HUD {
         this.shopList,
       ],
     });
-    this.shopButton = button('ساخت‌وساز', { className: 'game-corner-btn game-shop-btn', onClick: () => this.toggleShop() });
-    this.shopButton.prepend(el('span', { text: '🏛' }));
-    this.settingsButton = button('تنظیمات', { className: 'game-corner-btn game-settings-btn', onClick: () => this.onOpenSettings?.() });
-    this.settingsButton.prepend(el('span', { text: '⚙' }));
+    this.shopButton = button('ساخت‌وساز', {
+      className: 'game-corner-btn game-shop-btn hud-action hud-action--primary',
+      dataset: { hudAction: 'build' },
+      onClick: () => {
+        if (this.buildings.placing) return; // جانمایی فعال است؛ ابتدا تأیید یا لغو
+        this.toggleShop();
+      },
+    });
+    this.shopButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.build }));
+    this.shopButton.classList.add('hud-action--has-badge');
+    this.shopButton.append(this.buildersBadge);
+    this.settingsButton = button('تنظیمات', {
+      className: 'game-corner-btn game-settings-btn hud-action hud-action--compact',
+      dataset: { hudAction: 'settings' },
+      onClick: () => this.onOpenSettings?.(),
+    });
+    this.settingsButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.settings }));
     // Phase 6: دروازهٔ کمپین قصص (نشان = شمار ستاره‌ها و مأموریت باز).
-    this.questBadge = el('span', { className: 'game-corner-badge game-corner-badge--quest', text: '★۰' });
+    this.questBadge = el('span', { className: 'hud-badge game-corner-badge game-corner-badge--quest', text: '★۰' });
     this.questButton = button(t('campaign.button', 'قصه‌ها'), {
-      className: 'game-corner-btn game-quest-btn',
+      className: 'game-corner-btn game-quest-btn hud-action',
+      dataset: { hudAction: 'missions' },
       title: t('campaign.panelTitle', 'کمپین قصص'),
       onClick: () => this.onOpenMissions?.(),
     });
-    this.questButton.prepend(el('span', { text: '☼' }));
+    this.questButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.missions }));
     this.questButton.append(this.questBadge);
 
     // Phase 4: دارالقرآن gateway + spaced-repetition badge (due count).
-    this.studyBadge = el('span', { className: 'game-corner-badge is-hidden', text: '۰' });
+    this.studyBadge = badge('game-corner-badge is-hidden', '۰');
     this.studyButton = button('دارالقرآن', {
-      className: 'game-corner-btn game-study-btn',
+      className: 'game-corner-btn game-study-btn hud-action',
+      dataset: { hudAction: 'study' },
       title: 'درس و مرور فاصله‌دار',
       onClick: () => onOpenStudy?.(),
     });
-    this.studyButton.prepend(el('span', { text: '۞' }));
+    this.studyButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.study }));
     this.studyButton.append(this.studyBadge);
 
-    // Phase 5: پادگان (آموزش سپاه) و میدان نبرد.
-    this.armyBadge = el('span', { className: 'game-corner-badge game-corner-badge--army', text: '۰' });
+    // Phase 5: پادگان (آموزش سپاه) و میدان نبرد — از پنل کارنامه/نبرد باز می‌شوند.
+    this.armyBadge = badge('game-corner-badge game-corner-badge--army', '۰');
     this.armyButton = button(t('army.panel', 'پادگان'), {
-      className: 'game-corner-btn game-army-btn',
+      className: 'game-corner-btn game-army-btn hud-action hud-action--secondary',
+      dataset: { hudAction: 'barracks' },
       title: t('army.garrisonTitle', 'سپاه آماده'),
       onClick: () => this.onOpenBarracks?.(),
     });
-    this.armyButton.prepend(el('span', { text: '🛡' }));
+    this.armyButton.prepend(el('span', { className: 'hud-action__icon', text: safeIcon('🛡') }));
     this.armyButton.append(this.armyBadge);
 
-    this.battleBadge = el('span', { className: 'game-corner-badge game-corner-badge--battle is-hidden', text: '۰' });
+    this.battleBadge = badge('game-corner-badge game-corner-badge--battle is-hidden', '۰');
     this.battleButton = button(t('battle.button', 'نبرد'), {
-      className: 'game-corner-btn game-battle-btn',
+      className: 'game-corner-btn game-battle-btn hud-action hud-action--secondary',
+      dataset: { hudAction: 'battle' },
       title: t('battle.title', 'میدان نبرد'),
       onClick: () => this.onOpenBattle?.(),
     });
-    this.battleButton.prepend(el('span', { text: '⚔' }));
+    this.battleButton.prepend(el('span', { className: 'hud-action__icon', text: '⚔' }));
     this.battleButton.append(this.battleBadge);
 
     // Phase 8: جماعت — chat, mutual help and the weekly cooperative event.
-    this.socialBadge = el('span', { className: 'game-corner-badge game-corner-badge--social is-hidden', text: '۰' });
+    this.socialBadge = badge('game-corner-badge game-corner-badge--social is-hidden', '۰');
     this.socialButton = button(t('social.button', 'جماعت'), {
-      className: 'game-corner-btn game-social-btn',
+      className: 'game-corner-btn game-social-btn hud-action',
+      dataset: { hudAction: 'community' },
       title: t('social.title', '◈ جماعت'),
       onClick: () => this.onOpenSocial?.(),
     });
-    this.socialButton.prepend(el('span', { text: '◈' }));
+    this.socialButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.community }));
     this.socialButton.append(this.socialBadge);
+
+    // کارنامه: second entry point (the level chip above stays the primary one).
+    this.reportButton = button('کارنامه', {
+      className: 'game-corner-btn game-report-btn hud-action',
+      dataset: { hudAction: 'report' },
+      title: 'کارنامه، XP، دستاوردها و مأموریت روزانه',
+      onClick: () => this.onOpenMeta?.(),
+    });
+    this.reportButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.report }));
+
+    // «راهنمای متن» moved out of the map: it is now a control inside the
+    // report/settings flow so it can never float unlabelled over the terrain.
+    this.policyButton = button(t('hud.quranButton', 'راهنمای متن'), {
+      className: 'ui-btn quran-policy-btn',
+      dataset: { hudAction: 'quran' },
+      title: t('quran.title', 'سیاست نمایش متن قرآن'),
+      onClick: () => onOpenQuran?.(),
+    });
 
     /* --------------------------------------------------- queue panel */
     this.queueList = el('div', { className: 'queue-list' });
     this.queueBadge = el('span', { className: 'queue-badge', text: '۰' });
     this.queuePanel = el('div', {
       className: 'game-queue is-hidden',
+      attrs: { dataset: { hudRegion: 'queue' } },
       children: [
         el('header', {
           children: [el('b', { text: t('economy.queue', 'صف ساخت') }), this.queueBadge],
@@ -171,18 +262,19 @@ export class HUD {
     });
 
     /* ---------------------------------------------------- placement */
-    this.confirmButton = button('تأیید ساخت', { className: 'ui-btn ui-btn--primary', onClick: () => buildings.confirmPlacement() });
+    this.confirmButton = button('تأیید ساخت', { className: 'ui-btn ui-btn--primary', dataset: { hudAction: 'confirm' }, onClick: () => buildings.confirmPlacement() });
     this.placementBar = el('div', {
       className: 'placement-bar is-hidden',
+      attrs: { dataset: { hudRegion: 'placement' } },
       children: [
         el('span', { className: 'placement-title', text: '' }),
         this.confirmButton,
-        button('لغو', { className: 'ui-btn', onClick: () => buildings.cancelPlacement() }),
+        button('لغو', { className: 'ui-btn', dataset: { hudAction: 'cancel' }, onClick: () => buildings.cancelPlacement() }),
       ],
     });
 
     /* -------------------------------------------------- selection menu */
-    this.selection = el('div', { className: 'building-menu is-hidden' });
+    this.selection = el('div', { className: 'building-menu is-hidden', attrs: { dataset: { hudRegion: 'selection' } } });
     this._selectionEntity = null;
     this._selectionTimerNode = null;
     this._selectionSpeedupBtn = null;
@@ -205,29 +297,54 @@ export class HUD {
 
     this.toastNode = el('div', { className: 'game-toast' });
     this.pauseBadge = el('div', { className: 'ui-pause', text: 'متوقف' });
+
+    /* ------------------------------------------------------- HUD shell */
+    // Status only, one row, safe-area aware. Grows downward, never overlaps
+    // the bottom stack (both live in normal flow inside `.game-hud`).
+    this.topBar = el('header', {
+      className: 'hud-topbar',
+      attrs: { dataset: { hudRegion: 'top' }, 'aria-label': 'نوار وضعیت شهر' },
+      children: [this.player, this.resourcesView, this.settingsButton],
+    });
+
+    // Thumb-zone actions. DOM order = RTL visual order: Construction sits at
+    // the inline-start (right) edge, exactly where the thumb rests.
+    this.dockActions = el('nav', {
+      className: 'hud-dock',
+      attrs: { dataset: { hudRegion: 'dock' }, 'aria-label': 'کنش‌های اصلی' },
+      children: [
+        this.shopButton,
+        this.studyButton,
+        this.questButton,
+        this.socialButton,
+        this.reportButton,
+      ],
+    });
+
+    // Panels that belong above the dock (mission → queue → selection →
+    // placement) share one flow column, so they can never overlap each other
+    // or the dock — at any width or font scale.
+    this.panels = el('div', {
+      className: 'hud-panels',
+      attrs: { dataset: { hudRegion: 'panels' } },
+      children: [this.missionChip, this.queuePanel, this.selection, this.placementBar],
+    });
+    this.bottom = el('div', {
+      className: 'hud-bottom',
+      attrs: { dataset: { hudRegion: 'bottom' } },
+      children: [this.panels, this.dockActions],
+    });
+
     this.root = el('div', {
       className: 'ui-root game-hud',
       attrs: { dir: 'rtl', lang: 'fa' },
       children: [
         el('div', { className: 'ui-vignette' }),
-        this.player,
-        this.buildersView,
-        this.resourcesView,
-        this.missionChip,
-        this.shopButton,
-        this.settingsButton,
-        this.questButton,
-        this.studyButton,
-        this.armyButton,
-        this.battleButton,
-        this.socialButton,
-        this.queuePanel,
+        this.topBar,
+        this.bottom,
+        el('div', { className: 'hud-toaster', attrs: { dataset: { hudRegion: 'toast' } }, children: [this.toastNode] }),
         this.shop,
-        this.placementBar,
-        this.selection,
-        this.toastNode,
         this.pauseBadge,
-        button('راهنمای متن', { className: 'quran-policy-btn', onClick: () => onOpenQuran?.() }),
       ],
     });
     document.body.append(this.root);
@@ -283,25 +400,49 @@ export class HUD {
   /* ------------------------------------------------------------ economy */
 
   renderEconomy({ resources, capacity, cityLevel, builders }) {
-    this.levelValue.textContent = formatFa(cityLevel ?? 1);
-    this.builderValue.textContent = `${formatFa(builders.free)}/${formatFa(builders.total)}`;
+    const level = formatFa(cityLevel ?? 1);
+    this.levelValue.textContent = level;
+    this.avatarLevel.textContent = level;
+    this._renderBuilders(builders);
     for (const [key, chip] of Object.entries(this.chips)) {
       const value = Math.floor(resources[key] || 0);
       const node = chip.querySelector('b');
-      if (capacity && capacity[key] != null) {
-        node.textContent = `${formatFa(value)}/${formatFa(capacity[key])}`;
-        chip.classList.toggle('is-full', value >= capacity[key]);
-      } else {
-        node.textContent = formatFa(value);
-        chip.classList.toggle('is-full', false);
-      }
+      const cap = capacity && capacity[key] != null ? capacity[key] : null;
+      // value and «/capacity» are separate spans: the caption is dropped by CSS
+      // on very narrow screens instead of letting the number clip mid-digits
+      // (b.textContent still reads «۶۰۰/۸۰۰» for tests and screen readers).
+      const parts = [el('span', { className: 'game-resource__value', text: formatFa(value) })];
+      if (cap != null) parts.push(el('span', { className: 'game-resource__cap', text: `/${formatFa(cap)}` }));
+      node.replaceChildren(...parts); // replaceChildren() stringifies null → filter first
+      chip.classList.toggle('is-full', cap != null && value >= cap);
+      chip.title = cap == null
+        ? `${this.config.t(`economy.${key}`, key)}: ${formatFa(value)}`
+        : `${this.config.t(`economy.${key}`, key)}: ${formatFa(value)} / ${formatFa(cap)}`;
     }
+  }
+
+  /**
+   * Builders count lives on the Construction action (badge) — it used to be a
+   * separate card that overlapped the button strip. All three views (dock
+   * badge, panel badge, `builderValue` used by tests) are updated together.
+   */
+  _renderBuilders({ free = 0, total = 0 } = {}) {
+    const text = `${formatFa(free)}/${formatFa(total)}`;
+    this.builderValue.textContent = text;
+    this.buildersBadge.textContent = text;
+    this.queueBadge.textContent = text;
+    const busy = total > 0 && free < total;
+    this.shopButton.classList.toggle('is-busy', busy);
+    this.shopButton.setAttribute(
+      'aria-label',
+      `${this.config.t('economy.builders', 'بنّاها')}: ${text}`,
+    );
   }
 
   /* -------------------------------------------------------------- queue */
 
   renderQueue({ jobs, free, total }) {
-    this.queueBadge.textContent = `${formatFa(free)}/${formatFa(total)}`;
+    this._renderBuilders({ free, total });
     this.queuePanel.classList.toggle('is-hidden', !jobs || jobs.length === 0);
     this.queueList.replaceChildren();
     if (!jobs || jobs.length === 0) return;
@@ -360,7 +501,11 @@ export class HUD {
 
   renderPlacement(v) {
     this.placementBar.classList.toggle('is-hidden', !v.active);
-    this.shopButton.classList.toggle('is-hidden', v.active);
+    // The Construction action stays in the dock (hiding it shifted every other
+    // action); while placing it is inert instead, and the placement bar — which
+    // sits directly above the dock — carries تأیید/لغو.
+    this.shopButton.classList.toggle('is-inactive', v.active);
+    this.shopButton.disabled = Boolean(v.active);
     if (v.active) {
       this.placementBar.querySelector('.placement-title').textContent = `جانمایی ${v.def.name}`;
       this.confirmButton.disabled = !v.valid;

@@ -1,0 +1,83 @@
+name: CI
+
+# Phase 10 — every gate the repo has, in one workflow:
+#   npm ci · check · test:unit · smoke · build · test:pwa · HUD layout geometry
+# The HUD gate boots the real game in headless Chromium (Playwright's bundled
+# browser; software GL — layout evidence, never a GPU benchmark).
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Self checks + unit tests (npm test)
+        run: npm test
+
+      - name: jsdom smoke (full app boot + acceptance scenarios)
+        run: npm run smoke
+
+      - run: npm run build
+
+      - name: PWA release gate (manifest, icons, precache)
+        run: npm run test:pwa
+
+  hud-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install the browser used by the HUD layout gate
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolve the browser path
+        id: chromium
+        run: echo "path=$(node -e "console.log(require('@playwright/test').chromium.executablePath())")" >> "$GITHUB_OUTPUT"
+
+      - name: Start the dev server
+        run: |
+          npm run dev -- --port 5173 > /tmp/hud-dev.log 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf http://127.0.0.1:5173/ > /dev/null && exit 0
+            sleep 1
+          done
+          echo "dev server did not come up"; cat /tmp/hud-dev.log; exit 1
+
+      - name: HUD layout geometry + screenshots (5 viewports × 2 font scales, RTL)
+        env:
+          HUD_CHROMIUM_PATH: ${{ steps.chromium.outputs.path }}
+        run: node tools/hud-layout.mjs --url http://127.0.0.1:5173/ --shots docs/hud-redesign/after
+
+      - name: Keep the screenshots for the reviewer
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hud-screenshots
+          path: docs/hud-redesign/after
+          if-no-files-found: warn
+          retention-days: 14
