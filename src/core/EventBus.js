@@ -106,4 +106,15 @@ export const EVENTS = Object.freeze({
   BATTLE_SESSION_CLOSED: 'battle:session-closed',
   STRUCTURE_DAMAGED: 'game:structure-damaged',
   STRUCTURE_REPAIRED: 'game:structure-repaired',
+  // --- phase 6: story campaign (قصص) ---
+  CAMPAIGN_CHANGED: 'campaign:changed',
+  CAMPAIGN_PANEL_OPENED: 'campaign:panel-opened',
+  CAMPAIGN_PANEL_CLOSED: 'campaign:panel-closed',
+  MISSION_STARTED: 'campaign:mission-started',
+  MISSION_PROGRESS: 'campaign:mission-progress',
+  MISSION_ACTION: 'campaign:mission-action',
+  MISSION_PLOT_TAP: 'campaign:mission-plot-tap',
+  MISSION_FINISHED: 'campaign:mission-finished',
+  MISSION_ABORTED: 'campaign:mission-aborted',
+  MISSION_REWARD_GRANTED: 'campaign:mission-reward',
 });

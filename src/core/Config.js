@@ -10,6 +10,8 @@ import stringsFa from '../data/strings.fa.json';
 import economyData from '../data/economy.json';
 import balanceData from '../data/balance.json';
 import quranLearningData from '../data/quran-learning.json';
+import campaignData from '../data/campaign.json';
+import missionsData from '../data/missions.json';
 import { hash2i } from './RNG.js';
 import { clamp } from './MathUtils.js';
 
@@ -77,6 +79,8 @@ export class Config {
       economy: economyData,
       balance: balanceData,
       quranLearning: quranLearningData,
+      campaign: campaignData,
+      missions: missionsData,
     };
 
     this.world = deepFreeze(clone(worldData));
@@ -87,6 +91,10 @@ export class Config {
     this.balance = deepFreeze(clone(balanceData));
     /** Phase 4 tuning — numbers only; no Quran text ever lives in code. */
     this.quranLearning = deepFreeze(clone(quranLearningData));
+    /** Phase 6 campaign tuning (numbers, policy notes, labels) — no Quran text. */
+    this.campaign = deepFreeze(clone(campaignData));
+    /** Phase 6 mission definitions — narrative + verse *references* only. */
+    this.missions = deepFreeze(clone(missionsData));
 
     const requested = new URLSearchParams(search).get('quality');
     this.tier = QUALITY_TIERS.includes(requested) ? requested : detectQualityTier(env);

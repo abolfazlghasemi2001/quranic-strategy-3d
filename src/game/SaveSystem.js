@@ -9,6 +9,8 @@
  *           adds pending/status/jobs/dailyGoharAt/nextEntityId/nextJobId.
  *   2 → 3 : adds the quran learning layer (Leitner boxes, lesson records,
  *           reward totals). Old saves keep working with empty progress.
+ *   3 → 4 : adds the army / battle layer (garrison, training queue, battle log).
+ *   4 → 5 : adds the story campaign (mission stars, unlocks, active run).
  *   3 → 4 : adds the phase-5 army/battle layer (garrison, training queue,
  *           structure health and the last battle records for replay).
  *
@@ -19,13 +21,14 @@
  * store is used so the game logic remains fully functional and testable.
  */
 
-export const SAVE_SCHEMA_VERSION = 4;
+export const SAVE_SCHEMA_VERSION = 5;
 export const SAVE_DB_NAME = 'shahr-nur';
 export const SAVE_STORE = 'saves';
 export const SAVE_KEY = 'main';
 
 /** Pure migrations: version → (payload) => payload of version+1. */
 import { normalizeLearningState } from './quran/LearningState.js';
+import { normalizeCampaignState } from './campaign/MissionState.js';
 import { normalizeArmyState, normalizeBattleState } from './barracks/ArmyState.js';
 
 export const MIGRATIONS = {
@@ -76,6 +79,13 @@ export const MIGRATIONS = {
       maxHp: typeof entity.maxHp === 'number' ? entity.maxHp : null,
       damaged: Boolean(entity.damaged),
     }));
+    return next;
+  },
+  // Phase 6: کمپین قصص — کارنامهٔ مأموریت‌ها، ستاره‌ها و اجرای نیمه‌کاره.
+  // ذخیرهٔ فاز ۵ فقط این بلوک را خالی می‌گیرد؛ هیچ داده‌ای از دست نمی‌رود.
+  4(payload) {
+    const next = { ...payload };
+    next.campaign = normalizeCampaignState(payload.campaign);
     return next;
   },
 };

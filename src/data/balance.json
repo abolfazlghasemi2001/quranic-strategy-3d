@@ -532,6 +532,100 @@
         }
       ]
     },
+    "granary": {
+      "levels": [
+        {
+          "level": 1,
+          "cost": {
+            "rizq": 180,
+            "nur": 75,
+            "hekmat": 30
+          },
+          "seconds": 30
+        },
+        {
+          "level": 2,
+          "cost": {
+            "rizq": 300,
+            "nur": 125,
+            "hekmat": 50
+          },
+          "seconds": 50
+        },
+        {
+          "level": 3,
+          "cost": {
+            "rizq": 490,
+            "nur": 205,
+            "hekmat": 80
+          },
+          "seconds": 75
+        },
+        {
+          "level": 4,
+          "cost": {
+            "rizq": 810,
+            "nur": 340,
+            "hekmat": 135
+          },
+          "seconds": 120
+        },
+        {
+          "level": 5,
+          "cost": {
+            "rizq": 1335,
+            "nur": 555,
+            "hekmat": 220
+          },
+          "seconds": 185
+        },
+        {
+          "level": 6,
+          "cost": {
+            "rizq": 2200,
+            "nur": 920,
+            "hekmat": 365
+          },
+          "seconds": 290
+        },
+        {
+          "level": 7,
+          "cost": {
+            "rizq": 3630,
+            "nur": 1510,
+            "hekmat": 605
+          },
+          "seconds": 445
+        },
+        {
+          "level": 8,
+          "cost": {
+            "rizq": 5995,
+            "nur": 2500,
+            "hekmat": 1000
+          },
+          "seconds": 690
+        },
+        {
+          "level": 9,
+          "cost": {
+            "rizq": 9890,
+            "nur": 4120,
+            "hekmat": 1645
+          },
+          "seconds": 1070
+        },
+        {
+          "level": 10,
+          "cost": {
+            "rizq": 16315,
+            "nur": 6800,
+            "hekmat": 2720
+          },
+          "seconds": 1650
+        }
+      ]
+    },
     "watchtower": {
       "levels": [
         {

@@ -6,6 +6,8 @@ import { LearningSystem } from './quran/LearningSystem.js';
 import { BarracksSystem } from './barracks/BarracksSystem.js';
 import { BattleSystem } from './battle/BattleSystem.js';
 import { createStructureStats } from './battle/StructureStats.js';
+import { CampaignSystem } from './campaign/CampaignSystem.js';
+import { normalizeMissions, validateMissions } from './campaign/MissionData.js';
 import buildingData from '../data/buildings.json';
 import unitsData from '../data/units.json';
 import defensesData from '../data/defenses.json';
@@ -91,6 +93,26 @@ export class Game {
       defensesData,
       structureStats: this.structureStats,
       bus,
+      // مأموریت فعال اجازهٔ شروع نبرد نمی‌دهد (کمپین هیچ نبردی نمی‌خواهد).
+      externalBlocker: () => (this.campaign && this.campaign.activeRun ? 'mission-active' : null),
+    });
+
+    // --- phase 6: کمپین داستانی (قصص) — مأموریت‌ها، ستاره‌ها و قواعد هر قصه ---
+    /** فهرست نرمال‌شدهٔ مأموریت‌ها (فقط ارجاع آیه؛ هیچ متن قرآنی در دادهٔ مأموریت نیست). */
+    this.missions = normalizeMissions(config.missions);
+    this.missionValidation = validateMissions(this.missions);
+    this.campaign = new CampaignSystem({
+      config,
+      campaignData: config.campaign,
+      missions: this.missions,
+      state: this.state,
+      economy: this.economy,
+      queue: this.queue,
+      bus,
+      game: this,
+      dataset: quran?.dataset || null,
+      applySpeedup: (seconds, at) => (this.learning ? this.learning.applySpeedup(seconds, at) : null),
+      isBattleActive: () => !!this.battle?.active,
     });
 
     /** Injected by main.js once the save helpers exist (debounced autosave). */
@@ -243,6 +265,14 @@ export class Game {
       });
       this.learning.tick(now);
     }
+    // Phase 6: مأموریت نیمه‌کاره در بوت «موقتاً متوقف» می‌شود تا در غیبت بازیکن
+    // قحطی/سیل پیش نرود؛ ادامه با دکمهٔ همان پنل است.
+    if (this.campaign) {
+      this.campaign.onBoot(now);
+      if (!this.missionValidation.ok) {
+        console.warn('[شهر نور] خطاهای اعتبارسنجی مأموریت‌ها:', this.missionValidation.issues.filter((issue) => issue.level === 'error'));
+      }
+    }
     return { fresh, secondsAway, jobsDone, goharDaily };
   }
 
@@ -309,6 +339,11 @@ export class Game {
       this.bus.emit(EVENTS.UI_TOAST, { message: `پاداش روزانه: +${daily} گوهر`, type: 'info' });
     }
 
+    // مأموریت فعال (فاز ۶): فصل‌ها، موج‌ها و آبادانی — پیش از مصرف عمومی.
+    if (this.campaign) this.campaign.tick(dt, now);
+    const consumed = this.economy.applyConsumption(dt);
+    if (consumed > 0) this.markEconomyDirty();
+
     const finished = this.queue.tick(now);
     if (finished.length) this.markQueueDirty();
 
@@ -361,6 +396,10 @@ export class Game {
         entityId: j.entityId,
         type: j.type,
         targetLevel: j.targetLevel,
+        missionId: j.missionId ?? null,
+        actionId: j.actionId ?? null,
+        label: j.label ?? null,
+        icon: j.icon ?? null,
         status: j.status,
         startedAt: j.startedAt,
         endsAt: j.endsAt,
@@ -373,6 +412,14 @@ export class Game {
 
   /** Called by BuildQueue whenever a job completes. */
   _finishJob(job, at) {
+    // کار بنّای مأموریت (ساخت بخش سد، جوی، باغ) پایان یافت.
+    if (job.kind === 'mission') {
+      this.campaign?.onJobFinished(job, at);
+      this.markQueueDirty();
+      this.bus.emit(EVENTS.JOB_FINISHED, { job, entity: null });
+      this.emitQueue();
+      return;
+    }
     const entity = this.state.getEntity(job.entityId);
     if (entity) {
       entity.level = job.targetLevel;
@@ -496,6 +543,7 @@ export class Game {
   }
 
   dispose() {
+    this.campaign?.dispose();
     this.battle.dispose();
     for (const [ev, fn] of this._on) this.bus.off(ev, fn);
     this._on.length = 0;

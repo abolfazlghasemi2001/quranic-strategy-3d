@@ -1,5 +1,5 @@
 /**
- * شهر نور — entry point (phase 5: units, defence and battle mechanics)
+ * شهر نور — entry point (phase 6: story campaign / قصص قرآن)
  *
  * Boot order:
  *   config -> engine -> load save -> Quran dataset -> world -> input/camera ->
@@ -28,6 +28,8 @@ import { LessonHub } from './ui/quran/LessonHub.js';
 import { BattleView } from './world/battle/BattleView.js';
 import { BattlePanel } from './ui/BattlePanel.js';
 import { BarracksPanel } from './ui/BarracksPanel.js';
+import { MissionZone } from './world/MissionZone.js';
+import { MissionPanel } from './ui/campaign/MissionPanel.js';
 import { LoadingScreen, ErrorOverlay } from './ui/LoadingScreen.js';
 
 async function boot() {
@@ -190,6 +192,28 @@ async function boot() {
     },
   });
 
+  // Phase 6: نشانگرهای سه‌بعدی مأموریت‌ها + پنل کمپین قصص.
+  const missionZone = new MissionZone({
+    config,
+    parent: world.group,
+    bus,
+    getSnapshot: () => game.campaign?.snapshot() || null,
+  });
+  missionZone.setMissions(game.missions.byId);
+  const missionPanel = new MissionPanel({
+    config,
+    bus,
+    campaign: game.campaign,
+    economy: game.economy,
+    dataset: quran.dataset,
+    parent: document.body,
+    onOpenLesson: () => {
+      missionPanel.close();
+      buildings.cancelPlacement();
+      lessonHub.show();
+    },
+  });
+
   const hud = new HUD({
     config,
     engine,
@@ -201,6 +225,11 @@ async function boot() {
     queue: game.queue,
     game,
     learning: game.learning,
+    campaign: game.campaign,
+    onOpenMissions: () => {
+      buildings.cancelPlacement();
+      missionPanel.show();
+    },
     onOpenBattle: () => {
       buildings.cancelPlacement();
       battlePanel.show();
@@ -241,6 +270,9 @@ async function boot() {
     },
   });
 
+  // پایان مأموریت بی‌درنگ ذخیره می‌شود (ستاره‌ها و باز شدن مأموریت بعدی).
+  bus.on(EVENTS.MISSION_FINISHED, () => saveNow());
+
   bus.on(EVENTS.QURAN_LESSON_REQUESTED, () => {
     buildings.cancelPlacement();
     lessonHub.show();
@@ -264,6 +296,8 @@ async function boot() {
   engine.addUpdatable(buildings, 35);
   engine.addUpdatable(lessonHub, 95);
   engine.addUpdatable(battleView, 40);
+  engine.addUpdatable(missionZone, 45);
+  engine.addUpdatable(missionPanel, 98);
   engine.addUpdatable(battlePanel, 96);
   engine.addUpdatable(barracksPanel, 97);
   engine.addUpdatable(hud, 100);
@@ -277,7 +311,7 @@ async function boot() {
   window.__NUR__ = {
     config, engine, world, game, buildings, rig, input, bus, monitor, hud, devPanel, quranPanel,
     lessonHub, datasetLoader, quran, saveSystem, saveNow,
-    battleView, battlePanel, barracksPanel,
+    battleView, battlePanel, barracksPanel, missionZone, missionPanel,
   };
 
   window.addEventListener('pagehide', (event) => {
@@ -289,6 +323,8 @@ async function boot() {
     hud.dispose();
     quranPanel.dispose();
     lessonHub.dispose();
+    missionPanel.dispose();
+    missionZone.dispose();
     battlePanel.dispose();
     barracksPanel.dispose();
     battleView.dispose();
@@ -303,13 +339,15 @@ async function boot() {
   });
 
   console.info(
-    `[شهر نور] فاز ۵ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
+    `[شهر نور] فاز ۶ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
     `ذخیره: ${saveRecord ? `بازیابی (${bootInfo.secondsAway}s غیبت)` : 'جدید'}، ` +
     `صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}، ` +
     `دیتاست قرآن: ${quran.dataset.stats.datasetId} (آیه ${quran.dataset.stats.verseCount}، درس ${quran.dataset.stats.lessonCount}، بازبینی‌شده ${quran.dataset.stats.reviewedVerseCount})، ` +
     `در نوبت مرور: ${game.learning.stats().dueCount}، ` +
     `سپاه: ${game.barracks.total()} (ظرفیت ${game.barracks.capacity()})، ` +
-    `سابقهٔ نبرد: ${game.state.battles.history.length}`,
+    `سابقهٔ نبرد: ${game.state.battles.history.length}، ` +
+    `کمپین: ${game.campaign.list().filter((m) => m.status !== 'locked').length}/${game.campaign.list().length} مأموریت باز، ★${game.campaign.totalStars()}، ` +
+    `مأموریت فعال: ${game.campaign.activeRun ? game.campaign.mission(game.campaign.activeRun.missionId)?.title : 'ندارد'}`, 
   );
   return window.__NUR__;
 }

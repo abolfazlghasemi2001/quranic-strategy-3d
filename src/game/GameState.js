@@ -1,5 +1,6 @@
 import { clamp } from '../core/MathUtils.js';
 import { createLearningState, normalizeLearningState } from './quran/LearningState.js';
+import { createCampaignState, normalizeCampaignState } from './campaign/MissionState.js';
 import { createArmyState, createBattleState, normalizeArmyState, normalizeBattleState } from './barracks/ArmyState.js';
 
 /**
@@ -8,7 +9,7 @@ import { createArmyState, createBattleState, normalizeArmyState, normalizeBattle
  */
 export class GameState {
   constructor(config) {
-    this.version = 5; // logic schema (save schema handled by SaveSystem)
+    this.version = 6; // logic schema (save schema handled by SaveSystem)
     this.tick = 0;
     this.elapsed = 0;
     this.paused = false;
@@ -31,6 +32,9 @@ export class GameState {
     // --- army + battle layer (phase 5) ---
     this.army = createArmyState();
     this.battles = createBattleState();
+
+    // --- campaign layer (phase 6): missions, stars and the active run ---
+    this.campaign = createCampaignState();
 
     this.entities = new Map();
     this.entitySeq = 1;
@@ -107,6 +111,7 @@ export class GameState {
       lastDailyAt: this.lastDailyAt,
       dailyGranted: this.dailyGranted,
       learning: JSON.parse(JSON.stringify(this.learning)),
+      campaign: JSON.parse(JSON.stringify(this.campaign)),
       army: JSON.parse(JSON.stringify(this.army)),
       battles: JSON.parse(JSON.stringify(this.battles)),
       nextEntityId: this.nextEntityId,
@@ -149,6 +154,7 @@ export class GameState {
     this.nextJobId = payload.nextJobId ?? 1;
 
     this.learning = normalizeLearningState(payload.learning);
+    this.campaign = normalizeCampaignState(payload.campaign);
     this.army = normalizeArmyState(payload.army);
     this.battles = normalizeBattleState(payload.battles, { keep: 3 });
     this.entities = new Map();

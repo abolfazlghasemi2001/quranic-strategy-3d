@@ -120,6 +120,26 @@ export class BuildingFactory {
       base(1.7, m.brick);
       g.add(mesh(new THREE.CylinderGeometry(w * .5, w * .5, d, 12, 1, false, 0, Math.PI), m.plaster, 0, 1.7, -d / 2).rotateX(Math.PI / 2));
       arch(g, w * .48, 1.05, d / 2 + .2, m.dark);
+    } else if (def.id === 'granary') {
+      // انبار غله: سه خمرهٔ سفالین روی سکو با دریچهٔ بالا و نردهٔ چوبی.
+      // فقط هندسه و رنگ — هیچ نوشته و هیچ نشانه‌ای روی سطح (قاعدهٔ محتوایی).
+      base(.35, m.tile);
+      const jars = [-1, 0, 1];
+      for (const i of jars) {
+        const x = i * w * .3;
+        g.add(mesh(new THREE.CylinderGeometry(w * .17, w * .13, .95, 10), m.plaster, x, .85, -d * .12));
+        g.add(mesh(new THREE.SphereGeometry(w * .17, 12, 8), m.plaster, x, 1.32, -d * .12));
+        g.add(mesh(new THREE.CylinderGeometry(w * .07, w * .07, .16, 8), m.dark, x, 1.46, -d * .12));
+        g.add(mesh(new THREE.CylinderGeometry(w * .19, w * .19, .1, 10), m.tile, x, .42, -d * .12));
+      }
+      // سکوی بار و نرده
+      g.add(mesh(new THREE.BoxGeometry(w * .9, .12, d * .34), m.wood, 0, .46, d * .3));
+      for (const i of [-1, 1]) {
+        g.add(mesh(new THREE.BoxGeometry(.1, .55, .1), m.wood, i * w * .4, .78, d * .3 + d * .14));
+        g.add(mesh(new THREE.BoxGeometry(.1, .55, .1), m.wood, i * w * .4, .78, d * .3 - d * .14));
+      }
+      g.add(mesh(new THREE.BoxGeometry(w * .02, .1, d * .3), m.wood, -w * .4, 1.02, d * .3));
+      g.add(mesh(new THREE.BoxGeometry(w * .02, .1, d * .3), m.wood, w * .4, 1.02, d * .3));
     } else if (def.id === 'wall') {
       // قطعهٔ دیوار: بدنهٔ آجری کوتاه با کنگره‌های بالا (خانه‌به‌خانه کنار هم می‌نشیند).
       base(1.15, m.brick);

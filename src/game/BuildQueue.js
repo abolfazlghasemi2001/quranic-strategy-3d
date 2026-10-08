@@ -81,8 +81,8 @@ export class BuildQueue {
     }
     const job = {
       id: `job-${this.state.nextJobId++}`,
-      kind: spec.kind, // 'build' | 'upgrade'
-      entityId: spec.entityId,
+      kind: spec.kind, // 'build' | 'upgrade' | 'mission'
+      entityId: spec.entityId ?? null,
       type: spec.type,
       targetLevel: spec.targetLevel,
       durationMs: spec.durationMs,
@@ -90,6 +90,16 @@ export class BuildQueue {
       endsAt: null,
       status: 'queued',
     };
+    // کارهای مأموریت (فاز ۶) نشانگر خود را با خود می‌برند تا پس از پایان کار
+    // دقیقاً همان بخش سد/جوی/باغ به‌روز شود.
+    if (spec.kind === 'mission') {
+      job.missionId = spec.missionId ?? null;
+      job.actionId = spec.actionId ?? null;
+      job.plotId = spec.plotId ?? null;
+      job.plotIndex = spec.plotIndex ?? null;
+      job.label = spec.label ?? null;
+      job.icon = spec.icon ?? null;
+    }
     this.jobs.push(job);
     this._promote(now);
     return { ok: true, job };
@@ -162,6 +172,22 @@ export class BuildQueue {
     const remaining = this.tick(now);
     void remaining;
     return { ok: true, cost };
+  }
+
+  /**
+   * حذف کارها بر پایهٔ شرط (پایان یا رهاکردن مأموریت). کارهای حذف‌شده برگردانده
+   * می‌شوند تا فراخوان بتواند وضعیت نشانگرها را به حالت پیشین برگرداند.
+   */
+  removeJobs(predicate) {
+    if (typeof predicate !== 'function') return [];
+    const removed = [];
+    for (let index = this.jobs.length - 1; index >= 0; index -= 1) {
+      const job = this.jobs[index];
+      if (!predicate(job)) continue;
+      removed.unshift(job);
+      this.jobs.splice(index, 1);
+    }
+    return removed;
   }
 
   /* ----------------------------------------------------------- serialize */

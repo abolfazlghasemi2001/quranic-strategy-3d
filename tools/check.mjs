@@ -43,6 +43,17 @@ import {
 } from '../src/game/battle/BattleScenario.js';
 import { createRecord, replayRecord, recordSummary, verifySubmission } from '../src/game/battle/BattleRecorder.js';
 import { SaveSystem, migrateRecord, SAVE_SCHEMA_VERSION } from '../src/game/SaveSystem.js';
+import { CampaignSystem } from '../src/game/campaign/CampaignSystem.js';
+import {
+  containsVocalisedArabic,
+  missionRefCards,
+  MISSION_SCHEMA,
+  normalizeMissions,
+  parseRefId,
+  REFERENCE_PATTERN,
+  validateMissions,
+} from '../src/game/campaign/MissionData.js';
+import { MISSION_RULES } from '../src/game/campaign/rules/index.js';
 import { LearningSystem } from '../src/game/quran/LearningSystem.js';
 import { Leitner } from '../src/game/quran/Leitner.js';
 import {
@@ -831,13 +842,16 @@ test('save: serialize contains no three.js roots', () => {
   assert(e.root != null, 'root still lives on the in-memory entity');
 });
 
-test('data: strings carry phase-3 and phase-4 labels (queue, offline, lesson)', () => {
-  assert(strings.app.phase.includes('۳') || strings.app.phase.includes('۴'), 'phase label updated');
+test('data: strings carry the current phase labels (queue, offline, lesson, campaign)', () => {
+  assert(/[۳۴۵۶]/.test(strings.app.phase), 'phase label updated');
   assert(typeof strings.loading.steps.save === 'string', 'loading save step');
   assert(typeof strings.economy.queued === 'string' && typeof strings.economy.storageFull === 'string', 'economy strings');
   assert(typeof strings.loading.steps.quran === 'string', 'phase-4 loading step');
   assert(typeof strings.lesson?.start === 'string' && typeof strings.lesson?.noPenalty === 'string', 'lesson strings');
   assert(strings.quran.unreviewedBadge === REVIEW_PENDING_LABEL, 'the pending badge string matches the dataset label');
+  assert(typeof strings.campaign?.panelTitle === 'string', 'phase-6 campaign strings');
+  assert(typeof strings.campaign?.pausedNote === 'string' && typeof strings.campaign?.blocked?.busy === 'string', 'phase-6 mission states');
+  assert(typeof strings.campaign?.noDepictionNote === 'string', 'phase-6 no-depiction note');
 });
 
 
@@ -2176,10 +2190,273 @@ test('phase 5 perf: a 25-raider battle simulates far faster than real time (30-u
 });
 
 
+/* ==================================================================== phase 6
+   کمپین داستانی (قصص) — آزمون‌های منطق خالص (بدون DOM و بدون WebGL).
+   پوشش: دادهٔ سه مأموریت، زنجیرهٔ باز شدن، ستاره‌شماری و پاداش، قاعدهٔ هر قصه،
+   ذخیرهٔ ستاره‌ها و سیاست محتوایی (فقط ارجاع آیه، بدون متن و بدون تصویر). */
+
+const campaignData = readJson('src/data/campaign.json');
+const missionsData = readJson('src/data/missions.json');
+const missions = normalizeMissions(missionsData);
+const campaignConfig = { t: (key, fallback) => (fallback ?? key), campaign: campaignData, seed: 7 };
+
+function bootCampaign({ resources = { rizq: 3000, nur: 2000, hekmat: 1200, gohar: 20 }, completed = [] } = {}) {
+  const state = new GameState({ economy: economyData });
+  state.resources = { ...resources };
+  const economy = new EconomySystem({ economy: economyData, balance: balanceData, defs: buildingsData.buildings, state });
+  const queue = new BuildQueue({ economyData, economy, state });
+  const campaign = new CampaignSystem({ config: campaignConfig, campaignData, missions, state, economy, queue });
+  queue.onFinished = (job, at) => campaign.onJobFinished(job, at);
+  for (const id of completed) {
+    const record = campaign.record(id);
+    record.completions = 1;
+    record.bestStars = 3;
+  }
+  return { state, economy, queue, campaign };
+}
+
+/** اجرای کامل یک مأموریت با سیاست بازیکن؛ در پایان کارنامهٔ مأموریت برمی‌گردد. */
+function playMission(id, policy, { completed = [], resources, maxSeconds = 420 } = {}) {
+  const boot = bootCampaign({ completed, ...(resources ? { resources } : {}) });
+  let now = 1_700_000_000_000;
+  const started = boot.campaign.start(id, now);
+  assert(started.ok, `mission ${id} starts (${started.reason || 'ok'})`);
+  let guard = 0;
+  while (boot.campaign.activeRun && guard < maxSeconds * 4) {
+    guard += 1;
+    now += 500;
+    policy(boot, guard, now);
+    boot.queue.tick(now);
+    boot.campaign.tick(0.5, now);
+  }
+  const report = boot.campaign.snapshot(now).lastReport;
+  return { ...boot, report, now };
+}
+
+test('phase 6 data: the three missions normalize, validate and chain in order', () => {
+  const verdict = validateMissions(missions);
+  assert(verdict.ok, `validation: ${verdict.issues.filter((i) => i.level === 'error').map((i) => i.message).join(' | ')}`);
+  assert(missions.list.length === 3, `three missions (got ${missions.list.length})`);
+  assert(missions.list.map((m) => m.id).join(',') === 'mission-silos,mission-dam,mission-prosperity', 'mission order');
+  assert(missions.list.map((m) => m.qasas.surahName).join(',') === 'یوسف,کهف,سبأ', 'the three surahs of the campaign');
+  assert(missions.list[0].unlock.after === null, 'mission 1 is open from the start');
+  assert(missions.list[1].unlock.after === 'mission-silos' && missions.list[2].unlock.after === 'mission-dam', 'unlock chain follows the story order');
+  assert(MISSION_RULES[MISSION_SCHEMA ? 'plenty-famine' : ''] != null, 'rule registry is reachable');
+  for (const mission of missions.list) {
+    assert(mission.objectives.length === 3 && mission.objectives.filter((o) => o.primary).length === 1, `${mission.id}: three objectives, one primary`);
+    assert(mission.lessonLearned && mission.lessonPoints.length >= 2, `${mission.id}: lesson learned present`);
+    for (const id of mission.rule.ACTIONS) {
+      assert(mission.actions[id], `${mission.id}: action «${id}» is data-driven`);
+    }
+  }
+  const dam = missions.byId.get('mission-dam');
+  const prosperity = missions.byId.get('mission-prosperity');
+  assert(dam.plots.length === 5 && dam.plots.every((p) => p.kind === 'dam-segment'), 'the dam has five segments');
+  assert(prosperity.plots.filter((p) => p.kind === 'canal').length === 3, 'three canals');
+  assert(prosperity.plots.filter((p) => p.kind === 'garden').length === 3, 'three gardens');
+  assert(MISSION_SCHEMA === 1, 'mission schema version is pinned');
+});
+
+test('phase 6 policy: mission data carries references only — no verse text anywhere', () => {
+  for (const mission of missions.list) {
+    assert(mission.refs.length >= 2, `${mission.id}: at least two references`);
+    for (const ref of mission.refs) {
+      const parsed = parseRefId(ref);
+      assert(parsed && REFERENCE_PATTERN.test(ref), `${mission.id}: reference «${ref}» is a valid surah:ayah id`);
+    }
+    for (const line of mission.briefing) {
+      assert(!containsVocalisedArabic(line.text), `${mission.id}: narrative line carries no vocalised text`);
+    }
+    assert(!containsVocalisedArabic(mission.lessonLearned), `${mission.id}: lesson headline carries no vocalised text`);
+  }
+  // بدون دیتاست قرآنی، کارت ارجاع فقط «نیازمند بازبینی» است (هیچ متنی ساخته نمی‌شود).
+  const cards = missionRefCards(null, missions.byId.get('mission-silos'));
+  assert(cards.length === 4 && cards.every((c) => c.status === 'pending-review' && c.verse === null), 'no dataset ⇒ reference cards stay pending');
+  // با دیتاستی که همان آیه را دارد، متن فقط از دیتاست می‌آید.
+  const marks = ['\u064E', '\u0650', '\u064F', '\u0651', '\u0652'];
+  const syntheticText = ['\u0646', marks[0], '\u0635', marks[1], '\u0628', marks[3], marks[1], '\u0645', marks[0]].join('');
+  const refDataset = normalizeDataset({
+    meta: { datasetId: 'test-refs', reviewed: true, placeholder: false },
+    surahs: [{ index: 12, name: 'سورهٔ آزمون', ayahs: [{ index: 47, textUthmani: syntheticText, translationFa: 'ترجمهٔ آزمون', source: { datasetId: 'test-refs' } }] }],
+    lessons: [],
+  }, { origin: 'remote' });
+  const resolved = missionRefCards(refDataset, missions.byId.get('mission-silos'));
+  const hit = resolved.find((c) => c.id === 'ayah:12:47');
+  assert(hit && hit.status === 'in-dataset' && hit.verse && hit.verse.textUthmani === syntheticText, 'text comes from the dataset, never from the mission file');
+  assert(resolved.filter((c) => c.status === 'pending-review').length === 3, 'references the dataset lacks stay pending');
+  // روایت پروژه هیچ ادعای ترجمه‌ای ندارد: متن‌ها بدون اعراب‌اند و برچسب بازبینی جدا می‌آید.
+  assert(campaignData.values.reviewLabel.includes('بازبینی'), 'narrative is labelled as project text under review');
+});
+
+test('phase 6 mission 1: two stars without capacity, three stars with it, reward paid once', () => {
+  // بازیکن بی‌انبار: فقط برداشت می‌کند و انبار غله نمی‌سازد.
+  const poor = playMission('mission-silos', ({ campaign }, index, now) => {
+    if (index % 10 === 0) campaign.perform('harvestAll', {}, now);
+  }, { resources: { rizq: 800, nur: 600, hekmat: 400, gohar: 20 } });
+  assert(poor.report && !poor.report.failed, 'the famine mission completes');
+
+  // بازیکن برنامه‌ریز: کشتزار و انبار غله می‌سازد، ظرفیت را بالا می‌برد و منظم برداشت می‌کند.
+  const richResources = { rizq: 2500, nur: 500, hekmat: 400, gohar: 20 };
+  const rich = playMission('mission-silos', ({ campaign, state }, index, now) => {
+    if (index % 8 === 0) campaign.perform('harvestAll', {}, now);
+    if (index === 4) {
+      // شهر برنامه‌ریز: سه کشتزار، یک انبار غله و یک انبار بزرگ (ظرفیت پاداش را هم می‌سازد).
+      const at = (id, col, row, level) => {
+        const def = buildingsData.buildings.find((b) => b.id === id);
+        state.createEntity({ type: def.id, name: def.name, col, row, size: def.size, level, status: 'ready', pending: 0, lastAccrualAt: now });
+      };
+      at('farm', 6, 6, 3);
+      at('farm', 8, 6, 3);
+      at('farm', 6, 8, 3);
+      at('granary', 10, 10, 3);
+      at('warehouse', 12, 6, 2);
+    }
+  }, { resources: richResources });
+  assert(rich.report.stars === 3, `a planned city earns three stars (got ${rich.report.stars})`);
+  assert(rich.report.objectives.every((o) => o.done), 'all three objectives hold');
+  assert(rich.report.granted.nur > 0 && rich.report.granted.gohar > 0, 'first clear pays the mission reward');
+  assert(rich.campaign.record('mission-silos').completions === 1, 'completion recorded');
+  assert(rich.campaign.list()[1].status === 'available', 'mission 2 unlocked after the first clear');
+  assert(rich.campaign.canStart('mission-prosperity').reason === 'locked', 'mission 3 still locked');
+  assert(rich.campaign.totalStars() === 3 && rich.campaign.totalStarsPossible() === missions.list.length * campaignData.starsMax, 'star totals come from the data');
+
+  // تکرار مأموریت: همان مأموریت دوباره (بدون ساختن شهر بیشتر) و بدون پاداش پایهٔ دوباره.
+  // پیمانهٔ شهر در اجرای اول ته کشیده است؛ برای مقایسهٔ منصفانه، همان ذخیرهٔ
+  // اجرای اول را برمی‌گردانیم (سازه‌ها و ظرفیت سر جای خودشان هستند).
+  rich.state.resources = { ...richResources };
+  const second = rich.campaign.start('mission-silos', rich.now + 1000);
+  assert(second.ok, 'the mission can be replayed');
+  let now = rich.now + 1000;
+  for (let i = 0; i < 700 && rich.campaign.activeRun; i += 1) {
+    now += 500;
+    if (i % 8 === 0) rich.campaign.perform('harvestAll', {}, now);
+    rich.queue.tick(now);
+    rich.campaign.tick(0.5, now);
+  }
+  const replay = rich.campaign.snapshot(now).lastReport;
+  assert(replay.stars === 3, `replay still scores three stars (got ${replay.stars})`);
+  assert(replay.firstClear === false && replay.granted.nur === 0 && replay.granted.gohar === 0, 'a replay pays no base reward again');
+});
+
+test('phase 6 mission 2: waves punish gaps — idle city floods, diligent crew holds the dam', () => {
+  const idle = playMission('mission-dam', () => {}, { completed: ['mission-silos'] });
+  assert(idle.report.failed === true && idle.report.failReason === 'flood', 'an unbuilt dam floods the valley');
+  assert(idle.report.stars === 0, 'a failed mission pays no stars');
+  assert(idle.campaign.record('mission-dam').failed === 1, 'the failure is recorded');
+
+  const diligent = playMission('mission-dam', ({ campaign }, index, now) => {
+    if (index % 2) return;
+    const actions = campaign.actions();
+    const repair = actions.find((a) => a.id === 'repair' && a.enabled && a.integrity < 0.88);
+    const build = actions.find((a) => a.id === 'build' && a.enabled);
+    if (repair) campaign.perform('repair', { plotId: repair.plotId, plotIndex: repair.plotIndex }, now);
+    else if (build) campaign.perform('build', { plotId: build.plotId, plotIndex: build.plotIndex }, now);
+  }, { completed: ['mission-silos'] });
+  assert(diligent.report.stars === 3, `maintenance earns the third star (got ${diligent.report.stars})`);
+  assert(diligent.report.progress.avgIntegrity >= 0.7, `average integrity holds (${diligent.report.progress.avgIntegrity})`);
+  assert(diligent.report.progress.breaches === 0, 'no segment ever fell');
+  assert(diligent.queue.jobs.length === 0, 'mission jobs leave the queue when the mission ends');
+
+  const lazy = playMission('mission-dam', ({ campaign }, index, now) => {
+    if (index % 4) return;
+    const build = campaign.actions().find((a) => a.id === 'build' && a.enabled);
+    if (build) campaign.perform('build', { plotId: build.plotId, plotIndex: build.plotIndex }, now);
+  }, { completed: ['mission-silos'] });
+  assert(lazy.report.stars === 2, `building without maintenance scores two stars (got ${lazy.report.stars})`);
+  assert(lazy.report.objectives.find((o) => o.id === 'integrity').done === false, 'the integrity star is withheld');
+});
+
+test('phase 6 mission 3: neglect costs the gardens; upkeep and gratitude keep prosperity', () => {
+  const idle = playMission('mission-prosperity', () => {}, { completed: ['mission-silos', 'mission-dam'] });
+  assert(idle.report.stars === 0, `an idle city earns nothing (got ${idle.report.stars})`);
+  assert(idle.report.objectives.find((o) => o.id === 'season').done === false, 'the season star needs a living city');
+
+  const active = playMission('mission-prosperity', ({ campaign }, index, now) => {
+    if (index % 2) return;
+    const actions = campaign.actions();
+    const canal = actions.find((a) => a.id === 'canal' && a.enabled);
+    const garden = actions.find((a) => a.id === 'garden' && a.enabled);
+    const gratitude = actions.find((a) => a.id === 'gratitude' && a.enabled);
+    if (canal) campaign.perform('canal', { plotId: canal.plotId, plotIndex: canal.plotIndex }, now);
+    else if (garden) campaign.perform('garden', { plotId: garden.plotId, plotIndex: garden.plotIndex }, now);
+    else if (gratitude && index % 20 === 0) campaign.perform('gratitude', {}, now);
+  }, { completed: ['mission-silos', 'mission-dam'] });
+  assert(active.report.stars === 3, `upkeep earns three stars (got ${active.report.stars})`);
+  assert(active.report.objectives.find((o) => o.id === 'gardens').done === true, 'the gardens held');
+  assert(active.campaign.record('mission-prosperity').completions === 1, 'the third mission is recorded as completed');
+  assert(active.campaign.list().every((m) => m.status === 'completed'), 'all three stories complete the campaign');
+  assert(active.campaign.totalStars() === 9, `nine stars possible, nine earned (got ${active.campaign.totalStars()})`);
+});
+
+test('phase 6 save: stars and the active run survive the roundtrip — and the run resumes paused', () => {
+  const boot = bootCampaign({ completed: ['mission-silos'] });
+  boot.campaign.record('mission-silos').bestStars = 2;
+  boot.campaign.record('mission-silos').lastStars = 2;
+  const now = 1_700_000_000_000;
+  assert(boot.campaign.start('mission-dam', now).ok, 'mission 2 starts');
+  const build = boot.campaign.actions().find((a) => a.id === 'build' && a.enabled);
+  assert(boot.campaign.perform('build', { plotId: build.plotId, plotIndex: build.plotIndex }, now).ok, 'a segment is queued');
+  const payload = JSON.parse(JSON.stringify(boot.state.serialize()));
+  const restored = new GameState({ economy: economyData });
+  restored.hydrate(payload);
+  assert(restored.campaign.missions['mission-silos'].bestStars === 2, 'stars survive the save');
+  assert(restored.campaign.active && restored.campaign.active.missionId === 'mission-dam', 'the active run survives');
+  assert(restored.campaign.active.runtime.segments[0].status === 'building', 'the in-flight build survives');
+  // بوت: مأموریت نیمه‌کاره موقتاً متوقف می‌شود تا در غیبت بازیکن پیش نرود.
+  const again = new CampaignSystem({ config: campaignConfig, campaignData, missions, state: restored, economy: boot.economy, queue: boot.queue });
+  const bootInfo = again.onBoot(now + 60_000);
+  assert(bootInfo.resumed === true && restored.campaign.active.paused === true, 'an unfinished mission returns paused');
+  const before = restored.campaign.active.elapsedSeconds;
+  again.tick(5, now + 120_000);
+  assert(restored.campaign.active.elapsedSeconds === before, 'a paused mission does not advance');
+  assert(JSON.stringify(restored.serialize()).includes('mission-dam'), 'campaign state is part of every save');
+});
+
+test('phase 6 queue: mission work uses city builders, is not refunded on abort and rolls back on a full queue', () => {
+  const boot = bootCampaign({ completed: ['mission-silos'] });
+  let now = 1_700_000_000_000;
+  assert(boot.campaign.start('mission-dam', now).ok, 'mission 2 starts');
+  const spendBefore = { ...boot.state.resources };
+  const build = boot.campaign.actions().find((a) => a.id === 'build' && a.enabled);
+  const result = boot.campaign.perform('build', { plotId: build.plotId, plotIndex: build.plotIndex }, now);
+  assert(result.ok && result.job.kind === 'mission', 'the build goes through the city builder queue');
+  assert(boot.queue.jobs.filter((j) => j.kind === 'mission').length === 1, 'exactly one mission job in the queue');
+  assert(boot.state.resources.rizq === spendBefore.rizq - build.cost.rizq, 'the mission pays the city from its own store');
+  assert(boot.queue.jobs[0].entityId === null && boot.state.entities.size === 0, 'mission jobs never invent city entities');
+  // پرکردن صف با کار شهر: کار مأموریت بعدی باید برگردانده شود و نشانگر به حالت پیشین برگردد.
+  for (let i = 0; i < 8; i += 1) {
+    boot.queue.enqueue({ kind: 'build', entityId: 900 + i, type: 'farm', targetLevel: 1, durationMs: 60_000 }, now);
+  }
+  const next = boot.campaign.actions().find((a) => a.id === 'build' && a.enabled);
+  const before = { ...boot.state.resources };
+  const blocked = boot.campaign.perform('build', { plotId: next.plotId, plotIndex: next.plotIndex }, now);
+  assert(blocked.ok === false && blocked.reason === 'queue-full', 'a full queue refuses the mission job');
+  assert(boot.state.resources.rizq === before.rizq && boot.state.resources.hekmat === before.hekmat, 'the cost is refunded when the queue refuses');
+  const status = boot.campaign.actions().find((a) => a.plotId === next.plotId).status;
+  assert(status === 'empty', 'the segment rolls back to «empty»');
+  // رهاکردن: کارهای مأموریت از صف پاک می‌شوند و هزینه برنمی‌گردد (بی‌جریمه = بدون غرامت اضافه).
+  const aborted = boot.campaign.abort(now, 'test');
+  assert(aborted.ok, 'abort succeeds');
+  assert(boot.queue.jobs.every((j) => j.kind !== 'mission'), 'mission jobs are removed from the queue');
+  assert(boot.campaign.activeRun === null, 'no active run after abort');
+  assert(boot.economy.modifiers.production.rizq === undefined, 'economy modifiers are cleared after abort');
+});
+
+test('phase 6 missions pay star rewards that respect the warehouse ceiling and never gamble', () => {
+  const boot = bootCampaign({ resources: { rizq: 900, nur: 590, hekmat: 400, gohar: 20 } });
+  const start = boot.campaign.start('mission-silos', 1_700_000_000_000);
+  assert(start.ok, 'mission 1 starts');
+  boot.campaign.record('mission-silos').completions = 1; // شبیه‌سازی اجرای دوم
+  const report = boot.campaign.finish(1_700_000_000_000, { failed: false, evaluation: { objectives: { endure: true, reserve: true, neverEmpty: true } } });
+  assert(report.granted.nur <= boot.economy.capacity().nur, 'rewards clamp to the storage ceiling');
+  assert(report.granted.overflow.nur >= 0, 'overflow is reported instead of vanishing');
+  assert(!JSON.stringify(report).includes('roll') && !JSON.stringify(report).includes('chance'), 'no randomness anywhere in the reward path');
+});
+
 await flushPending();
 
 const pad = (value, width) => String(value).padEnd(width, ' ');
-console.log('\n=== شهر نور — self checks (فازهای ۱، ۳، ۴ و ۵) ===\n');
+console.log('\n=== شهر نور — self checks (فازهای ۱، ۳، ۴، ۵ و ۶) ===\n');
 for (const result of results) {
   console.log(`${result.ok ? '✓' : '✗'} ${pad(result.name, 62)}${result.ok ? '' : result.message}`);
 }

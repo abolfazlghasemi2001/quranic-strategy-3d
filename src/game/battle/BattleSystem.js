@@ -38,8 +38,10 @@ export class BattleSystem {
    * @param {object} options.defensesData — defenses.json
    * @param {object} options.structureStats — createStructureStats(...)
    * @param {import('../../core/EventBus.js').EventBus} options.bus
+   * @param {(() => string|null)|null} [options.externalBlocker] — قید بیرونی
+   *        (فاز ۶: مأموریت فعال) که دلیل جلوگیری از شروع نبرد را برمی‌گرداند
    */
-  constructor({ config, state, economy, barracks, battleData, unitsData, defensesData, structureStats, bus }) {
+  constructor({ config, state, economy, barracks, battleData, unitsData, defensesData, structureStats, bus, externalBlocker = null }) {
     this.config = config;
     this.state = state;
     this.economy = economy;
@@ -52,6 +54,8 @@ export class BattleSystem {
 
     this.defenseDefs = defenseDefsFrom(defensesData);
     this.structureModifiers = structureModifiersFrom(defensesData);
+    /** مأموریت فعال اجازهٔ شروع نبرد نمی‌دهد (و نه برعکس: مأموریت‌ها نبرد نمی‌خواهند). */
+    this.externalBlocker = typeof externalBlocker === 'function' ? externalBlocker : null;
     this.session = null;
     this.lastReport = null;
     this.lastVerification = null;
@@ -95,6 +99,10 @@ export class BattleSystem {
   canStart() {
     if (this.active) return { ok: false, reason: 'busy' };
     if (this.state.entities.size === 0) return { ok: false, reason: 'empty-city' };
+    if (this.externalBlocker) {
+      const reason = this.externalBlocker();
+      if (reason) return { ok: false, reason };
+    }
     return { ok: true };
   }
 
