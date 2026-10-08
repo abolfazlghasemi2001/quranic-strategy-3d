@@ -3,12 +3,14 @@
   "private": true,
   "version": "0.3.0",
   "type": "module",
-  "description": "شهر نور — شهرسازی و استراتژی سه‌بعدی فارسی (فاز ۸: اجتماعی و چندنفره)",
+  "description": "شهر نور — شهرسازی و استراتژی سه‌بعدی فارسی (بتای انتشار، فاز ۹)",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node tools/generate-pwa-icons.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "node tools/check.mjs",
+    "test": "node tools/check.mjs",
+    "check": "npm run test",
     "smoke": "node tools/smoke.mjs",
     "server": "node server/src/index.js",
     "server:start": "node server/src/index.js"

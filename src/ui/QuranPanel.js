@@ -4,8 +4,10 @@
  * Content red line for this project:
  *   - Quran text/translations are NEVER written from memory; they may only be
  *     read from a verified dataset (e.g. Tanzil).
- *   - Until such a dataset exists in the repo (public/quran/), only a placeholder
- *     explicitly labelled «نمونه — جایگزین شود» is shown.
+ *   - The bundled public dataset is attributed to Tanzil but is not project-reviewed;
+ *     every unreviewed verse stays visibly labelled until human review is complete.
+ *   - If loading fails, the internal synthetic placeholder is visibly labelled
+ *     «نمونه — جایگزین شود» and is never presented as a genuine verse.
  *   - Quran text never appears on the ground, on destructible structures or in
  *     battle effects; when shown it uses the Quranic font class with full
  *     diacritics.
@@ -106,8 +108,10 @@ export class QuranPanel {
               ? this.config.t('quran.datasetLoaded', 'دیتاست بیرونی بارگذاری شد')
               : this.config.t('quran.datasetSample', 'نمونهٔ داخلی (جای‌نگهدار)'),
           }),
+          summary.source ? el('span', { className: 'hub-chip', text: `منبع: ${summary.source}` }) : null,
+          summary.placeholder ? el('span', { className: 'hub-chip is-pending', text: PLACEHOLDER_LABEL }) : null,
+          el('span', { className: `hub-chip${summary.reviewed ? ' is-ok' : ' is-pending'}`, text: summary.reviewed ? 'بازبینی‌شده' : REVIEW_PENDING_LABEL }),
           el('span', { className: 'hub-chip', text: `آیه‌های بازبینی‌شده: ${summary.reviewedVerseCount}/${summary.verseCount}` }),
-          el('span', { className: 'hub-chip is-pending', text: REVIEW_PENDING_LABEL }),
         ],
       }),
       el('p', { className: 'ui-modal__hint', text: `مسیر جایگزینی: ${summary.expectedPath} — یا بارگذاری با ?quran=./مسیر/فایل.json` }),

@@ -234,6 +234,7 @@ export class Terrain {
     const blend = Boolean(this.config.quality.groundDetailBlend);
     const grassRepeat = textures.grassRepeatUnits;
     const { minX, minZ, width, depth } = this.extent;
+    const palette = this.config.world.lighting.dayCycle?.colors || {};
 
     const uniforms = {
       uDirtMap: { value: this.dirtTexture },
@@ -243,13 +244,39 @@ export class Terrain {
       uSandUv: { value: new THREE.Vector2(grassRepeat / textures.sandRepeatUnits, grassRepeat / textures.sandRepeatUnits) },
       uMaskUv: { value: new THREE.Vector4(grassRepeat / width, grassRepeat / depth, -minX / width, -minZ / depth) },
       uDirtTint: { value: new THREE.Color(textures.dirt.base) },
+      uWindTime: { value: 0 },
+      uWaterTime: { value: 0 },
+      uDaylight: { value: 1 },
+      uWaterDayColor: { value: new THREE.Color(palette.waterDay || '#3a93a8') },
+      uWaterNightColor: { value: new THREE.Color(palette.waterNight || '#142b4b') },
     };
     this.groundUniforms = uniforms;
 
     const declarations = `
       uniform sampler2D uMaskMap;
       uniform vec4 uMaskUv;
+      uniform float uWindTime;
+      uniform float uWaterTime;
+      uniform float uDaylight;
+      uniform vec3 uWaterDayColor;
+      uniform vec3 uWaterNightColor;
+      varying vec3 vShahrWorldPosition;
       ${blend ? 'uniform sampler2D uDirtMap;\nuniform sampler2D uSandMap;\nuniform vec2 uDirtUv;\nuniform vec2 uSandUv;' : 'uniform vec3 uDirtTint;'}
+    `;
+
+    const surfaceShader = `
+      float grassCoverage = smoothstep( 0.2, 0.72, maskTexel.r ) * ( 1.0 - maskTexel.g );
+      float grassBreeze = sin( vShahrWorldPosition.x * 0.15 + vShahrWorldPosition.z * 0.09 + uWindTime * 1.25 );
+      groundColor *= 1.0 + grassBreeze * 0.018 * grassCoverage;
+      float waterMask = 1.0 - smoothstep( 0.005, 0.045, maskTexel.r );
+      float waveA = sin( dot( vShahrWorldPosition.xz, vec2( 0.055, 0.037 ) ) + uWaterTime * 0.72 );
+      float waveB = sin( dot( vShahrWorldPosition.xz, vec2( -0.031, 0.061 ) ) - uWaterTime * 0.51 );
+      float waterRipple = ( waveA + waveB ) * 0.5;
+      float glint = smoothstep( 0.72, 0.96, waterRipple );
+      vec3 waterColor = mix( uWaterNightColor, uWaterDayColor, uDaylight );
+      waterColor *= 0.93 + waterRipple * 0.08;
+      waterColor += vec3( 0.08, 0.18, 0.19 ) * glint;
+      groundColor = mix( groundColor, waterColor, waterMask );
     `;
 
     const body = blend
@@ -261,6 +288,7 @@ export class Terrain {
         vec3 groundColor = mix( sandTexel.rgb, grassTexel.rgb, maskTexel.r );
         groundColor = mix( groundColor, dirtTexel.rgb, maskTexel.g );
         groundColor *= mix( vec3( 1.0 ), vec3( 1.06, 1.0, 0.86 ), maskTexel.b );
+        ${surfaceShader}
         diffuseColor.rgb *= groundColor;
       `
       : `
@@ -270,17 +298,28 @@ export class Terrain {
         vec3 groundColor = mix( uDirtTint * 0.85, grassTexel.rgb, coverage );
         groundColor = mix( groundColor, uDirtTint, maskTexel.g * 0.9 );
         groundColor *= mix( vec3( 1.0 ), vec3( 1.06, 1.0, 0.86 ), maskTexel.b );
+        ${surfaceShader}
         diffuseColor.rgb *= groundColor * ( 0.35 + 0.65 * max( coverage, 0.35 ) );
       `;
 
     material.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, uniforms);
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vShahrWorldPosition;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvShahrWorldPosition = ( modelMatrix * vec4( position, 1.0 ) ).xyz;');
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', `#include <common>\n${declarations}`)
         .replace('#include <map_fragment>', body);
     };
-    material.customProgramCacheKey = () => (blend ? 'ground-blend-v1' : 'ground-tint-v1');
+    material.customProgramCacheKey = () => (blend ? 'ground-water-grass-v2-blend' : 'ground-water-grass-v2-tint');
     material.needsUpdate = true;
+  }
+
+  update(time = 0, daylight = 1) {
+    if (!this.groundUniforms) return;
+    this.groundUniforms.uWindTime.value = Number(time) || 0;
+    this.groundUniforms.uWaterTime.value = Number(time) || 0;
+    this.groundUniforms.uDaylight.value = Math.max(0, Math.min(1, Number(daylight) || 0));
   }
 
   /* ------------------------------------------------------------ grid lines */
@@ -291,52 +330,46 @@ export class Terrain {
     const rows = this.config.rows;
     const y = 0.06;
     const colors = this.config.terrain.colors;
+    const positions = [];
+    const vertexColors = [];
+    const gridColor = new THREE.Color(colors.gridLine).multiplyScalar(0.54);
+    const borderColor = new THREE.Color(colors.gridBorder).multiplyScalar(1.58);
+    const addSegment = (x0, z0, x1, z1, color) => {
+      positions.push(x0, y, z0, x1, y, z1);
+      vertexColors.push(color.r, color.g, color.b, color.r, color.g, color.b);
+    };
 
-    const lines = [];
     for (let col = 0; col <= cols; col += 1) {
       const x = col * tileSize;
-      lines.push(x, y, 0, x, y, rows * tileSize);
+      addSegment(x, 0, x, rows * tileSize, gridColor);
     }
     for (let row = 0; row <= rows; row += 1) {
       const z = row * tileSize;
-      lines.push(0, y, z, cols * tileSize, y, z);
+      addSegment(0, z, cols * tileSize, z, gridColor);
     }
 
-    const lineGeometry = this._track(new THREE.BufferGeometry());
-    lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
-    const lineMaterial = this._track(
-      new THREE.LineBasicMaterial({
-        color: new THREE.Color(colors.gridLine),
-        transparent: true,
-        opacity: 0.13,
-        depthWrite: false,
-      }),
-    );
-    this.gridLines = new THREE.LineSegments(lineGeometry, lineMaterial);
-    this.gridLines.name = 'grid-lines';
-    this.gridLines.renderOrder = 2;
-    this.group.add(this.gridLines);
+    // Border and inner grid share one vertex-coloured material/draw call.
+    addSegment(0, 0, cols * tileSize, 0, borderColor);
+    addSegment(cols * tileSize, 0, cols * tileSize, rows * tileSize, borderColor);
+    addSegment(cols * tileSize, rows * tileSize, 0, rows * tileSize, borderColor);
+    addSegment(0, rows * tileSize, 0, 0, borderColor);
 
-    const border = [
-      0, y, 0, cols * tileSize, y, 0,
-      cols * tileSize, y, 0, cols * tileSize, y, rows * tileSize,
-      cols * tileSize, y, rows * tileSize, 0, y, rows * tileSize,
-      0, y, rows * tileSize, 0, y, 0,
-    ];
-    const borderGeometry = this._track(new THREE.BufferGeometry());
-    borderGeometry.setAttribute('position', new THREE.Float32BufferAttribute(border, 3));
-    const borderMaterial = this._track(
-      new THREE.LineBasicMaterial({
-        color: new THREE.Color(colors.gridBorder),
-        transparent: true,
-        opacity: 0.38,
-        depthWrite: false,
-      }),
-    );
-    this.gridBorder = new THREE.LineSegments(borderGeometry, borderMaterial);
-    this.gridBorder.name = 'grid-border';
-    this.gridBorder.renderOrder = 3;
-    this.group.add(this.gridBorder);
+    const geometry = this._track(new THREE.BufferGeometry());
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(vertexColors, 3));
+    const material = this._track(new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+      toneMapped: false,
+    }));
+    this.gridLines = new THREE.LineSegments(geometry, material);
+    this.gridLines.name = 'grid-lines-and-border';
+    this.gridLines.renderOrder = 2;
+    this.gridBorder = this.gridLines; // compatibility alias; intentionally the same draw call
+    this.group.add(this.gridLines);
 
     this.setGridVisible(this.gridVisible);
   }

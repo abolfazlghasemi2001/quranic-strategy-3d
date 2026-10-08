@@ -7,6 +7,7 @@
  * می‌آید و همیشه با کلاس `quran-text` نمایش داده می‌شود.
  */
 import { el, button, faDigits } from '../dom.js';
+import { PLACEHOLDER_LABEL, REVIEW_PENDING_LABEL } from '../../game/quran/QuranDataset.js';
 import { noPenaltyNote } from './verseCard.js';
 
 const MAX_CHIP = 90; // بریدن متن‌های بسیار بلند در کاشی‌های بازی (نمایشی، امن)
@@ -20,11 +21,30 @@ function feedbackNode() {
   return el('p', { className: 'minigame__feedback', attrs: { role: 'status', 'aria-live': 'polite' } });
 }
 
+function provenanceText(item = {}) {
+  const labels = [];
+  if (item.placeholder) labels.push(PLACEHOLDER_LABEL);
+  labels.push(item.reviewed ? 'بازبینی‌شده' : REVIEW_PENDING_LABEL);
+  const source = item.source || {};
+  const sourceLabel = [source.datasetId, source.version ? `نسخهٔ ${source.version}` : null].filter(Boolean).join(' · ');
+  labels.push(sourceLabel ? `منبع: ${sourceLabel}` : 'منبع ثبت نشده');
+  return labels.join(' · ');
+}
+
+function provenanceNode(item) {
+  return el('small', {
+    className: 'quran-provenance',
+    attrs: { dir: 'rtl', lang: 'fa' },
+    text: provenanceText(item),
+  });
+}
+
 /* ------------------------------------------------ ۱) تکمیل آیه */
 
 export function createAyahCompletionView({ game, onAnswer = () => {} }) {
   const feedback = feedbackNode();
   const board = el('div', { className: 'minigame__board' });
+  const provenance = el('p', { className: 'quran-provenance', attrs: { role: 'note' } });
   const options = el('div', { className: 'mcg-options' });
   const hintBtn = button('راهنما (بدون جریمه)', { className: 'ui-btn ui-btn--ghost', onClick: () => { if (game.hint()) { feedback.textContent = 'یک گزینهٔ نادرست حذف شد — بدون جریمه.'; refresh(); } } });
 
@@ -39,6 +59,7 @@ export function createAyahCompletionView({ game, onAnswer = () => {} }) {
         ],
       }),
       el('p', { className: 'minigame__hint', text: 'واژهٔ پنهان‌شده را از میان گزینه‌ها برگزین. متن آیه فقط همین‌جا نمایش داده می‌شود.' }),
+      provenance,
       board,
       options,
       feedback,
@@ -49,6 +70,7 @@ export function createAyahCompletionView({ game, onAnswer = () => {} }) {
 
   function refresh() {
     const snap = game.snapshot();
+    provenance.textContent = provenanceText(snap);
     root.querySelector('.minigame__counter').textContent = `${faDigits(Math.min(snap.solvedCount + 1, snap.total))} / ${faDigits(snap.total)}`;
     board.replaceChildren();
     const line = el('p', { className: 'quran-text minigame__verse', attrs: { dir: 'rtl', lang: 'ar' } });
@@ -132,9 +154,13 @@ export function createWordMatchView({ game, onAnswer = () => {} }) {
     meaningsCol.replaceChildren(el('h4', { className: 'wm-col__title', text: 'معنی' }));
 
     for (const term of snap.terms) {
+      const review = provenanceText(term);
       const chip = button(clip(term.label), {
         className: `wm-chip wm-chip--term${term.matched ? ' is-matched' : ''}${term.selected ? ' is-selected' : ''}${term.tricky ? ' is-tricky' : ''}${term.kind === 'ayah' ? ' wm-chip--ayah' : ''}`,
+        title: `${clip(term.label, 80)} — ${review}`,
       });
+      chip.setAttribute('aria-label', `${clip(term.label, 80)} — ${review}`);
+      chip.append(provenanceNode(term));
       chip.disabled = term.matched || snap.done;
       chip.addEventListener('click', () => {
         game.selectTerm(term.id);
@@ -145,9 +171,13 @@ export function createWordMatchView({ game, onAnswer = () => {} }) {
     }
 
     for (const meaning of snap.meanings) {
+      const review = provenanceText(meaning);
       const chip = button(clip(meaning.label, 140), {
         className: `wm-chip wm-chip--meaning${meaning.matched ? ' is-matched' : ''}${meaning.tricky ? ' is-tricky' : ''}`,
+        title: `${clip(meaning.label, 100)} — ${review}`,
       });
+      chip.setAttribute('aria-label', `${clip(meaning.label, 100)} — ${review}`);
+      chip.append(provenanceNode(meaning));
       chip.disabled = meaning.matched || snap.done || !snap.selectedTerm;
       chip.addEventListener('click', () => {
         const result = game.selectMeaning(meaning.id);
@@ -228,7 +258,14 @@ export function createAyahOrderView({ game, onAnswer = () => {} }) {
         attrs: { 'data-card-id': card.id },
         children: [
           el('div', { className: 'ao-card__index', text: faDigits(index + 1) }),
-          el('div', { className: 'ao-card__body', children: [label, card.caption ? el('small', { className: 'ao-card__caption', text: clip(card.caption, 100) }) : null] }),
+          el('div', {
+            className: 'ao-card__body',
+            children: [
+              label,
+              card.caption ? el('small', { className: 'ao-card__caption', text: clip(card.caption, 100) }) : null,
+              provenanceNode(card),
+            ],
+          }),
           el('div', {
             className: 'ao-card__tools',
             children: [

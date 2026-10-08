@@ -91,6 +91,15 @@ export class SkyDome {
     this.mesh.position.copy(engine.camera.position);
   }
 
+  setLighting({ sunDirection, zenith, horizon, below, glow, glowStrength } = {}) {
+    if (sunDirection) this.uniforms.uSunDirection.value.set(sunDirection.x, sunDirection.y, sunDirection.z).normalize();
+    if (zenith) this.uniforms.uZenith.value.copy(zenith);
+    if (horizon) this.uniforms.uHorizon.value.copy(horizon);
+    if (below) this.uniforms.uBelow.value.copy(below);
+    if (glow) this.uniforms.uGlow.value.copy(glow);
+    if (Number.isFinite(glowStrength)) this.uniforms.uGlowStrength.value = glowStrength;
+  }
+
   dispose() {
     this.geometry.dispose();
     this.material.dispose();

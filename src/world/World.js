@@ -12,6 +12,7 @@ import { Terrain } from './Terrain.js';
 import { SkyDome } from './SkyDome.js';
 import { Markers } from './Markers.js';
 import { Chunk } from './Chunk.js';
+import { DayNightCycle } from './DayNightCycle.js';
 import { EVENTS } from '../core/EventBus.js';
 
 const nextFrame = () => new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
@@ -40,6 +41,22 @@ export class World {
     this.markers = null;
     this.lights = {};
     this.built = false;
+    this.dayNight = new DayNightCycle(config.world.lighting.dayCycle || {});
+    this.dayNightState = this.dayNight.sample();
+    this.reducedMotion = false;
+    this.animationTime = 0;
+    this._palette = this._createLightingPalette();
+    this._cycleScratch = {
+      sun: new THREE.Color(),
+      hemisphereSky: new THREE.Color(),
+      hemisphereGround: new THREE.Color(),
+      ambient: new THREE.Color(),
+      zenith: new THREE.Color(),
+      horizon: new THREE.Color(),
+      below: new THREE.Color(),
+      glow: new THREE.Color(),
+      fog: new THREE.Color(),
+    };
 
     this._unsubscribers = [];
   }
@@ -103,6 +120,9 @@ export class World {
     );
     sun.target.position.set(center.x, 0, center.z);
     sun.castShadow = Boolean(this.config.quality.shadows);
+    // The solar direction changes continuously; refresh the map on a short,
+    // explicit cadence instead of paying for a full shadow render every frame.
+    sun.shadow.autoUpdate = false;
 
     if (sun.castShadow) {
       const size = this.config.quality.shadowMapSize || 1024;
@@ -165,8 +185,115 @@ export class World {
   /* --------------------------------------------------------------- frame */
 
   update(dt, engine) {
-    if (this.sky) this.sky.update(dt, engine);
-    if (this.markers) this.markers.update(dt, engine);
+    if (!this.reducedMotion && Number.isFinite(dt) && dt > 0) this.animationTime += dt;
+    this.dayNightState = this.dayNight.update(dt, { reducedMotion: this.reducedMotion });
+    this._applyDayNight(this.dayNightState, engine);
+
+    if (this.terrain) this.terrain.update(this.animationTime, this.dayNightState.daylight);
+    for (const chunk of this.chunks.values()) chunk.decor?.update(this.animationTime);
+    const animationDelta = this.reducedMotion ? 0 : dt;
+    if (this.sky) this.sky.update(animationDelta, engine);
+    if (this.markers) this.markers.update(animationDelta, engine);
+  }
+
+  setReducedMotion(enabled) {
+    this.reducedMotion = Boolean(enabled);
+    return this.reducedMotion;
+  }
+
+  _createLightingPalette() {
+    const colors = this.config.world.lighting.dayCycle?.colors || {};
+    const values = {
+      sunDay: colors.sunDay || this.config.world.lighting.sun.color,
+      sunTwilight: colors.sunTwilight || '#ffb46e',
+      sunNight: colors.sunNight || '#a9c8ff',
+      hemisphereSkyDay: colors.hemisphereSkyDay || this.config.world.lighting.hemisphere.skyColor,
+      hemisphereSkyNight: colors.hemisphereSkyNight || '#263d68',
+      hemisphereGroundDay: colors.hemisphereGroundDay || this.config.world.lighting.hemisphere.groundColor,
+      hemisphereGroundNight: colors.hemisphereGroundNight || '#202738',
+      ambientDay: colors.ambientDay || this.config.world.lighting.ambient.color,
+      ambientNight: colors.ambientNight || '#8698c2',
+      skyZenithDay: colors.skyZenithDay || this.config.world.sky.zenith,
+      skyZenithNight: colors.skyZenithNight || '#101b39',
+      skyHorizonDay: colors.skyHorizonDay || this.config.world.sky.horizon,
+      skyHorizonNight: colors.skyHorizonNight || '#283b5c',
+      skyHorizonTwilight: colors.skyHorizonTwilight || '#df886b',
+      skyBelowDay: colors.skyBelowDay || this.config.world.sky.below,
+      skyBelowNight: colors.skyBelowNight || '#18233e',
+      skyGlowDay: colors.skyGlowDay || this.config.world.sky.glow,
+      skyGlowNight: colors.skyGlowNight || '#7998c7',
+      skyGlowTwilight: colors.skyGlowTwilight || '#ffc078',
+      fogDay: colors.fogDay || this.config.world.fog.color,
+      fogNight: colors.fogNight || '#18243a',
+    };
+    return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, new THREE.Color(value)]));
+  }
+
+  _applyDayNight(state, engine) {
+    const cycle = this.config.world.lighting.dayCycle || {};
+    const lighting = this.config.world.lighting;
+    const palette = this._palette;
+    const scratch = this._cycleScratch;
+    const day = state.daylight;
+    const dusk = state.twilight;
+    const direction = state.sunDirection;
+
+    if (this.lights.sun) {
+      const center = this.config.mapCenter;
+      const distance = lighting.sun.distance;
+      this.lights.sun.position.set(
+        center.x + direction.x * distance,
+        direction.y * distance,
+        center.z + direction.z * distance,
+      );
+      this.lights.sun.target.position.set(center.x, 0, center.z);
+      scratch.sun.copy(palette.sunNight).lerp(palette.sunDay, day).lerp(palette.sunTwilight, dusk * 0.72);
+      this.lights.sun.color.copy(scratch.sun);
+      this.lights.sun.intensity = (cycle.sunIntensityNight ?? 0.1)
+        + ((cycle.sunIntensityDay ?? lighting.sun.intensity) - (cycle.sunIntensityNight ?? 0.1)) * day
+        + dusk * 0.1;
+
+      const shadowsEnabled = Boolean(engine?.renderer?.shadowMap?.enabled && this.lights.sun.castShadow);
+      const refreshSeconds = Math.max(0.25, Number(cycle.shadowRefreshSeconds) || 1.5);
+      if (shadowsEnabled && this.animationTime >= (this._nextShadowRefresh || 0)) {
+        this.lights.sun.shadow.needsUpdate = true;
+        this._nextShadowRefresh = this.animationTime + refreshSeconds;
+      }
+    }
+
+    if (this.lights.hemisphere) {
+      scratch.hemisphereSky.copy(palette.hemisphereSkyNight).lerp(palette.hemisphereSkyDay, day);
+      scratch.hemisphereGround.copy(palette.hemisphereGroundNight).lerp(palette.hemisphereGroundDay, day);
+      this.lights.hemisphere.color.copy(scratch.hemisphereSky);
+      this.lights.hemisphere.groundColor.copy(scratch.hemisphereGround);
+      this.lights.hemisphere.intensity = (cycle.hemisphereIntensityNight ?? 0.3)
+        + ((cycle.hemisphereIntensityDay ?? lighting.hemisphere.intensity) - (cycle.hemisphereIntensityNight ?? 0.3)) * day;
+    }
+
+    if (this.lights.ambient) {
+      scratch.ambient.copy(palette.ambientNight).lerp(palette.ambientDay, day);
+      this.lights.ambient.color.copy(scratch.ambient);
+      this.lights.ambient.intensity = (cycle.ambientIntensityNight ?? 0.22)
+        + ((cycle.ambientIntensityDay ?? lighting.ambient.intensity) - (cycle.ambientIntensityNight ?? 0.22)) * day;
+    }
+
+    scratch.zenith.copy(palette.skyZenithNight).lerp(palette.skyZenithDay, day);
+    scratch.horizon.copy(palette.skyHorizonNight).lerp(palette.skyHorizonDay, day).lerp(palette.skyHorizonTwilight, dusk * 0.74);
+    scratch.below.copy(palette.skyBelowNight).lerp(palette.skyBelowDay, day);
+    scratch.glow.copy(palette.skyGlowNight).lerp(palette.skyGlowDay, day).lerp(palette.skyGlowTwilight, dusk * 0.72);
+    this.sky?.setLighting({
+      sunDirection: direction,
+      zenith: scratch.zenith,
+      horizon: scratch.horizon,
+      below: scratch.below,
+      glow: scratch.glow,
+      glowStrength: (0.14 + day * 0.64 + dusk * 0.22) * (this.config.world.sky.glowStrength ?? 0.85),
+    });
+
+    if (engine?.scene?.fog) {
+      scratch.fog.copy(palette.fogNight).lerp(palette.fogDay, day).lerp(palette.skyHorizonTwilight, dusk * 0.18);
+      engine.scene.fog.color.copy(scratch.fog);
+    }
   }
 
   /* --------------------------------------------------------------- query */

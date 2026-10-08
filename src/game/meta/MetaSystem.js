@@ -218,6 +218,10 @@ export class MetaSystem {
     if (key === 'qualityTier' && ['low', 'medium', 'high'].includes(value)) next.qualityTier = value;
     else if (key === 'batterySaver') next.batterySaver = Boolean(value);
     else if (key === 'soundEnabled') next.soundEnabled = Boolean(value);
+    else if (key === 'recitationEnabled') next.recitationEnabled = Boolean(value);
+    else if (key === 'fontScale' && ['normal', 'large', 'larger'].includes(value)) next.fontScale = value;
+    else if (key === 'highContrast') next.highContrast = Boolean(value);
+    else if (key === 'reduceMotion') next.reduceMotion = Boolean(value);
     else if (key === 'language' && ['fa-IR', 'fa-AF'].includes(value)) next.language = value;
     else return false;
     if (!metaSettingsAreValid(next)) return false;

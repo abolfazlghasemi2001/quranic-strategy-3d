@@ -55,6 +55,9 @@ export class AyahOrderGame {
         text: v.textUthmani,
         caption: v.translationFa,
         ref: `${v.surahIndex}:${v.ayahIndex}`,
+        reviewed: v.reviewed === true,
+        placeholder: v.placeholder === true,
+        source: v.source || null,
       }));
       this.cards = cards;
       this.targetOrder = cards.map((c) => c.id);
@@ -64,7 +67,16 @@ export class AyahOrderGame {
       const tokens = tokenize(verse?.textUthmani || '');
       const wanted = Math.max(2, Math.min(Number(chunks) || config.chunks || 4, Number(config.maxChunks) || 5, tokens.length));
       const parts = chunksOf(tokens, wanted, this.rng);
-      this.cards = parts.map((text, index) => ({ id: `part-${index}`, index, text, caption: null, ref: null }));
+      this.cards = parts.map((text, index) => ({
+        id: `part-${index}`,
+        index,
+        text,
+        caption: null,
+        ref: null,
+        reviewed: verse?.reviewed === true,
+        placeholder: verse?.placeholder === true,
+        source: verse?.source || null,
+      }));
       this.targetOrder = this.cards.map((c) => c.id);
       this.order = this._scramble(this.targetOrder);
       this.verseId = verse?.id || null;
@@ -181,6 +193,9 @@ export class AyahOrderGame {
         text: byId.get(id)?.text || '',
         caption: byId.get(id)?.caption || null,
         ref: byId.get(id)?.ref || null,
+        reviewed: byId.get(id)?.reviewed === true,
+        placeholder: byId.get(id)?.placeholder === true,
+        source: byId.get(id)?.source || null,
         locked: this.locked.has(id),
         correct: id === this.targetOrder[position],
       })),

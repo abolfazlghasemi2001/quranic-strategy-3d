@@ -24,6 +24,9 @@ import {
   mergeGeometries,
 } from '../src/core/GeometryUtils.js';
 import { TerrainMap } from '../src/world/TerrainMap.js';
+import { Terrain } from '../src/world/Terrain.js';
+import { DayNightCycle, sampleDayNight } from '../src/world/DayNightCycle.js';
+import { applyWindShader, setWindTime } from '../src/world/WindShader.js';
 import { World } from '../src/world/World.js';
 import { generatePlacements, splitPlacementsByChunk } from '../src/world/Placement.js';
 import { OrbitCameraRig } from '../src/core/OrbitCameraRig.js';
@@ -445,8 +448,8 @@ test('perf: draw call and triangle budget for the whole scene', () => {
   const map = new TerrainMap(config);
   const { placements } = generatePlacements({ config, map });
 
-  // ground 1 + grid lines 2 + sky 1 + 4 instanced meshes per non empty chunk
-  const staticCalls = 4;
+  // Ground 1 + consolidated grid/border 1 + sky 1; foliage stays instanced.
+  const staticCalls = 3;
   const perChunkCalls = ['tree', 'rock', 'shrub'].filter((kind) => placements[kind].length > 0).length;
   const instancedCalls = perChunkCalls === 3 ? 4 : perChunkCalls + 1;
   const drawCalls = staticCalls + instancedCalls;
@@ -459,6 +462,78 @@ test('perf: draw call and triangle budget for the whole scene', () => {
   const total = treeTris + rockTris + shrubTris + groundTris;
   assert(total < quality.targets.maxTriangles, `triangle budget exceeded: ${total}`);
   assert(total < 60000, `vegetation should stay lightweight (got ${total} triangles)`);
+});
+
+/* --------------------------------------------------------- phase 9 rendering */
+
+test('phase 9 day/night cycle is smooth, frame-delta based and deterministic', () => {
+  const cycle = new DayNightCycle({ enabled: true, durationSeconds: 120, startPhase: 0 });
+  const start = cycle.sample();
+  const after = cycle.update(12);
+  assertClose(after.phase, 0.1, 1e-12, '12 seconds advances one tenth of the configured day');
+  assert(after.daylight > start.daylight, 'daylight increases smoothly through dawn');
+  const frozenPhase = cycle.phase;
+  cycle.update(90, { reducedMotion: true });
+  assert(cycle.phase === frozenPhase, 'reduced motion freezes the cycle');
+  assert(sampleDayNight(0.25).daylight > 0.99, 'quarter-day is bright daytime');
+  assert(sampleDayNight(0.75).daylight < 0.01, 'three-quarter-day is nighttime');
+  const replay = new DayNightCycle({ enabled: true, durationSeconds: 120, startPhase: 0 });
+  replay.update(12);
+  assert(replay.phase === cycle.phase, 'same elapsed time yields the same phase');
+});
+
+test('phase 9 shader hooks add wind/water uniforms without adding ground meshes', () => {
+  const material = new THREE.MeshStandardMaterial();
+  applyWindShader(material, { strength: 0.12 });
+  const foliageShader = { uniforms: {}, vertexShader: '#include <common>\n#include <begin_vertex>', fragmentShader: '' };
+  material.onBeforeCompile(foliageShader);
+  assert(foliageShader.uniforms.uWindTime && foliageShader.uniforms.uWindStrength, 'wind uniforms are injected');
+  assert(foliageShader.vertexShader.includes('#include <common>\nuniform float uWindTime;'), 'wind declarations use real GLSL line breaks');
+  assert(foliageShader.vertexShader.includes('shahrWindWave'), 'wind sway is inserted in the vertex shader');
+  setWindTime(material, 4.5);
+  assert(material.userData.shahrWindUniforms.uWindTime.value === 4.5, 'shared wind time updates');
+  material.dispose();
+
+  const config = makeConfig('high');
+  const terrainOwner = new Terrain({ config, map: new TerrainMap(config) });
+  const groundMaterial = new THREE.MeshStandardMaterial({ map: new THREE.Texture() });
+  terrainOwner._applyGroundShader(groundMaterial);
+  const groundShader = {
+    uniforms: {},
+    vertexShader: '#include <common>\n#include <begin_vertex>',
+    fragmentShader: '#include <common>\n#include <map_fragment>',
+  };
+  groundMaterial.onBeforeCompile(groundShader);
+  assert(groundShader.uniforms.uWaterTime && groundShader.uniforms.uDaylight, 'ground water/daylight uniforms are injected');
+  assert(groundShader.fragmentShader.includes('uniform sampler2D uDirtMap;\nuniform sampler2D uSandMap;'), 'ground declarations use real GLSL line breaks');
+  assert(groundShader.fragmentShader.includes('waterRipple') && groundShader.fragmentShader.includes('grassBreeze'), 'ground shader has water and grass animation');
+  assert(!groundShader.fragmentShader.includes('#include <map_fragment>'), 'custom ground fragment replaces the standard map pass');
+  groundMaterial.dispose();
+  terrainOwner.dispose();
+});
+
+test('phase 9 grid and border are consolidated into one vertex-coloured draw call', () => {
+  const config = makeConfig('high');
+  const terrainOwner = new Terrain({ config, map: new TerrainMap(config) });
+  terrainOwner._buildGrid();
+  assert(terrainOwner.group.children.length === 1, 'only one grid overlay object is added');
+  assert(terrainOwner.gridLines === terrainOwner.gridBorder, 'compatibility border alias shares the mesh');
+  assert(terrainOwner.gridLines.isLineSegments, 'grid is a single LineSegments mesh');
+  assert(terrainOwner.gridLines.geometry.getAttribute('color').count === terrainOwner.gridLines.geometry.getAttribute('position').count, 'each vertex has a color for the stronger border');
+  terrainOwner.dispose();
+});
+
+test('phase 9 PWA manifest has generated install icons and offline shell source', () => {
+  const manifest = readJson('public/manifest.webmanifest');
+  assert(manifest.display === 'standalone' && manifest.start_url && manifest.scope, 'manifest supports standalone installation');
+  assert(manifest.icons.length >= 2, 'manifest includes small and large icons');
+  for (const icon of manifest.icons) {
+    const bytes = readFileSync(resolve(root, 'public', icon.src.replace(/^\.\//, '')));
+    assert(bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), `${icon.src} is a PNG`);
+  }
+  const worker = readFileSync(resolve(root, 'src/pwa/service-worker.js'), 'utf8');
+  assert(worker.includes("addEventListener('install'") && worker.includes("addEventListener('fetch'"), 'service worker precaches and handles offline requests');
+  assert(readFileSync(resolve(root, 'tools/generate-pwa-icons.mjs'), 'utf8').includes('encodePng'), 'icons are generated by source code');
 });
 
 /* ----------------------------------------------------------------- camera */
@@ -896,6 +971,7 @@ function syntheticVerse(surahIndex, ayahIndex, extra = {}) {
 }
 
 const bundled = normalizeDataset(quranSample, { origin: 'bundled' });
+const publicQuran = normalizeDataset(readJson('public/quran/quran.json'), { origin: 'remote' });
 
 /* --------------------------------------------------------------- دیتاست */
 
@@ -917,6 +993,51 @@ test('quran: the bundled sample carries no Quranic text and is fully labelled', 
   const badges = verseBadges(bundled.verseList[0]).map((b) => b.label);
   assert(badges.includes(PLACEHOLDER_LABEL), 'placeholder badge');
   assert(badges.includes(REVIEW_PENDING_LABEL), 'review-pending badge (acceptance: unreviewed verses are flagged)');
+});
+
+test('phase 9 provenance: every active Tanzil-attributed verse is visibly pending and sourced', () => {
+  assert(publicQuran.meta.datasetId === 'tanzil-uthmani-1.1', 'the active default has an explicit dataset identity');
+  assert(publicQuran.meta.reviewed === false && publicQuran.meta.status === 'external-unreviewed', 'default dataset never claims project review');
+  assert(publicQuran.verseList.length > 6000 && publicQuran.stats.reviewedVerseCount === 0, 'the complete active text remains pending review');
+  assert(publicQuran.surahs.length === 114 && publicQuran.surahs.every((surah) => surah.namePlaceholder), 'all generated surah names are marked as placeholders');
+  for (const verse of publicQuran.verseList) {
+    assert(!verse.reviewed && !verse.placeholder, `${verse.id} is explicitly external and unreviewed, not a fabricated placeholder`);
+    assert(verse.source.datasetId === publicQuran.meta.datasetId && verse.source.url && verse.source.license,
+      `${verse.id} carries dataset provenance and license`);
+    assert(verseBadges(verse).some((badge) => badge.label === REVIEW_PENDING_LABEL),
+      `${verse.id} has a visible review-pending label`);
+  }
+});
+
+test('phase 9 provenance: placeholder word banks are sourced, labelled and excluded from distractors', () => {
+  for (const lesson of bundled.lessons) {
+    for (const pair of lesson.wordBank) {
+      assert(pair.placeholder === true && pair.reviewed === false, `${lesson.id} word remains an explicit placeholder`);
+      assert(pair.source?.datasetId === bundled.meta.datasetId, `${lesson.id} word has its dataset provenance`);
+    }
+  }
+  const lesson = bundled.lessons.find((item) => item.wordBank.length > 0);
+  const { pairs, mode } = wordMatchPairsFor({ lesson, dataset: bundled, config: learningData.minigames['word-match'] });
+  assert(mode === 'word-bank' && pairs.every((pair) => pair.placeholder && !pair.reviewed && pair.source?.datasetId), 'word-match keeps provenance on every pair');
+  assert(tokensPool(bundled, { excludeVerseId: bundled.verseList[0].id }).length === 0, 'unreviewed sample verses are never borrowed as distractors');
+  assert(validateDataset(bundled).issues.some((issue) => issue.code === 'wordbank-unreviewed'), 'validator reports unreviewed word-bank entries');
+});
+
+test('phase 9 recitation: playback requires an explicit license and safe attribution URL', () => {
+  const sampleArabic = String.fromCodePoint(0x0646, 0x064e, 0x0635, 0x0651, 0x064c);
+  const dataset = normalizeDataset({
+    datasetId: 'audio-policy-test',
+    source: 'fixture',
+    version: '1',
+    surahs: [{ index: 1, name: 'fixture', ayahs: [
+      { index: 1, text: sampleArabic, translation: 'نمونه', audio: { url: 'https://audio.invalid/1.mp3', license: 'CC-BY' } },
+      { index: 2, text: sampleArabic, translation: 'نمونه', audio: { url: 'https://audio.invalid/2.mp3', license: 'CC-BY', licenseUrl: 'https://license.invalid/' } },
+      { index: 3, text: sampleArabic, translation: 'نمونه', audio: { url: 'javascript:alert(1)', license: 'CC-BY', licenseUrl: 'javascript:alert(1)' } },
+    ] }],
+  });
+  assert(dataset.verseList[0].audio.playable === false, 'a license name without its attribution URL cannot play');
+  assert(dataset.verseList[1].audio.playable === true, 'explicit license and attribution URL permit optional playback');
+  assert(dataset.verseList[2].audio === null, 'script URLs are rejected');
 });
 
 test('quran: validator catches empty text, missing diacritics and empty lessons', () => {
@@ -2572,8 +2693,15 @@ test('phase 7 daily + settings: unfinished tasks and preferences persist across 
   assert(meta.setSetting('qualityTier', 'low'), 'quality preference is changeable');
   assert(meta.setSetting('batterySaver', true), 'battery saver preference is changeable');
   assert(meta.setSetting('soundEnabled', false), 'sound preference is changeable');
+  assert(meta.setSetting('recitationEnabled', true), 'licensed recitation is an independent setting');
+  assert(meta.setSetting('fontScale', 'larger'), 'font scale is changeable');
+  assert(meta.setSetting('highContrast', true), 'high contrast is changeable');
+  assert(meta.setSetting('reduceMotion', true), 'reduced motion is changeable');
   assert(meta.setSetting('language', 'fa-AF'), 'language preference is changeable');
-  assert(settingsEvent.qualityTier === 'low' && settingsEvent.batterySaver && !settingsEvent.soundEnabled && settingsEvent.language === 'fa-AF', 'settings changes emit the complete runtime preference set');
+  assert(settingsEvent.qualityTier === 'low' && settingsEvent.batterySaver && !settingsEvent.soundEnabled
+    && settingsEvent.recitationEnabled && settingsEvent.fontScale === 'larger'
+    && settingsEvent.highContrast && settingsEvent.reduceMotion && settingsEvent.language === 'fa-AF',
+  'settings changes emit the complete runtime/accessibility preference set');
 
   now += 86_400_000;
   meta.update(1);
@@ -2587,7 +2715,10 @@ test('phase 7 daily + settings: unfinished tasks and preferences persist across 
   const metaAgain = new MetaSystem({ state: restored, bus: restoredBus, metaData, ftueData, now: () => now });
   metaAgain.onBoot(now);
   assert(metaAgain.dailySnapshot().id === originalMission.id && metaAgain.dailySnapshot().progress === 0, 'daily task identity and progress survive save/load');
-  assert(metaAgain.settings.qualityTier === 'low' && metaAgain.settings.batterySaver && !metaAgain.settings.soundEnabled && metaAgain.settings.language === 'fa-AF', 'all preferences survive save/load');
+  assert(metaAgain.settings.qualityTier === 'low' && metaAgain.settings.batterySaver && !metaAgain.settings.soundEnabled
+    && metaAgain.settings.recitationEnabled && metaAgain.settings.fontScale === 'larger'
+    && metaAgain.settings.highContrast && metaAgain.settings.reduceMotion && metaAgain.settings.language === 'fa-AF',
+  'graphics, audio and accessibility preferences survive save/load');
 
   const eventByTask = {
     build: () => restoredBus.emit(EVENTS.JOB_FINISHED, { job: { kind: 'build', type: 'farm' }, entity: { id: 7, type: 'farm' } }),
@@ -2933,7 +3064,7 @@ test('phase 8 client: SocialClient request/response, pushes and graceful failure
 await flushPending();
 
 const pad = (value, width) => String(value).padEnd(width, ' ');
-console.log('\n=== شهر نور — self checks (فازهای ۱ تا ۸) ===\n');
+console.log('\n=== شهر نور — self checks (فازهای ۱ تا ۹) ===\n');
 for (const result of results) {
   console.log(`${result.ok ? '✓' : '✗'} ${pad(result.name, 62)}${result.ok ? '' : result.message}`);
 }
