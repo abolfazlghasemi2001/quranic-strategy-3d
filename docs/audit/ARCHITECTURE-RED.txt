@@ -1,0 +1,37 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-architecture.test.js [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 17[2mms[22m[39m
+[31m   [31m×[31m keeps every game module free from direct DOM/Three.js access[39m[32m 14[2mms[22m[39m
+   [32m✓[39m keeps battle stepping independent of ambient random numbers and clocks[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-architecture.test.js[2m > [22mkeeps every game module free from direct DOM/Three.js access
+[31m[1mAssertionError[22m: expected [ 'src/game/Game.js', …(1) ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "src/game/Game.js",[39m
+[31m+   "src/game/social/SocialSystem.js",[39m
+[31m+ ][39m
+
+[36m [2m❯[22m tests/upgrade-architecture.test.js:[2m7:21[22m[39m
+    [90m  5|[39m it('keeps every game module free from direct DOM/Three.js access', () …
+    [90m  6|[39m   const forbidden = files('src/game').filter((path) => /\b(?:window|do…
+    [90m  7|[39m   expect(forbidden).toEqual([]);
+    [90m   |[39m                     [31m^[39m
+    [90m  8|[39m });
+    [90m  9|[39m it('keeps battle stepping independent of ambient random numbers and cl…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 07:37:46
+[2m   Duration [22m 181ms[2m (transform 36%, tests 34%, import 22%, worker 8%)[22m
+

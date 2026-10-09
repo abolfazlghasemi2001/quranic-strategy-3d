@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "note": "فاز ۵ — تنظیمات نبرد PvE. شبیه‌ساز قطعی است: گام زمانی ثابت، بذر ثابت و هیچ Math.random مستقیمی در منطق نیست. ورودی‌ها فقط دستورهای شماره‌دار (tick) هستند تا بعداً سرور بتواند همان (بذر + دستورها) را بازپخش و اعتبارسنجی کند.",
   "content": {
     "blood": false,
@@ -37,10 +37,10 @@
     "note": "ظرفیت پادگان = baseCapacity + capacityPerBarracksLevel × سطح پادگان."
   },
   "retaliation": {
-  "seconds": 3,
-  "note": "هر واحدی که از یک واحد دشمن آسیب ببیند، چند ثانیه او را بالاتر از جدول اولویت هدف می‌گیرد؛ وگرنه مهاجم‌ها فقط سازه می‌زدند و مدافعان هیچ آسیبی نمی‌دیدند (و ترمیم‌گر بی‌کار می‌ماند)."
-},
-"attacker": {
+    "seconds": 3,
+    "note": "هر واحدی که از یک واحد دشمن آسیب ببیند، چند ثانیه او را بالاتر از جدول اولویت هدف می‌گیرد؛ وگرنه مهاجم‌ها فقط سازه می‌زدند و مدافعان هیچ آسیبی نمی‌دیدند (و ترمیم‌گر بی‌کار می‌ماند)."
+  },
+  "attacker": {
     "modifiers": {
       "hp": 0.9,
       "damage": 0.8,
@@ -56,7 +56,18 @@
       "healer": "support"
     },
     "supportRetreatsWhenColumnBroken": true,
-    "supportRetreatsNote": "اگر هیچ رزمندهٔ مهاجمی نماند، ترمیم‌گر مهاجم هم عقب می‌کشد تا نبرد قطعی تمام شود."
+    "supportRetreatsNote": "اگر هیچ رزمندهٔ مهاجمی نماند، ترمیم‌گر مهاجم هم عقب می‌کشد تا نبرد قطعی تمام شود.",
+    "columnExit": {
+      "enabled": true,
+      "priorityKinds": [
+        "defense"
+      ],
+      "minDestroyedPriority": 1,
+      "healthFraction": 0.4,
+      "graceTicks": 40,
+      "requireAllWavesSpawned": true,
+      "requireNoDefenderCombatants": true
+    }
   },
   "defender": {
     "autoDeploy": {

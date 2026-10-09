@@ -1,3 +1,5 @@
+@font-face { font-family:'Vazirmatn'; src:url('/fonts/Vazirmatn-Variable.woff2') format('woff2'); font-weight:100 900; font-style:normal; font-display:swap; }
+@font-face { font-family:'Amiri Quran'; src:url('/fonts/AmiriQuran-Arabic.woff2') format('woff2'); font-weight:400; font-style:normal; font-display:swap; unicode-range:U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF; }
 /* شهر نور — رابط کاربری فارسی (RTL)، طراحی موبایل‌محور */
 
 :root {
@@ -1753,3 +1755,22 @@ html.is-high-contrast .hud-badge { background: #000; color: #fff08a; border-colo
   background: linear-gradient(180deg, rgba(25, 78, 74, 0.85), rgba(9, 38, 39, 0.92));
 }
 .meta-actions-grid .quran-policy-btn { min-height: 48px; border-radius: 15px; }
+
+.hud-action__icon svg, .game-player__icon svg { display:block; inline-size:1em; block-size:1em; }
+.hud-action { transition:transform 100ms ease, background-color 140ms ease; }
+.hud-action:active { transform:scale(.96); }
+.is-reduced-motion .hud-action { transition:none; }
+@media (orientation:portrait) and (max-height:680px) {
+  :root { --dock-pad:2px; }
+}
+@media (orientation:landscape) and (max-height:560px) {
+  .game-player { padding-block:2px; }
+  .game-avatar { width:34px; height:34px; min-width:34px; }
+  .game-resource { line-height:1.1; padding-block:0; }
+  .game-resource small { line-height:1.1; }
+}
+.game-player__cell--player > b { line-height:1.2; }
+
+.pwa-update { position:fixed; z-index:80; inset-block-start:calc(var(--safe-top) + 70px); inset-inline:10px; max-width:440px; margin-inline:auto; padding:12px; border:1px solid var(--accent); border-radius:var(--radius); background:var(--panel-strong); color:var(--text); font-family:var(--font-ui); box-shadow:var(--shadow); }
+.pwa-update p { margin:0 0 10px; line-height:1.7; }
+.pwa-update button { min-height:48px; margin-inline-end:8px; }

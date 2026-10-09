@@ -10,7 +10,7 @@ import { clamp } from '../../core/MathUtils.js';
 import { FACTION } from './Unit.js';
 import { STRUCTURE_KIND } from './StructureStats.js';
 
-export const SCENARIO_VERSION = 1;
+export const SCENARIO_VERSION = 2;
 
 /** بذر هر نبرد از (بذر بازی، بذر سناریو، شمارهٔ نبرد) ساخته می‌شود. */
 export function deriveBattleSeed({ worldSeed, seedOffset, battleSeq = 0 }) {
@@ -121,6 +121,7 @@ export function buildScenario({ config, state, defensesData, battleData, structu
   const scenario = {
     version: SCENARIO_VERSION,
     seed: seed >>> 0,
+    columnExit: battleData.attacker?.columnExit ? { ...battleData.attacker.columnExit, priorityKinds: [...battleData.attacker.columnExit.priorityKinds] } : null,
     encounter: { id: encounter.id, name: encounter.name, threat: encounter.threat },
     cols: config.cols,
     rows: config.rows,
@@ -143,6 +144,7 @@ export function scenarioHash(scenario) {
     `e${scenario.encounter ? scenario.encounter.id : '?'}`,
     `${scenario.cols}x${scenario.rows}@${scenario.tileSize}`,
   ];
+  if (scenario.version >= 2) parts.push(`exit|${JSON.stringify(scenario.columnExit || null)}`);
   for (const structure of scenario.structures) {
     parts.push(`${structure.index}|${structure.type}|${structure.kind}|${structure.col},${structure.row},${structure.w},${structure.h}|${structure.level}|${structure.hp}/${structure.maxHp}|${structure.sourceId}`);
   }

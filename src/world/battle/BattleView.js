@@ -51,6 +51,8 @@ export class BattleView {
     this.engine = engine;
     this.battleData = battleData;
     this.unitsData = unitsData;
+    this.proceduralOnly = unitsData.rendering?.proceduralDefault !== false;
+    this.reducedMotion = false;
     this.unitDefs = new Map((unitsData?.units || []).map((def) => [def.id, def]));
     this.characterProfileOverrides = new Map();
     this.getBattle = getBattle;
@@ -119,11 +121,13 @@ export class BattleView {
   }
 
   setReducedMotion(enabled) {
+    this.reducedMotion = Boolean(enabled);
     this.characterSystem.setReducedMotion(enabled);
   }
 
   /** Appearance-only override; combat stats and deterministic simulation are untouched. */
   setCharacterProfile(unitId, profileId) {
+    this.proceduralOnly = false; this.preloadCharacters().catch(() => {});
     const id = String(unitId || '');
     if (!this.unitDefs.has(id)) return false;
     const defaultProfile = this.characterSystem.registry.profileForUnit(id);
@@ -155,7 +159,7 @@ export class BattleView {
     this.mounted = true;
     this.elapsed = 0;
     this.group.visible = true;
-    this.characterSystem.preloadCharacters().catch(() => {});
+    if (!this.proceduralOnly) this.characterSystem.preloadCharacters().catch(() => {});
 
     const counts = new Map();
     const bump = (faction, type) => counts.set(`${faction}:${type}`, (counts.get(`${faction}:${type}`) || 0) + 1);
@@ -170,10 +174,13 @@ export class BattleView {
         const key = `${faction}:${def.id}`;
         const capacity = Math.min(this.maxUnitsPerInstance, Math.max(4, (counts.get(key) || 0) + 2));
         const palette = faction === BATTLE_FACTION.DEFENDER ? BATTLE_PALETTES.defender : BATTLE_PALETTES.raider;
-        const geometry = createUnitGeometry(def.id, palette);
+        const geometry = createUnitGeometry(def.id, palette, def.render);
+        const pose = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
+        pose.setUsage(THREE.DynamicDrawUsage); geometry.setAttribute('aPose', pose);
         this.unitGeometries.push(geometry);
         const mesh = new THREE.InstancedMesh(geometry, this.unitMaterial, capacity);
         mesh.name = `units:${key}`;
+        mesh.customDepthMaterial = this.unitMaterial.userData.depthMaterial;
         mesh.castShadow = true;
         mesh.receiveShadow = false;
         mesh.frustumCulled = false;
@@ -325,6 +332,7 @@ export class BattleView {
     this.structureStates.clear();
     this.projectiles.length = 0;
     this.facing.clear();
+    this._renderRecords.length = 0; this._renderRecordsById.clear();
     this.characterSystem.releaseExcept(new Set());
     this.characterSystem.setRenderStats({ visible: 0, animated: 0, fallback: 0, culled: 0 });
     this.mounted = false;
@@ -428,6 +436,10 @@ export class BattleView {
   update(dt) {
     if (!this.mounted || !this.sim) return;
     this.elapsed += dt;
+    const pose = this.unitMaterial.userData.pose;
+    pose.time.value = this.elapsed;
+    const policy = this.unitsData.rendering || {};
+    pose.strength.value = this.reducedMotion || (this.rig?.distance > policy.shaderPoseDistance) || (this.engine?.stats?.frameMs > policy.poseMaxFrameMs) ? 0 : 1;
     const battle = this.getBattle ? this.getBattle() : null;
     const alpha = battle && battle.alpha != null ? Math.max(0, Math.min(1, battle.alpha)) : 1;
     const camera = this.rig?.camera || null;
@@ -516,7 +528,7 @@ export class BattleView {
     selected.clear();
     const diverse = this._preferredCharacterKeys;
     diverse.clear();
-    const maxAnimated = this.characterSystem.maxAnimatedUnits;
+    const maxAnimated = this.proceduralOnly ? 0 : this.characterSystem.maxAnimatedUnits;
     const maxDistanceSq = this.characterSystem.maxAnimationDistance ** 2;
     let chosen = 0;
     for (const record of records) {
@@ -572,6 +584,9 @@ export class BattleView {
           group.mesh.setMatrixAt(group.used, this._matrix);
           this._color.setScalar(record.tint);
           group.mesh.setColorAt(group.used, this._color);
+          const state = unit.state === 'down' ? 5 : unit.state === 'retreat' ? 4 : unit.state === 'move' ? 1 : unit.state === 'attack' ? (unit.role === 'support' ? 3 : 2) : 0;
+          const fade = unit.state === 'down' ? Math.min(1, unit.stateTicks / this.sim.ticksOf(unit, 'fade')) : 0;
+          group.mesh.geometry.attributes.aPose.setXYZW(group.used, state, unit.id * 1.618, unit.stateTicks, fade);
           group.used += 1;
           fallbackCount += 1;
         }
@@ -599,6 +614,7 @@ export class BattleView {
     for (const group of this.groups.values()) {
       group.mesh.count = group.used;
       group.mesh.instanceMatrix.needsUpdate = true;
+      group.mesh.geometry.attributes.aPose.needsUpdate = true;
       if (group.mesh.instanceColor) group.mesh.instanceColor.needsUpdate = true;
     }
     bars.bg.count = barCount;
@@ -706,6 +722,7 @@ export class BattleView {
     for (const off of this._eventUnsubscribers) off();
     this._eventUnsubscribers.length = 0;
     this.characterSystem.dispose();
+    this.unitMaterial.userData.depthMaterial.dispose();
     this.unitMaterial.dispose();
     this.parent.remove(this.group);
   }

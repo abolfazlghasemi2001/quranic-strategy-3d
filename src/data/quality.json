@@ -21,7 +21,8 @@
       "textureSize": 128,
       "maskSize": 512,
       "textureAnisotropy": 1,
-      "groundDetailBlend": false
+      "groundDetailBlend": false,
+      "minResolutionScale": 0.75
     },
     "medium": {
       "shadows": true,
@@ -30,7 +31,8 @@
       "decorScale": 0.8,
       "shadowMapSize": 1024,
       "textureSize": 256,
-      "textureAnisotropy": 2
+      "textureAnisotropy": 2,
+      "minResolutionScale": 0.7
     },
     "high": {
       "shadows": true,
@@ -39,7 +41,8 @@
       "decorScale": 1,
       "shadowMapSize": 2048,
       "textureSize": 256,
-      "textureAnisotropy": 4
+      "textureAnisotropy": 4,
+      "minResolutionScale": 0.65
     }
   },
   "detection": {
@@ -51,5 +54,22 @@
     "fps": 60,
     "maxDrawCalls": 150,
     "maxTriangles": 400000
+  },
+  "scheduler": {
+    "frameToleranceMs": 1
+  },
+  "batching": {
+    "initialCapacity": 4
+  },
+  "resolutionGovernor": {
+    "enabled": true,
+    "alpha": 0.12,
+    "warmupFrames": 4,
+    "slowFrames": 6,
+    "fastFrames": 120,
+    "cooldownFrames": 8,
+    "step": 0.1,
+    "downThreshold": 1.18,
+    "upThreshold": 1.035
   }
 }

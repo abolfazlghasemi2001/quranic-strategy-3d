@@ -1,8 +1,8 @@
 /**
  * SaveSystem — IndexedDB persistence with schema versioning + migrations.
  *
- * Record shape (schemaVersion 6):
- *   { id:'main', schemaVersion:6, savedAt:number, payload:{...GameState} }
+ * Record shape (schemaVersion 7):
+ *   { id:'main', schemaVersion:7, savedAt:number, payload:{...GameState} }
  *
  * Migrations are pure functions keyed by the version they upgrade FROM:
  *   1 → 2 : legacy {gold,wood,stone} resources → {rizq,nur,hekmat,gohar},
@@ -12,6 +12,7 @@
  *   3 → 4 : adds the army / battle layer (garrison, training queue, battle log).
  *   4 → 5 : adds the story campaign (mission stars, unlocks, active run).
  *   5 → 6 : adds player meta progression, FTUE, daily mission and settings.
+ *   6 → 7 : tags the current battle simulation version; old v1 history is immutable.
  *
  * A record with a NEWER schemaVersion than we understand is preserved as a
  * backup (`main-backup-v{n}`) and the game starts fresh — never crashes.
@@ -20,7 +21,7 @@
  * store is used so the game logic remains fully functional and testable.
  */
 
-export const SAVE_SCHEMA_VERSION = 6;
+export const SAVE_SCHEMA_VERSION = 7;
 export const SAVE_DB_NAME = 'shahr-nur';
 export const SAVE_STORE = 'saves';
 export const SAVE_KEY = 'main';
@@ -93,6 +94,9 @@ export const MIGRATIONS = {
     const next = { ...payload };
     next.meta = normalizeMetaState(payload.meta, { legacySave: true });
     return next;
+  },
+  6(payload) {
+    return { ...payload, battles: { ...(payload.battles || {}), simulationVersion: 2 } };
   },
 };
 
@@ -211,11 +215,12 @@ export class SaveSystem {
     return { payload: migrated.payload, migratedFrom: migrated.migratedFrom, savedAt: record.savedAt || 0 };
   }
 
-  async saveRecord(record) {
+  async saveRecord(record, { requirePersistent = false } = {}) {
     if (this.backend === 'idb') {
       const ok = await this._idbPut(record);
       if (ok) return true;
     }
+    if (requirePersistent) throw new Error('persistent-save-unavailable');
     this.memory.set(record.id, record);
     return true;
   }
@@ -225,7 +230,7 @@ export class SaveSystem {
    * @param {object} payload — GameState.serialize()
    * @returns {Promise<number>} savedAt timestamp
    */
-  async save(payload) {
+  async save(payload, options = {}) {
     const savedAt = Date.now();
     const record = {
       id: SAVE_KEY,
@@ -233,7 +238,7 @@ export class SaveSystem {
       savedAt,
       payload: { ...payload, savedAt },
     };
-    await this.saveRecord(record);
+    await this.saveRecord(record, options);
     return savedAt;
   }
 

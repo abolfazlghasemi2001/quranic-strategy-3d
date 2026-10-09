@@ -52,6 +52,9 @@ export class Engine {
     this.frameCap = config.targets?.fps || 60;
     this.runtimeQuality = { ...config.quality };
     this._nextFrameAt = 0;
+    this._resolutionScale = 1;
+    this._disposed = false;
+    this.governor = null;
     this.stats = {
       frameMs: 0,
       fps: 0,
@@ -74,6 +77,11 @@ export class Engine {
     this._createCamera();
     this._bindEvents();
     this.resize();
+    import('./FrameTimeGovernor.js').then(({ FrameTimeGovernor }) => {
+      if (this._disposed) return;
+      this.governor = new FrameTimeGovernor(config.sources.quality.resolutionGovernor);
+      this.governor.reset({ fps: this.frameCap, minScale: this.runtimeQuality.minResolutionScale || 0.7 });
+    }).catch(() => {});
   }
 
   /* ------------------------------------------------------------- creation */
@@ -183,7 +191,7 @@ export class Engine {
     const parent = this.canvas.parentElement || document.body;
     const width = Math.max(1, Math.round(parent.clientWidth || window.innerWidth || 1));
     const height = Math.max(1, Math.round(parent.clientHeight || window.innerHeight || 1));
-    const dpr = Math.min(window.devicePixelRatio || 1, this.runtimeQuality.maxPixelRatio || this.config.quality.maxPixelRatio);
+    const dpr = Math.min(window.devicePixelRatio || 1, this.runtimeQuality.maxPixelRatio || this.config.quality.maxPixelRatio) * this._resolutionScale;
 
     if (this.viewport.width === width && this.viewport.height === height && this.viewport.dpr === dpr) return;
 
@@ -213,8 +221,10 @@ export class Engine {
     this.runtimeQualityTier = tier;
     this.batterySaver = Boolean(batterySaver);
     this.runtimeQuality = effective;
+    this._resolutionScale = 1;
     this.frameCap = this.batterySaver ? 30 : Math.max(1, Number(this.config.targets?.fps) || 60);
     this._nextFrameAt = 0;
+    this.governor?.reset({ fps: this.frameCap, minScale: effective.minResolutionScale || 0.7 });
 
     if (this.renderer) {
       this.renderer.shadowMap.enabled = effective.shadows;
@@ -256,12 +266,18 @@ export class Engine {
     const shadows = Boolean(this.runtimeQuality?.shadows && !this.batterySaver);
     root.traverse((node) => {
       if (node.isMesh) {
-        node.castShadow = shadows;
-        node.receiveShadow = shadows;
+        node.castShadow = shadows && !node.userData.noShadow;
+        node.receiveShadow = shadows && !node.userData.noShadow;
       }
       if (node.isDirectionalLight && node.name === 'sun') node.castShadow = shadows;
     });
     return root;
+  }
+
+  markShadowDirty() {
+    if (!this.renderer?.shadowMap?.enabled) return;
+    this.renderer.shadowMap.needsUpdate = true;
+    this.scene.traverse((node) => { if (node.isLight && node.shadow && node.castShadow) node.shadow.needsUpdate = true; });
   }
 
   /* ---------------------------------------------------------------- loop */
@@ -313,8 +329,12 @@ export class Engine {
 
   _applyPauseState() {
     const shouldPause = this._pauseReasons.size > 0;
+    const suspended = this._pauseReasons.has('hidden') || this._pauseReasons.has('context-lost');
+    if (suspended && this._rafId) { window.cancelAnimationFrame(this._rafId); this._rafId = 0; }
+    else if (!suspended && this.running && !this._rafId) this._rafId = window.requestAnimationFrame(this._boundTick);
     if (this.paused === shouldPause) return;
     this.paused = shouldPause;
+    if (shouldPause && this.stats) { this.stats.fps = 0; this.stats.frameMs = 0; }
     if (!shouldPause) {
       this._clock.getDelta(); // drop the elapsed paused time
       this._nextFrameAt = 0;
@@ -328,17 +348,27 @@ export class Engine {
   }
 
   _tick(timestamp = 0) {
+    this._rafId = 0;
+    if (!this.running || this._pauseReasons?.has('hidden') || this._pauseReasons?.has('context-lost')) return;
     this._rafId = window.requestAnimationFrame(this._boundTick);
+    if (this.paused) return;
 
     const now = Number.isFinite(timestamp) && timestamp > 0
       ? timestamp
       : (typeof performance !== 'undefined' ? performance.now() : Date.now());
     if (!this.paused && this.frameCap > 0) {
-      if (now + 0.25 < this._nextFrameAt) return;
-      this._nextFrameAt = now + (1000 / this.frameCap);
+      if (now + (this.config.sources?.quality?.scheduler?.frameToleranceMs ?? 1) < this._nextFrameAt) return;
+      const interval = 1000 / this.frameCap;
+      this._nextFrameAt = this._nextFrameAt > 0
+        ? this._nextFrameAt + Math.max(1, Math.floor((now - this._nextFrameAt) / interval) + 1) * interval
+        : now + interval;
     }
 
-    const dt = Math.min(this._clock.getDelta(), MAX_FRAME_DELTA);
+    const frameDelta = this._clock.getDelta();
+    this.frameDelta = frameDelta;
+    const scale = this.governor?.sample(frameDelta * 1000);
+    if (scale != null) { this._resolutionScale = scale; this.resize(); }
+    const dt = Math.min(frameDelta, MAX_FRAME_DELTA);
     this.frame += 1;
 
     if (!this.paused) {
@@ -346,10 +376,11 @@ export class Engine {
       for (let i = 0; i < this.updatables.length; i += 1) {
         this.updatables[i].update(dt, this);
       }
+      for (const updatable of this.updatables) updatable.beforeRender?.(this);
       this.renderer.render(this.scene, this.camera);
     }
 
-    this._refreshStats(dt);
+    this._refreshStats(frameDelta);
   }
 
   _refreshStats(dt) {
@@ -383,6 +414,7 @@ export class Engine {
   /* ------------------------------------------------------------- dispose */
 
   dispose() {
+    this._disposed = true;
     this.stop();
     window.removeEventListener('resize', this._onResize);
     window.removeEventListener('orientationchange', this._onOrientation);

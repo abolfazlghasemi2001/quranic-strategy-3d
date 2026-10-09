@@ -1,0 +1,141 @@
+{
+  "date": "2026-10-09",
+  "method": "Vite manifest static-import graph + Node zlib gzip, decimal kB. Optional modules/idle fetches are reported separately.",
+  "baselineGzipBytes": 328160,
+  "requestedHistoricBaselineBytes": 288600,
+  "targetBytes": 202020,
+  "initialGzipBytes": 201646,
+  "reductionVsActualBaselinePercent": 38.55253534861044,
+  "reductionVsHistoricBaselinePercent": 30.129591129591127,
+  "totalGzipBytes": 343385,
+  "files": [
+    {
+      "file": "assets/ArmyFeature-Bzwoijrl.js",
+      "name": "ArmyFeature",
+      "initial": false,
+      "bytes": 14814,
+      "gzipBytes": 5738,
+      "brotliBytes": 4891
+    },
+    {
+      "file": "assets/VerseIds-_iqcZdS_.js",
+      "name": "VerseIds",
+      "initial": false,
+      "bytes": 71,
+      "gzipBytes": 82,
+      "brotliBytes": 63
+    },
+    {
+      "file": "assets/characters-BZd4g6JF.js",
+      "name": "characters",
+      "initial": false,
+      "bytes": 5100,
+      "gzipBytes": 1820,
+      "brotliBytes": 1525
+    },
+    {
+      "file": "assets/quran-DWDQuD4d.js",
+      "name": "quran",
+      "initial": false,
+      "bytes": 88414,
+      "gzipBytes": 25248,
+      "brotliBytes": 21931
+    },
+    {
+      "file": "assets/three-CRFS15zL.js",
+      "name": "three",
+      "initial": true,
+      "bytes": 513850,
+      "gzipBytes": 127144,
+      "brotliBytes": 103371
+    },
+    {
+      "file": "assets/index-N6wBDXgW.js",
+      "name": "index",
+      "initial": true,
+      "bytes": 239839,
+      "gzipBytes": 74502,
+      "brotliBytes": 61975
+    },
+    {
+      "file": "assets/FrameTimeGovernor-CStVnbIj.js",
+      "name": "FrameTimeGovernor",
+      "initial": false,
+      "bytes": 897,
+      "gzipBytes": 423,
+      "brotliBytes": 379
+    },
+    {
+      "file": "assets/SoundManager-CBgPHd2s.js",
+      "name": "SoundManager",
+      "initial": false,
+      "bytes": 5538,
+      "gzipBytes": 1919,
+      "brotliBytes": 1693
+    },
+    {
+      "file": "assets/strings.fa-_ITr6Dc5.js",
+      "name": "strings.fa",
+      "initial": false,
+      "bytes": 19924,
+      "gzipBytes": 6904,
+      "brotliBytes": 5970
+    },
+    {
+      "file": "assets/CampaignFeature-wna4x-cl.js",
+      "name": "CampaignFeature",
+      "initial": false,
+      "bytes": 53073,
+      "gzipBytes": 16548,
+      "brotliBytes": 14526
+    },
+    {
+      "file": "assets/FTUEGuide-DE5-80uQ.js",
+      "name": "FTUEGuide",
+      "initial": false,
+      "bytes": 6251,
+      "gzipBytes": 2467,
+      "brotliBytes": 2111
+    },
+    {
+      "file": "assets/PwaUpdateNotice-Cj9z49vQ.js",
+      "name": "PwaUpdateNotice",
+      "initial": false,
+      "bytes": 1281,
+      "gzipBytes": 687,
+      "brotliBytes": 582
+    },
+    {
+      "file": "assets/battle-T4MFPDi0.js",
+      "name": "battle",
+      "initial": false,
+      "bytes": 196374,
+      "gzipBytes": 57632,
+      "brotliBytes": 50123
+    },
+    {
+      "file": "assets/PanelsFeature-BGM82D-n.js",
+      "name": "PanelsFeature",
+      "initial": false,
+      "bytes": 71549,
+      "gzipBytes": 20420,
+      "brotliBytes": 17853
+    },
+    {
+      "file": "assets/BuildingSurfaceMaps-BeSlNyW6.js",
+      "name": "BuildingSurfaceMaps",
+      "initial": false,
+      "bytes": 1234,
+      "gzipBytes": 699,
+      "brotliBytes": 626
+    },
+    {
+      "file": "assets/ShadowRig-D48yv96l.js",
+      "name": "ShadowRig",
+      "initial": false,
+      "bytes": 2710,
+      "gzipBytes": 1152,
+      "brotliBytes": 1039
+    }
+  ]
+}

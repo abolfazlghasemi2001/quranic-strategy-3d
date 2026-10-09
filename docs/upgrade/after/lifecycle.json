@@ -1,0 +1,98 @@
+{
+  "cycles": [
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    },
+    {
+      "geometries": 13,
+      "textures": 4,
+      "programs": 11
+    }
+  ],
+  "shadow": [
+    {
+      "dt": 0.1,
+      "globalDirty": true,
+      "lightDirty": true,
+      "matrixChange": true,
+      "bounds": {
+        "left": -56.69140625,
+        "right": 35.30859375,
+        "near": 266.64714088193443,
+        "far": 316.38103669276603
+      }
+    },
+    {
+      "dt": 0.1,
+      "globalDirty": false,
+      "lightDirty": false,
+      "matrixChange": false,
+      "bounds": {
+        "left": -56.69140625,
+        "right": 35.30859375,
+        "near": 266.64714088193443,
+        "far": 316.38103669276603
+      }
+    },
+    {
+      "dt": 1.6,
+      "globalDirty": true,
+      "lightDirty": true,
+      "matrixChange": true,
+      "bounds": {
+        "left": -58.78125,
+        "right": 37.21875,
+        "near": 267.17218209560275,
+        "far": 315.9615343527018
+      }
+    }
+  ],
+  "terminal": {
+    "geometries": 0,
+    "textures": 0,
+    "programs": 6
+  },
+  "errors": []
+}

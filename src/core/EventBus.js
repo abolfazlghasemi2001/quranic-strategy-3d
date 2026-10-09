@@ -66,6 +66,7 @@ export const EVENTS = Object.freeze({
   CAMERA_CHANGED: 'camera:changed',
   RESIZE: 'renderer:resize',
   QUALITY_CHANGED: 'quality:changed',
+  HAPTIC_REQUESTED: 'core:haptic-requested',
   CHARACTER_ASSET_STATUS: 'characters:asset-status',
   CHARACTER_PROFILE_SELECTED: 'characters:profile-selected',
   GRID_VISIBILITY: 'ui:grid-visibility',

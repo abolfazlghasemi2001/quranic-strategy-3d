@@ -1,0 +1,2210 @@
+[
+  {
+    "path": "src/core/Config.js",
+    "lines": 251,
+    "sha256": "9f88ce96f22c50e0f5ac00ac42820a2a9451084108f258a971aad021984ec86e",
+    "imports": [
+      "../data/world.json",
+      "../data/terrain.json",
+      "../data/quality.json",
+      "../data/gameplay.json",
+      "../data/strings.fa.json",
+      "../data/economy.json",
+      "../data/balance.json",
+      "../data/quran-learning.json",
+      "../data/campaign.json",
+      "../data/missions.json",
+      "../data/meta.json",
+      "../data/ftue.json",
+      "../data/social.json",
+      "./RNG.js",
+      "./MathUtils.js"
+    ],
+    "exports": [
+      "QUALITY_TIERS",
+      "deepFreeze",
+      "detectQualityTier",
+      "Config"
+    ],
+    "dom": 2,
+    "random": 0
+  },
+  {
+    "path": "src/core/Engine.js",
+    "lines": 403,
+    "sha256": "c103c7ca47a368ae4f36e783fccc00c5238036b8aec9527c205adb90efa9381d",
+    "imports": [
+      "three",
+      "./Registry.js",
+      "./EventBus.js"
+    ],
+    "exports": [
+      "Engine"
+    ],
+    "dom": 17,
+    "random": 0
+  },
+  {
+    "path": "src/core/EventBus.js",
+    "lines": 150,
+    "sha256": "d80cc9de9c15c52567a94d470449ce0defc1aae395fe3e160679dad0ee939096",
+    "imports": [],
+    "exports": [
+      "EventBus",
+      "EVENTS"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/core/Format.js",
+    "lines": 13,
+    "sha256": "8e82d2501e8979a3b6ad8dfb3b1c8ffa00cae44170f8fedb6162d2091dd74af1",
+    "imports": [],
+    "exports": [
+      "faDigits",
+      "formatFa"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/core/GeometryUtils.js",
+    "lines": 153,
+    "sha256": "53b9c7fd42d2eb2538e88122aede43fc06dda89b1b3fbacdb1996daef7ff53d2",
+    "imports": [
+      "three",
+      "./RNG.js"
+    ],
+    "exports": [
+      "createGroundQuad",
+      "mergeGeometries",
+      "jitterPositions",
+      "createRockGeometry",
+      "createShrubGeometry",
+      "createTreeGeometries",
+      "createMarkerGeometry"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/core/InputManager.js",
+    "lines": 278,
+    "sha256": "3b8c331b8b9785b89dbfd604d01be5324fb61d9f339248e45aa8edea27c63e71",
+    "imports": [],
+    "exports": [
+      "InputManager"
+    ],
+    "dom": 10,
+    "random": 0
+  },
+  {
+    "path": "src/core/MathUtils.js",
+    "lines": 66,
+    "sha256": "bc25ff8ec5d17cef7ab7e1f40955a46d97c429616971f336120ce330b1503036",
+    "imports": [],
+    "exports": [
+      "TAU",
+      "clamp",
+      "clamp01",
+      "lerp",
+      "inverseLerp",
+      "smoothstep",
+      "degToRad",
+      "radToDeg",
+      "damp",
+      "dampFactor",
+      "wrapAngle",
+      "moveTowards",
+      "remap"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/core/Noise.js",
+    "lines": 53,
+    "sha256": "adbdfe828fa924ec524899197101b0bcebba0f872708ccedb360412cf10a69b8",
+    "imports": [
+      "./RNG.js"
+    ],
+    "exports": [
+      "valueNoise2D",
+      "fbm2D"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/core/OrbitCameraRig.js",
+    "lines": 204,
+    "sha256": "785e851a0bc9e753011a4502f78f00332c303da4d420a1399409bb0ecb52b656",
+    "imports": [
+      "three",
+      "./MathUtils.js"
+    ],
+    "exports": [
+      "OrbitCameraRig"
+    ],
+    "dom": 3,
+    "random": 0
+  },
+  {
+    "path": "src/core/RNG.js",
+    "lines": 82,
+    "sha256": "d34f1d1f526746bbc4d96dd31bdcf29158b72917fc21b04ed516cf54f6164532",
+    "imports": [],
+    "exports": [
+      "hashUint32",
+      "hash2i",
+      "hash3i",
+      "mulberry32",
+      "rngAt2i",
+      "Rng"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/core/Registry.js",
+    "lines": 89,
+    "sha256": "a28dbdd3675b89f5444eaf39c7edf707fc89f8fe47c30e2540dc31ce0f4b28e4",
+    "imports": [],
+    "exports": [
+      "Registry",
+      "disposeObject3D",
+      "disposeMaterial"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/core/SoundManager.js",
+    "lines": 245,
+    "sha256": "f1616baf199b37cb0d7a75091de8208a4d22af1cdd0106247490ced6cd710fd2",
+    "imports": [
+      "./EventBus.js"
+    ],
+    "exports": [
+      "SoundManager"
+    ],
+    "dom": 10,
+    "random": 0
+  },
+  {
+    "path": "src/core/Textures.js",
+    "lines": 170,
+    "sha256": "6d0b38910f50300cdc7a172daf0954164016709a300160a7af11c820c61d413e",
+    "imports": [
+      "three",
+      "./RNG.js"
+    ],
+    "exports": [
+      "createGroundTexture",
+      "createGradientTexture"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/data/balance.json",
+    "lines": 1215,
+    "sha256": "0d24bf63155bab31bb4a7a2f1e9bbc96513fc8c90fd6aa9d292c73d1befd5187",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/battle.json",
+    "lines": 316,
+    "sha256": "ec0faa3c0c30dc810cca44d53dfc8eb5687d86d42c94c4d1a79837e1a5d4d39f",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 1
+  },
+  {
+    "path": "src/data/buildings.json",
+    "lines": 145,
+    "sha256": "c7575e569d25ddd4d24df54820f60d8dc4ba51b47c344848daedf9ac81875348",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/campaign.json",
+    "lines": 68,
+    "sha256": "7ff05b291741cafb7c0f516dd26fe87cfa9b2b8c14053b6c87f25e5e2bf19ef2",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/characters.json",
+    "lines": 202,
+    "sha256": "4cca87a768620ce28dc955c76593be07be9d5eecd1a405fa211543d13d4bea61",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/defenses.json",
+    "lines": 119,
+    "sha256": "0c349faa63c3b1f05048c7ee7d65c5ca0ddf610b2e34c4924afc86e9aee50f60",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/economy.json",
+    "lines": 83,
+    "sha256": "3af8c095a1b38d452189e809c10b9b20cd62775079b95bb411afe12a8b5d75e1",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/ftue.json",
+    "lines": 156,
+    "sha256": "c79953b6fb5d704ad1330bc23923383b0048bb2fbfaf22dd1e2a3cd256a740b1",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/gameplay.json",
+    "lines": 17,
+    "sha256": "3ade74cac0586b7405665203f14f9a08726a9051a2445df8792cd9b74f812681",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/meta.json",
+    "lines": 102,
+    "sha256": "e2818e803307170b1afe428e6d9e6e9189261f04905b3e4c66b58bc8924b9ed7",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/missions.json",
+    "lines": 462,
+    "sha256": "0f533aad215347131a668752772b699c611b75bb48668ac23b998439de3f71b7",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/quality.json",
+    "lines": 55,
+    "sha256": "c46ef6c3198a1dc83b6fb1bb73a9ca2df6c718290fe80d1460a2dde194bb797c",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/quran-learning.json",
+    "lines": 67,
+    "sha256": "341297ed4c18723761124533fde156ecd3f37b2dda3cb304ebd23536458c87e9",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/quran-sample.json",
+    "lines": 210,
+    "sha256": "af8f1b51d0be3c9e193f94d43064c2d4a7c7565d9ccf63f9ac58048a228f5b4e",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/social.json",
+    "lines": 96,
+    "sha256": "175873c5ed78aee5df5ae405d41a3bd0e6f2676cbb9b0c20019a1594342ef3f4",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/strings.fa.json",
+    "lines": 394,
+    "sha256": "b1d7639fb81a9dd7a8ae7e504e876e2c9c4d2560537d9e9664c5266ab986f091",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/terrain.json",
+    "lines": 93,
+    "sha256": "33c0138c66c9d6e6d2bbb5a5468afc8bf99c07ea46aa00e005b1f08d6fd5a64f",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/units.json",
+    "lines": 157,
+    "sha256": "34874447837db018d312d14b5177cd9c45255e58af82298e97f73defc148bc67",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/data/world.json",
+    "lines": 118,
+    "sha256": "dad6ad3287f89dd41ed36ae5ad906a88a9c2a222af63aefe89873bb890251c78",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/BuildQueue.js",
+    "lines": 215,
+    "sha256": "a5cf0e5e7aefea07c9cee410faf137953f2f200a38a0644f3241d45c8dd043f4",
+    "imports": [],
+    "exports": [
+      "BuildQueue"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/BuildingSystem.js",
+    "lines": 589,
+    "sha256": "223181b65a118a8996576580d69c4f298a6d374d0c2a0a81374a9156eac982d3",
+    "imports": [
+      "../data/buildings.json",
+      "../core/EventBus.js",
+      "../core/Format.js"
+    ],
+    "exports": [
+      "BuildingSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/EconomySystem.js",
+    "lines": 437,
+    "sha256": "6db9322347ee7218ee90c39246f825c55b06c45e63034cf5257442a50f57d798",
+    "imports": [],
+    "exports": [
+      "EconomySystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/Game.js",
+    "lines": 575,
+    "sha256": "1778dee5c6c8821fa210bb0acbbb3fb548095878edc37790b69e4efa22c5d61a",
+    "imports": [
+      "./GameState.js",
+      "./EconomySystem.js",
+      "./BuildQueue.js",
+      "../core/EventBus.js",
+      "./quran/LearningSystem.js",
+      "./barracks/BarracksSystem.js",
+      "./battle/BattleSystem.js",
+      "./battle/StructureStats.js",
+      "./campaign/CampaignSystem.js",
+      "./campaign/MissionData.js",
+      "./meta/MetaSystem.js",
+      "./social/SocialSystem.js",
+      "../data/buildings.json",
+      "../data/units.json",
+      "../data/defenses.json",
+      "../data/battle.json"
+    ],
+    "exports": [
+      "Game"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/GameState.js",
+    "lines": 184,
+    "sha256": "de2fa1c9ca0ebab2fa1a10f555acf80f2f63dfc33e35c04b0b090b9701dcb74e",
+    "imports": [
+      "../core/MathUtils.js",
+      "./quran/LearningState.js",
+      "./campaign/MissionState.js",
+      "./barracks/ArmyState.js",
+      "./meta/MetaState.js",
+      "./social/SocialState.js"
+    ],
+    "exports": [
+      "GameState"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/SaveSystem.js",
+    "lines": 260,
+    "sha256": "d8e4e5214840c2027d5b56c77f5aa62899b163d76beb6e2b4ac42d41ddecf997",
+    "imports": [
+      "./quran/LearningState.js",
+      "./campaign/MissionState.js",
+      "./barracks/ArmyState.js",
+      "./meta/MetaState.js"
+    ],
+    "exports": [
+      "SAVE_SCHEMA_VERSION",
+      "SAVE_DB_NAME",
+      "SAVE_STORE",
+      "SAVE_KEY",
+      "MIGRATIONS",
+      "migrateRecord",
+      "SaveSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/barracks/ArmyState.js",
+    "lines": 92,
+    "sha256": "6324256fef6ba10a08706f04b2b5054f3c3966356c34108a56defadf157fe144",
+    "imports": [],
+    "exports": [
+      "ARMY_SCHEMA",
+      "createArmyState",
+      "createBattleState",
+      "normalizeArmyState",
+      "normalizeBattleState"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/barracks/BarracksSystem.js",
+    "lines": 344,
+    "sha256": "f55bc18a3dbad6e139e95d590f9429acb9ba8bcebbe99637eaaa11d6bdc4163c",
+    "imports": [
+      "../../core/EventBus.js"
+    ],
+    "exports": [
+      "BarracksSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/battle/AStar.js",
+    "lines": 226,
+    "sha256": "068a4cb89994cb26e942b11eef5c973038a4ec862944c4598bf17a55193e13d3",
+    "imports": [
+      "./BattleGrid.js"
+    ],
+    "exports": [
+      "BinaryHeap",
+      "octile",
+      "findPath",
+      "nearestFreeCell",
+      "pathWorldLength",
+      "pathTiles",
+      "attackCellSet"
+    ],
+    "dom": 0,
+    "random": 1
+  },
+  {
+    "path": "src/game/battle/BattleGrid.js",
+    "lines": 202,
+    "sha256": "0caf32eb373404cc021b8e4ee24ecacc0bd225137092586e49826232569f53a3",
+    "imports": [
+      "../../core/MathUtils.js",
+      "./StructureStats.js"
+    ],
+    "exports": [
+      "NEIGHBOR_OFFSETS",
+      "BattleGrid"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/battle/BattleRecorder.js",
+    "lines": 122,
+    "sha256": "150ef52106c4eb0df4f82c97859c71ac5b5f350a821c01f052aa7601517826f4",
+    "imports": [
+      "./BattleSim.js"
+    ],
+    "exports": [
+      "RECORD_VERSION",
+      "createRecord",
+      "replayRecord",
+      "verifySubmission",
+      "recordSummary"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/battle/BattleScenario.js",
+    "lines": 200,
+    "sha256": "731527cd135773288c464ef31e9a18970ce15bdb3c0b6c3533461b20205fe3d7",
+    "imports": [
+      "../../core/RNG.js",
+      "../../core/MathUtils.js",
+      "./Unit.js",
+      "./StructureStats.js"
+    ],
+    "exports": [
+      "SCENARIO_VERSION",
+      "deriveBattleSeed",
+      "encounterById",
+      "encounterList",
+      "buildScenario",
+      "scenarioHash",
+      "scenarioHasDefenders",
+      "scenarioSummary",
+      "defenseDefsFrom",
+      "structureModifiersFrom"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/battle/BattleSim.js",
+    "lines": 1461,
+    "sha256": "22bbc02d2f18758c60d07b16f74e8084a43a91bf7620c8d01fb2c68992245569",
+    "imports": [
+      "../../core/RNG.js",
+      "../../core/MathUtils.js",
+      "./BattleGrid.js",
+      "./AStar.js",
+      "./Unit.js",
+      "./StructureStats.js"
+    ],
+    "exports": [
+      "BATTLE_EVENT",
+      "BATTLE_RESULT",
+      "normalizeUnitDefs",
+      "BattleSim"
+    ],
+    "dom": 0,
+    "random": 1
+  },
+  {
+    "path": "src/game/battle/BattleSystem.js",
+    "lines": 552,
+    "sha256": "3c4f8ed8bcea0d766958997a451da7a5ab2cf1b743e62c85d865bb519f619867",
+    "imports": [
+      "../../core/EventBus.js",
+      "./BattleSim.js",
+      "./BattleScenario.js",
+      "./BattleRecorder.js",
+      "./Unit.js"
+    ],
+    "exports": [
+      "BATTLE_MODE",
+      "BattleSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/battle/StructureStats.js",
+    "lines": 128,
+    "sha256": "482960f1bcda7e5facad9d51961189e96335a2e3b8c240c4cc85a8bf5af64f1e",
+    "imports": [
+      "../../core/MathUtils.js"
+    ],
+    "exports": [
+      "STRUCTURE_KIND",
+      "createStructureStats"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/battle/Unit.js",
+    "lines": 144,
+    "sha256": "4aab071c16d3eaed91a071bf7a9d2d392be52937d4e02e4a843c22905dd03ff7",
+    "imports": [],
+    "exports": [
+      "UNIT_STATE",
+      "FACTION",
+      "FSM_TRANSITIONS",
+      "canTransition",
+      "transition",
+      "TARGET_KIND",
+      "createUnitRecord",
+      "unitSummary",
+      "distance2d",
+      "distanceSq2d"
+    ],
+    "dom": 0,
+    "random": 1
+  },
+  {
+    "path": "src/game/campaign/CampaignSystem.js",
+    "lines": 742,
+    "sha256": "6aa3dabf9fadef707244cd463426cc169c813f0cbb53a46d6bb7b4e08947968b",
+    "imports": [
+      "../../core/EventBus.js",
+      "./MissionState.js",
+      "./rules/index.js",
+      "./MissionData.js",
+      "../quran/QuranDataset.js"
+    ],
+    "exports": [
+      "CampaignSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/campaign/MissionData.js",
+    "lines": 301,
+    "sha256": "37207270175869013d66ccc4c65219b78a6109724ffa49c8fd73f7ef83dedd2b",
+    "imports": [
+      "./rules/index.js"
+    ],
+    "exports": [
+      "MISSION_SCHEMA",
+      "REFERENCE_PATTERN",
+      "MISSION_POLICY",
+      "containsVocalisedArabic",
+      "scanForVocalisedArabic",
+      "parseRefId",
+      "makeRefId",
+      "normalizeMissions",
+      "validateMissions",
+      "missionRefs",
+      "refLabel",
+      "resolveRef",
+      "missionRefCards",
+      "narrativeLines",
+      "objectiveById",
+      "starCount",
+      "narrativeBadges"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/campaign/MissionState.js",
+    "lines": 129,
+    "sha256": "fe12cd315f7bb915cddccd1b14fa108f45bca2396a976c2f433b522a5e7cd9fb",
+    "imports": [],
+    "exports": [
+      "CAMPAIGN_SCHEMA_VERSION",
+      "createMissionRecord",
+      "createCampaignState",
+      "normalizeCampaignState",
+      "missionRecordView"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/campaign/rules/DamUpholdRule.js",
+    "lines": 334,
+    "sha256": "90183d192dff6f6f5289b1c1e6168bc857a21b356873b77a40378bf9af93caee",
+    "imports": [
+      "./shared.js"
+    ],
+    "exports": [
+      "KIND",
+      "OBJECTIVES",
+      "ACTIONS",
+      "createRuntime",
+      "tick",
+      "evaluate",
+      "economyModifiers",
+      "actions",
+      "perform",
+      "onJobFinished",
+      "rollbackPending",
+      "summary"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/campaign/rules/PlentyFamineRule.js",
+    "lines": 207,
+    "sha256": "8de321d6fcfdceb66d6fd57630bcd3f621b35af843258738f0be40c081f495d8",
+    "imports": [
+      "./shared.js"
+    ],
+    "exports": [
+      "KIND",
+      "OBJECTIVES",
+      "ACTIONS",
+      "DEFAULT_DRAIN_RESOURCE",
+      "createRuntime",
+      "tick",
+      "evaluate",
+      "economyModifiers",
+      "actions",
+      "perform",
+      "onJobFinished",
+      "summary"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/campaign/rules/ProsperityRule.js",
+    "lines": 276,
+    "sha256": "5904ecfc1bf454ae2dcdc2949190b44beecbe7d4b4a8d7edaff83d1e78f280fb",
+    "imports": [
+      "./shared.js"
+    ],
+    "exports": [
+      "KIND",
+      "OBJECTIVES",
+      "ACTIONS",
+      "createRuntime",
+      "tick",
+      "evaluate",
+      "economyModifiers",
+      "actions",
+      "perform",
+      "onJobFinished",
+      "rollbackPending",
+      "summary"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/campaign/rules/index.js",
+    "lines": 39,
+    "sha256": "f5cbbcd285cab060b8c62c7b0ce6418a404fd13c43847656ad324940541d2d28",
+    "imports": [
+      "./PlentyFamineRule.js",
+      "./DamUpholdRule.js",
+      "./ProsperityRule.js"
+    ],
+    "exports": [
+      "MISSION_RULES",
+      "getRuleModule",
+      "ruleKinds",
+      "objectiveIdsFor"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/campaign/rules/shared.js",
+    "lines": 61,
+    "sha256": "f6cf4fce5e46cc7cc767f9336bf6047a3bf3b4f11f0714e8cb7013500cf3a4f4",
+    "imports": [],
+    "exports": [
+      "finiteOr",
+      "clamp01",
+      "average",
+      "affordableCost",
+      "missionJobSpec"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/meta/MetaState.js",
+    "lines": 169,
+    "sha256": "fa57da5a863a8f7ab67666401ba50be9a32047cebcb32ace987865e5a2afb8fb",
+    "imports": [],
+    "exports": [
+      "createMetaState",
+      "normalizeMetaState",
+      "metaSettingsAreValid"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/meta/MetaSystem.js",
+    "lines": 489,
+    "sha256": "05dfdc31aeac697f6ee008c7e364f716ccd0ff584d86e13cae0f36c42d3acfff",
+    "imports": [
+      "../../core/EventBus.js",
+      "./MetaState.js"
+    ],
+    "exports": [
+      "MetaSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/LearningState.js",
+    "lines": 82,
+    "sha256": "91820880f10f583d900b737f17bec6853bf1eec523f1ba1ce15555773e525b9f",
+    "imports": [],
+    "exports": [
+      "LEARNING_SCHEMA_VERSION",
+      "createLearningState",
+      "normalizeLearningState"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/LearningSystem.js",
+    "lines": 389,
+    "sha256": "9075d44b44fe86e6ff30884958544d93f00bfae32c38a788e6660374688a2016",
+    "imports": [
+      "../../core/EventBus.js",
+      "./Leitner.js",
+      "./LessonEngine.js",
+      "./QuranDataset.js"
+    ],
+    "exports": [
+      "LearningSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/Leitner.js",
+    "lines": 166,
+    "sha256": "ea7ee88d8757ccfb4eee6e6e6237f436f7ce94279191830cff53e824e0848ad3",
+    "imports": [
+      "../../core/MathUtils.js"
+    ],
+    "exports": [
+      "Leitner"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/LessonEngine.js",
+    "lines": 419,
+    "sha256": "e6641e82dc213be127dcad5f8f673deb32f7e93fb5df31ccf6d42a065f804371",
+    "imports": [
+      "../../core/RNG.js",
+      "./content.js",
+      "./minigames/AyahCompletion.js",
+      "./minigames/AyahOrder.js",
+      "./minigames/WordMatch.js"
+    ],
+    "exports": [
+      "LessonSession",
+      "LessonEngine"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/QuranDataset.js",
+    "lines": 535,
+    "sha256": "6f8650e59d8673519da35205a22649c3b463d9fa657dde216390c1c602dd09d9",
+    "imports": [
+      "../../core/MathUtils.js"
+    ],
+    "exports": [
+      "PLACEHOLDER_LABEL",
+      "REVIEW_PENDING_LABEL",
+      "PLACEHOLDER_TOKEN",
+      "hasDiacritics",
+      "verseId",
+      "parseVerseId",
+      "tokenize",
+      "normalizeDataset",
+      "validateDataset",
+      "verseBadges",
+      "verseReference",
+      "toFaDigits",
+      "lessonVerses",
+      "mergeDatasets",
+      "datasetSummary",
+      "QuranDatasetLoader",
+      "lessonDurationLabel"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/content.js",
+    "lines": 95,
+    "sha256": "aa110e5bd26f4c1ac47d7372d9a8d1b4e71528f3dcafe35e70565b6296991092",
+    "imports": [],
+    "exports": [
+      "tokensPool",
+      "wordMatchPairsFor",
+      "lessonOutline"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/minigames/AyahCompletion.js",
+    "lines": 210,
+    "sha256": "0a5918076a23adcb557d1b5929be66050c8aaa2fec54aed12fc2831cdcd6078e",
+    "imports": [
+      "../../../core/RNG.js",
+      "../QuranDataset.js"
+    ],
+    "exports": [
+      "AYAH_COMPLETION_ID",
+      "AyahCompletionGame"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/minigames/AyahOrder.js",
+    "lines": 223,
+    "sha256": "223340b8df94d792e8c7a4129fde713d64fca561d2794eb7bf581920b2e36acc",
+    "imports": [
+      "../../../core/RNG.js",
+      "../QuranDataset.js"
+    ],
+    "exports": [
+      "AYAH_ORDER_ID",
+      "AyahOrderGame"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/minigames/WordMatch.js",
+    "lines": 185,
+    "sha256": "eda1adcde94a559b0aa18640b1b78fd29667a0e4dc3f70c53c21ea739e960097",
+    "imports": [
+      "../../../core/RNG.js"
+    ],
+    "exports": [
+      "WORD_MATCH_ID",
+      "buildPairs",
+      "WordMatchGame"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/quran/minigames/index.js",
+    "lines": 10,
+    "sha256": "ad2ceaba100f07554a4992f0e958863554cd00bc60c895303b152031dbeb288f",
+    "imports": [],
+    "exports": [
+      "MINIGAMES"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/social/SocialClient.js",
+    "lines": 228,
+    "sha256": "9143ba2d673f9b6ebd5c9071ec553fed7bcb7058f59bb17bdcc40bdc4e9182f1",
+    "imports": [],
+    "exports": [
+      "SocialClient"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/social/SocialState.js",
+    "lines": 31,
+    "sha256": "c9cc0971cf3308b8caf1acba9de26a18beebb8459e33010c0b62b0b2f61fcfb2",
+    "imports": [],
+    "exports": [
+      "createSocialPrefs",
+      "normalizeSocialPrefs"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/game/social/SocialSystem.js",
+    "lines": 581,
+    "sha256": "75badae8899db05323b16cd715f8b5c90dd6f4a78a590ab6af30a316ac29be6f",
+    "imports": [
+      "./SocialClient.js",
+      "../../core/EventBus.js"
+    ],
+    "exports": [
+      "SocialSystem"
+    ],
+    "dom": 3,
+    "random": 0
+  },
+  {
+    "path": "src/main.js",
+    "lines": 508,
+    "sha256": "893438eb2ef038902205eabd469eeb93b87f6f432383c5e97b149f62b0fc77ae",
+    "imports": [
+      "./ui/hud.css",
+      "./ui/quran/accessibility.css",
+      "./core/Config.js",
+      "./core/Engine.js",
+      "./core/EventBus.js",
+      "./core/SoundManager.js",
+      "./core/InputManager.js",
+      "./core/OrbitCameraRig.js",
+      "./world/World.js",
+      "./world/BuildingView.js",
+      "./world/WorldInputAdapter.js",
+      "./game/Game.js",
+      "./game/BuildingSystem.js",
+      "./game/SaveSystem.js",
+      "./game/quran/QuranDataset.js",
+      "./data/quran-sample.json",
+      "./ui/PerfMonitor.js",
+      "./ui/HUD.js",
+      "./ui/DevPanel.js",
+      "./ui/QuranPanel.js",
+      "./ui/quran/LessonHub.js",
+      "./world/battle/BattleView.js",
+      "./ui/BattlePanel.js",
+      "./ui/BarracksPanel.js",
+      "./world/MissionZone.js",
+      "./ui/campaign/MissionPanel.js",
+      "./ui/MetaPanel.js",
+      "./ui/SettingsPanel.js",
+      "./ui/social/JamaatPanel.js",
+      "./ui/FTUEGuide.js",
+      "./ui/LoadingScreen.js",
+      "./ui/quran/RecitationAudio.js"
+    ],
+    "exports": [],
+    "dom": 28,
+    "random": 0
+  },
+  {
+    "path": "src/pwa/service-worker.js",
+    "lines": 69,
+    "sha256": "2e2175f48d22eae5a85482ae6d3632be3954af9f2c40265064eb4f524570218e",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/ui/BarracksPanel.js",
+    "lines": 358,
+    "sha256": "fe170d545c237b3decd740ea7ffb2eb57799f1e2c7a95da6a1ae391130083ca1",
+    "imports": [
+      "./dom.js",
+      "../core/EventBus.js",
+      "../data/characters.json",
+      "./HUD.js"
+    ],
+    "exports": [
+      "BarracksPanel"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/ui/BattlePanel.js",
+    "lines": 479,
+    "sha256": "ce286f7fd2b1633d5c7d047c53aa5c2d38772b7e806241294677f0f0f5695da9",
+    "imports": [
+      "./dom.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "BattlePanel"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/ui/DevPanel.js",
+    "lines": 221,
+    "sha256": "d9b52449f6947aef7543cd86e058912b8d79e55857b7d5120e6b9e7a31ae7ada",
+    "imports": [
+      "./dom.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "DevPanel"
+    ],
+    "dom": 3,
+    "random": 0
+  },
+  {
+    "path": "src/ui/FTUEGuide.js",
+    "lines": 237,
+    "sha256": "e13c185523bc8ef98805a65ce40d9c9d8bdcaf07e1db1d5be298a234747ab58a",
+    "imports": [
+      "three",
+      "./dom.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "FTUEGuide"
+    ],
+    "dom": 5,
+    "random": 0
+  },
+  {
+    "path": "src/ui/HUD.js",
+    "lines": 814,
+    "sha256": "756356e352be5afe55225fada30bce8e49ca01a66d8e83a99e87d4c63a8de198",
+    "imports": [
+      "../data/buildings.json",
+      "./dom.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "formatCountdown",
+      "HUD"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/ui/LoadingScreen.js",
+    "lines": 85,
+    "sha256": "da1719d9e0b4a5616af9398c381f413f9dd06415b8aec399f6b1d5f68f7d5727",
+    "imports": [
+      "./dom.js"
+    ],
+    "exports": [
+      "LoadingScreen",
+      "ErrorOverlay"
+    ],
+    "dom": 2,
+    "random": 0
+  },
+  {
+    "path": "src/ui/MetaPanel.js",
+    "lines": 195,
+    "sha256": "aa26d1be09bfd6e97ef20a29179a8ea59d24e10010a0ed355e76475d22daf478",
+    "imports": [
+      "./dom.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "MetaPanel"
+    ],
+    "dom": 3,
+    "random": 0
+  },
+  {
+    "path": "src/ui/PerfMonitor.js",
+    "lines": 101,
+    "sha256": "26a0a8db5083b1a1a98142795def0379d774a9f1b8537b578399ba9897b1bf0c",
+    "imports": [],
+    "exports": [
+      "PerfMonitor"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/ui/QuranPanel.js",
+    "lines": 136,
+    "sha256": "264175c9e29e872c1c8ec567f799933603d779f51d628918cea5050e4646e262",
+    "imports": [
+      "./dom.js",
+      "../game/quran/QuranDataset.js"
+    ],
+    "exports": [
+      "QuranPanel"
+    ],
+    "dom": 3,
+    "random": 0
+  },
+  {
+    "path": "src/ui/SettingsPanel.js",
+    "lines": 163,
+    "sha256": "1e40ee8357df89952a5197cf05f0cd4dad30042d4d9cb19bf934dfb1d7871fce",
+    "imports": [
+      "./dom.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "SettingsPanel"
+    ],
+    "dom": 5,
+    "random": 0
+  },
+  {
+    "path": "src/ui/campaign/MissionPanel.js",
+    "lines": 549,
+    "sha256": "07b533654687ffbe5964f27db5794083b1a8c54ace006f8c13bac832ca00360d",
+    "imports": [
+      "../dom.js",
+      "../../core/EventBus.js",
+      "./verseRefs.js",
+      "../../game/quran/QuranDataset.js"
+    ],
+    "exports": [
+      "MissionPanel"
+    ],
+    "dom": 4,
+    "random": 0
+  },
+  {
+    "path": "src/ui/campaign/verseRefs.js",
+    "lines": 108,
+    "sha256": "f10a7fabb751cf5c1ed39cd9f559fe9a2cc18640beadabb7eef51cd309d2928d",
+    "imports": [
+      "../dom.js",
+      "../quran/verseCard.js",
+      "../../game/quran/QuranDataset.js"
+    ],
+    "exports": [
+      "refLabel",
+      "verseRefCard",
+      "verseRefList",
+      "narrativeLine"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/ui/dom.js",
+    "lines": 49,
+    "sha256": "034702194f50fac72b1e4c81b78c41e0467aa63eedfca9a9e1b3b9c6ee092c91",
+    "imports": [
+      "../core/Format.js"
+    ],
+    "exports": [
+      "el",
+      "clear",
+      "button"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/ui/hud.css",
+    "lines": 1755,
+    "sha256": "abf0e31dfe2c6b6403afdae882032dbe4273403236e941f9ebd50c5b34f69fab",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/ui/quran/LessonHub.js",
+    "lines": 333,
+    "sha256": "c9d5835cd55cad8706509ecfc63ac5546b9979d0c0e0a937cb8b6cd7aa75e31a",
+    "imports": [
+      "../dom.js",
+      "../../core/EventBus.js",
+      "../../game/quran/QuranDataset.js",
+      "./LessonRunner.js",
+      "../../game/quran/minigames/index.js"
+    ],
+    "exports": [
+      "LessonHub"
+    ],
+    "dom": 4,
+    "random": 0
+  },
+  {
+    "path": "src/ui/quran/LessonRunner.js",
+    "lines": 336,
+    "sha256": "4c3eb50625f45800b347c486f19973ef554dded896dc9c9d9b1672aeb63c2fee",
+    "imports": [
+      "../dom.js",
+      "./verseCard.js",
+      "./minigameViews.js",
+      "../../game/quran/QuranDataset.js"
+    ],
+    "exports": [
+      "formatClock",
+      "LessonRunner"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/ui/quran/RecitationAudio.js",
+    "lines": 55,
+    "sha256": "ddff2de8af5d40078456154465d6e7aac70c050018739c1325199eeb2ced60d8",
+    "imports": [],
+    "exports": [
+      "isRecitationEnabled",
+      "stopRecitation",
+      "setRecitationEnabled",
+      "playRecitation"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/ui/quran/accessibility.css",
+    "lines": 47,
+    "sha256": "44fd338e4fa3734fa60e02a613804910c7d7288e07a4e15b7990ed25f70e3a3c",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/ui/quran/minigameViews.js",
+    "lines": 307,
+    "sha256": "d5d119c87131ff4dca745b9308c2a6c8bc107d9b253522d38501f784ad15bcb4",
+    "imports": [
+      "../dom.js",
+      "../../game/quran/QuranDataset.js",
+      "./verseCard.js"
+    ],
+    "exports": [
+      "createAyahCompletionView",
+      "createWordMatchView",
+      "createAyahOrderView",
+      "createMinigameView"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/ui/quran/verseCard.js",
+    "lines": 107,
+    "sha256": "6fcec2559b7dcd87f37f848798c95c6e4131140deff10c45202d66e89540b690",
+    "imports": [
+      "../dom.js",
+      "../../game/quran/QuranDataset.js",
+      "./RecitationAudio.js"
+    ],
+    "exports": [
+      "verseCard",
+      "noPenaltyNote",
+      "stepCounter"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/ui/social/JamaatPanel.js",
+    "lines": 507,
+    "sha256": "248d2817de60ee2c527cc798578f341a0e893dbd09e52b69aa355c97598e97bf",
+    "imports": [
+      "../../data/buildings.json",
+      "../dom.js",
+      "../../core/EventBus.js"
+    ],
+    "exports": [
+      "JamaatPanel"
+    ],
+    "dom": 3,
+    "random": 0
+  },
+  {
+    "path": "src/world/BuildingFactory.js",
+    "lines": 290,
+    "sha256": "b736ef01b5b568082010a1904c53d45c0538540009dfb37529379ca45cc594cc",
+    "imports": [
+      "three"
+    ],
+    "exports": [
+      "BuildingFactory"
+    ],
+    "dom": 2,
+    "random": 0
+  },
+  {
+    "path": "src/world/BuildingView.js",
+    "lines": 305,
+    "sha256": "322adaefa8813f13364624560cd6e123621737a6b1a175aafa3fe3727207f6b5",
+    "imports": [
+      "three",
+      "../data/economy.json",
+      "../data/buildings.json",
+      "../core/EventBus.js",
+      "./BuildingFactory.js"
+    ],
+    "exports": [
+      "BuildingView"
+    ],
+    "dom": 3,
+    "random": 0
+  },
+  {
+    "path": "src/world/Chunk.js",
+    "lines": 64,
+    "sha256": "03411cb0b2629afd1859a9242a189e0cb09b2c6c8e71d20fe4de9c3f8d5baa3d",
+    "imports": [
+      "three",
+      "./Decor.js"
+    ],
+    "exports": [
+      "Chunk"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/DayNightCycle.js",
+    "lines": 65,
+    "sha256": "de3681e534f745d7d92a9738a15a0985ca911ab6f69fce9b8fa3b94e118767e6",
+    "imports": [],
+    "exports": [
+      "sampleDayNight",
+      "DayNightCycle"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/Decor.js",
+    "lines": 187,
+    "sha256": "5db0fdefc403adc649a1ea012e0bedff95e99d2f3e07682f73848e254196e59e",
+    "imports": [
+      "three",
+      "../core/GeometryUtils.js",
+      "../core/RNG.js",
+      "./WindShader.js"
+    ],
+    "exports": [
+      "Decor"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/Markers.js",
+    "lines": 82,
+    "sha256": "12131b7afe92af6e496cceaff3770b1a3b7ac8c90d18afbfb915874cad78a8c7",
+    "imports": [
+      "three",
+      "../core/GeometryUtils.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "Markers"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/MissionZone.js",
+    "lines": 275,
+    "sha256": "de9685157296159680c58e5d4d28efc3364853632499fbc5368cbf57a2e7a4ce",
+    "imports": [
+      "three",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "MissionZone"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/Placement.js",
+    "lines": 203,
+    "sha256": "83519ed70a424a68292718b1dad462ddeac9aa5fdc5b5b767c8b48a068b8303b",
+    "imports": [
+      "../core/RNG.js",
+      "../core/MathUtils.js"
+    ],
+    "exports": [
+      "generatePlacements",
+      "splitPlacementsByChunk"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/SkyDome.js",
+    "lines": 108,
+    "sha256": "06d677355f94b80ec5ebfba155f546a30ec8d0cb73157c092af0fd5cc3f94519",
+    "imports": [
+      "three"
+    ],
+    "exports": [
+      "SkyDome"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/Terrain.js",
+    "lines": 402,
+    "sha256": "b2b8990f974102077664e3b1e4f31b6e944318b495a3600b2a4067d9eeee4e82",
+    "imports": [
+      "three",
+      "../core/GeometryUtils.js",
+      "../core/Textures.js",
+      "../core/Noise.js",
+      "../core/RNG.js",
+      "../core/MathUtils.js"
+    ],
+    "exports": [
+      "Terrain"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/world/TerrainMap.js",
+    "lines": 143,
+    "sha256": "6f29f020ae332e7c4e9ad0707b6a693810615d1496f242bf160e5436cb542925",
+    "imports": [
+      "../core/MathUtils.js",
+      "../core/Noise.js"
+    ],
+    "exports": [
+      "TILE_FLAGS",
+      "TerrainMap"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/WindShader.js",
+    "lines": 38,
+    "sha256": "29d4b1b62db9b5afd28ed83d773823511ea140cfbb9728c85e643fef9989e987",
+    "imports": [],
+    "exports": [
+      "applyWindShader",
+      "setWindTime"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/World.js",
+    "lines": 377,
+    "sha256": "44268bdf663bd5b179b83384fc328dbc06dfa358253ca8ddfae00905d3ef426a",
+    "imports": [
+      "three",
+      "./TerrainMap.js",
+      "./Placement.js",
+      "./Terrain.js",
+      "./SkyDome.js",
+      "./Markers.js",
+      "./Chunk.js",
+      "./DayNightCycle.js",
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "World"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/world/WorldInputAdapter.js",
+    "lines": 39,
+    "sha256": "e7a8008d134474f95d810915bdb3ba44c9e1ab919ef368632e7f2c632a0080bf",
+    "imports": [
+      "../core/EventBus.js"
+    ],
+    "exports": [
+      "WorldInputAdapter"
+    ],
+    "dom": 2,
+    "random": 0
+  },
+  {
+    "path": "src/world/battle/BattleView.js",
+    "lines": 719,
+    "sha256": "8429776b2d4b791710be9db6917e3d56656c6ff164ce9f2f1f3a5243e25ace0a",
+    "imports": [
+      "three",
+      "../../data/characters.json",
+      "../../core/EventBus.js",
+      "../characters/CharacterSystem.js",
+      "./Particles.js",
+      "./UnitModels.js"
+    ],
+    "exports": [
+      "BattleView"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/battle/Particles.js",
+    "lines": 122,
+    "sha256": "81b07b097e0996f8c6acb0c3141635c9ee952c1e13ab53f4c90ae8d52714a16c",
+    "imports": [
+      "three",
+      "../../core/RNG.js",
+      "./UnitModels.js"
+    ],
+    "exports": [
+      "ParticleField"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/battle/UnitModels.js",
+    "lines": 172,
+    "sha256": "8e10388499c4fdcbd927553cc31c70cec4ad99cab81f540ba5b2ce8c7c362de2",
+    "imports": [
+      "three"
+    ],
+    "exports": [
+      "BATTLE_FACTION",
+      "BATTLE_PALETTES",
+      "paint",
+      "mergePainted",
+      "createUnitGeometry",
+      "createUnitMaterial",
+      "createProjectileGeometry",
+      "createBarGeometry",
+      "createParticleTexture",
+      "createDeployRing"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/world/characters/CharacterAssetLoader.js",
+    "lines": 216,
+    "sha256": "0ab131816a734473471511e4ceb2735870f9daecdb85117fd0eba1cbb41860bd",
+    "imports": [
+      "three/addons/loaders/GLTFLoader.js"
+    ],
+    "exports": [
+      "disposeGltf",
+      "CharacterAssetLoader"
+    ],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "src/world/characters/CharacterEntity.js",
+    "lines": 176,
+    "sha256": "31bb30070eff0dc6ad913286180d354965f3497bbba979200baf23adce1b623d",
+    "imports": [
+      "three",
+      "three/addons/utils/SkeletonUtils.js"
+    ],
+    "exports": [
+      "CharacterEntity"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/characters/CharacterRegistry.js",
+    "lines": 67,
+    "sha256": "f6b921489b3630f72733720d73cf289d708137a61fc9d410fc4d8e358187d6b6",
+    "imports": [
+      "../../data/characters.json"
+    ],
+    "exports": [
+      "CharacterRegistry"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "src/world/characters/CharacterSystem.js",
+    "lines": 301,
+    "sha256": "612787064d596cdd0d954b5208a00bccd08205b67a7ddeeb124fbd16e9d07a22",
+    "imports": [
+      "three",
+      "../../core/EventBus.js",
+      "./CharacterRegistry.js",
+      "./CharacterAssetLoader.js",
+      "./CharacterEntity.js"
+    ],
+    "exports": [
+      "CharacterSystem"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/README.md",
+    "lines": 97,
+    "sha256": "eda40d46b57c668ac94c4f2d8051693c6de7aea205cc77ee818a3bf256f58666",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/package.json",
+    "lines": 14,
+    "sha256": "948e9da657eaadda9d538f371ff382c8982944124abbfa3a8cba3cac90435a49",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/auth.js",
+    "lines": 37,
+    "sha256": "d1724449df7f7e65a35ffa8c0e288bd85d62c74eca953996df572ba17d03f0f4",
+    "imports": [
+      "node:crypto"
+    ],
+    "exports": [
+      "MAX_DISPLAY_NAME",
+      "issueToken",
+      "sanitizeDisplayName",
+      "randomNameSuffix"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/chatFilter.js",
+    "lines": 63,
+    "sha256": "36524d2fd43c71a8a86c7b9b448b3d74464af0a2eb7d01029077cf32bf0bf42f",
+    "imports": [],
+    "exports": [
+      "normalizeForMatch",
+      "cleanChatText",
+      "filterChat"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/data.js",
+    "lines": 132,
+    "sha256": "fbe62c24f410c0a87a512ba25e2ea68831719c6b3b7444b96a840a62989b3761",
+    "imports": [
+      "node:fs",
+      "node:path",
+      "node:url"
+    ],
+    "exports": [
+      "repoRoot",
+      "loadGameData",
+      "GameData"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/index.js",
+    "lines": 65,
+    "sha256": "a970d2c6d6671e610797e14f491f68349dbc347d24a55ebfbf485ea52ae39569",
+    "imports": [
+      "node:path",
+      "./server.js"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/jamaat.js",
+    "lines": 351,
+    "sha256": "c4d2e9a3f6d6c4561eb4578d5ec7bf3cf46fee7bf1e26960a91cff196a352942",
+    "imports": [],
+    "exports": [
+      "weekIdFor",
+      "JamaatManager"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/player.js",
+    "lines": 353,
+    "sha256": "9dd34efdcdba2bb8a8b858017f19f6a42414566401eff98615dc3c3fa6c0e870",
+    "imports": [
+      "./protocol.js"
+    ],
+    "exports": [
+      "PlayerSim"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/protocol.js",
+    "lines": 115,
+    "sha256": "11314796a1639c3457df7191cd3ef4399361444177ec6b2108ea4f4ba6bedbe7",
+    "imports": [],
+    "exports": [
+      "PROTOCOL_VERSION",
+      "REQUEST_TYPES",
+      "PUSH_TYPES",
+      "ERRORS",
+      "isPlainObject",
+      "asInt",
+      "asNumber",
+      "asString",
+      "asCostMap"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/rateLimit.js",
+    "lines": 48,
+    "sha256": "de048d5586249f0d451244ac02ab8c124c75228fc840f56ad3ca2a9535c13bf5",
+    "imports": [],
+    "exports": [
+      "RateLimiter"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/server.js",
+    "lines": 865,
+    "sha256": "9c26e0515b0a676da044e47a5d9eb801cbf6b2a08f7d23d3179bd627e9aa1244",
+    "imports": [
+      "node:http",
+      "./ws.js",
+      "./data.js",
+      "./auth.js",
+      "./rateLimit.js",
+      "./chatFilter.js",
+      "./player.js",
+      "./jamaat.js",
+      "./store.js",
+      "./protocol.js"
+    ],
+    "exports": [
+      "GameServer"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/store.js",
+    "lines": 64,
+    "sha256": "ed416a4c6301b3b8c3fa2ff52c822e5c264d8948f5ed39229c85a8d10fa8ecf5",
+    "imports": [
+      "node:fs",
+      "node:path"
+    ],
+    "exports": [
+      "JsonStore"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/ws.js",
+    "lines": 260,
+    "sha256": "c7843e49a45ae0d97c82970c8c067f802f76aa9ac1c3c9d687d2cc225a07bb4b",
+    "imports": [
+      "node:crypto"
+    ],
+    "exports": [
+      "acceptKey",
+      "WSConnection",
+      "handleUpgradeRequest"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "server/src/wsClient.js",
+    "lines": 226,
+    "sha256": "8138d4dcd123b16d45fb658bacce02f64b6d1321982b1bfb2f9572d7df00ec8c",
+    "imports": [
+      "node:net",
+      "node:crypto"
+    ],
+    "exports": [
+      "WsTestClient",
+      "connectWs"
+    ],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "tools/FakeEngine.js",
+    "lines": 165,
+    "sha256": "bbf4eb8f0f4e1934995f91d5c92ad8cb3e2dd874b3ae27ae419227fbcc6a8286",
+    "imports": [
+      "three"
+    ],
+    "exports": [
+      "Engine"
+    ],
+    "dom": 4,
+    "random": 0
+  },
+  {
+    "path": "tools/build-quran.mjs",
+    "lines": 115,
+    "sha256": "a53f94a50855cd8214316bbfa48ba98c00b4cbd8264df1ed7824985793273580",
+    "imports": [
+      "node:fs",
+      "node:path"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "tools/check.mjs",
+    "lines": 3092,
+    "sha256": "6ec8c35bb33b1b40f7a36ec44877330e0d64c4fd6646596f1c429ea119007d7f",
+    "imports": [
+      "node:fs",
+      "node:url",
+      "node:path",
+      "three",
+      "../src/core/RNG.js",
+      "../src/core/Noise.js",
+      "../src/core/MathUtils.js",
+      "../src/core/GeometryUtils.js",
+      "../src/world/TerrainMap.js",
+      "../src/world/Terrain.js",
+      "../src/world/DayNightCycle.js",
+      "../src/world/WindShader.js",
+      "../src/world/World.js",
+      "../src/world/Placement.js",
+      "../src/core/OrbitCameraRig.js",
+      "../src/game/GameState.js",
+      "../src/game/EconomySystem.js",
+      "../src/game/BuildQueue.js",
+      "../src/game/barracks/BarracksSystem.js",
+      "../src/game/battle/BattleGrid.js",
+      "../src/game/battle/AStar.js",
+      "../src/game/battle/BattleSim.js",
+      "../src/game/battle/Unit.js",
+      "../src/game/battle/StructureStats.js",
+      "../src/game/battle/BattleScenario.js",
+      "../src/game/battle/BattleRecorder.js",
+      "../src/game/SaveSystem.js",
+      "../src/game/campaign/CampaignSystem.js",
+      "../src/game/meta/MetaSystem.js",
+      "../src/core/EventBus.js",
+      "./FakeEngine.js",
+      "../src/game/campaign/MissionData.js",
+      "../src/game/campaign/rules/index.js",
+      "../src/game/quran/LearningSystem.js",
+      "../src/game/quran/Leitner.js",
+      "../src/game/quran/QuranDataset.js",
+      "../src/game/quran/content.js",
+      "../src/game/quran/minigames/AyahCompletion.js",
+      "../src/game/quran/minigames/WordMatch.js",
+      "../src/game/quran/minigames/AyahOrder.js",
+      "../server/src/server.js",
+      "../server/src/wsClient.js",
+      "../server/src/rateLimit.js",
+      "../server/src/chatFilter.js",
+      "../server/src/auth.js"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 5
+  },
+  {
+    "path": "tools/generate-pwa-icons.mjs",
+    "lines": 150,
+    "sha256": "3b8ac384ef713fd4950ee3fa87659283afdb36ea31ad32669d6fd5e52191e4d8",
+    "imports": [
+      "node:fs",
+      "node:zlib",
+      "node:path",
+      "node:url"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "tools/hud-layout.mjs",
+    "lines": 420,
+    "sha256": "cc134769e5e0d36cffb9c72fcbd5928fd181ded69e93a433357694985233f75d",
+    "imports": [
+      "node:fs",
+      "node:module",
+      "node:os",
+      "node:path",
+      "node:url"
+    ],
+    "exports": [],
+    "dom": 28,
+    "random": 0
+  },
+  {
+    "path": "tools/hud-screenshots.mjs",
+    "lines": 129,
+    "sha256": "eca274b7c4bf341768d8e5013b4c1b26e080422c88513dfd7ae43e940e683c24",
+    "imports": [
+      "node:fs",
+      "node:module",
+      "node:path",
+      "node:os",
+      "node:url"
+    ],
+    "exports": [],
+    "dom": 2,
+    "random": 0
+  },
+  {
+    "path": "tools/pwa-check.mjs",
+    "lines": 115,
+    "sha256": "ac2fd8d6bcc232362194e00b9313e570882706410bac0ea1f45801179cdf748e",
+    "imports": [
+      "node:fs",
+      "node:path",
+      "node:url"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "tools/smoke.mjs",
+    "lines": 1168,
+    "sha256": "ec3da3696534504e0e9532c37227143418c8cbae816c8cb7050c8611aec2595c",
+    "imports": [
+      "node:fs",
+      "node:path",
+      "node:url",
+      "jsdom",
+      "fake-indexeddb/auto",
+      "three",
+      "vite"
+    ],
+    "exports": [],
+    "dom": 62,
+    "random": 0
+  },
+  {
+    "path": "tools/tanzil/README.md",
+    "lines": 18,
+    "sha256": "def3de4be6001363ae8c9a8355f19aa58f7dba52a45f24cbd7a1886aa0f24677",
+    "imports": [],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "tests/barracks-characters.test.js",
+    "lines": 66,
+    "sha256": "fdd84ddb36fec1614d9713bffbdc0941ccd7696d9f0f6f2177c2b8918e1755f1",
+    "imports": [
+      "vitest",
+      "../src/ui/BarracksPanel.js",
+      "../src/core/EventBus.js"
+    ],
+    "exports": [],
+    "dom": 1,
+    "random": 0
+  },
+  {
+    "path": "tests/battle-sim.test.js",
+    "lines": 480,
+    "sha256": "5c67c9841187ab574c82a81b152e3ba48de13e0bf30769fe681b8a5b0e1e75cc",
+    "imports": [
+      "vitest",
+      "node:fs",
+      "node:path",
+      "node:url",
+      "../src/game/GameState.js",
+      "../src/game/battle/BattleSim.js",
+      "../src/game/battle/Unit.js",
+      "../src/game/battle/BattleGrid.js",
+      "../src/game/battle/AStar.js",
+      "../src/game/battle/StructureStats.js",
+      "../src/game/battle/BattleScenario.js",
+      "../src/game/battle/BattleRecorder.js",
+      "../src/data/economy.json",
+      "../src/data/terrain.json",
+      "../src/data/world.json",
+      "../src/data/units.json",
+      "../src/data/defenses.json",
+      "../src/data/battle.json"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 3
+  },
+  {
+    "path": "tests/building-architecture.test.js",
+    "lines": 65,
+    "sha256": "2b0aadaac6d294c81beb75f7e8228e36921003ce21f14af8df609dbe8619a907",
+    "imports": [
+      "vitest",
+      "../src/core/Config.js",
+      "../src/core/EventBus.js",
+      "../src/game/Game.js",
+      "../src/game/BuildingSystem.js",
+      "../src/world/WorldInputAdapter.js"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "tests/character-pipeline.test.js",
+    "lines": 116,
+    "sha256": "c4bd77c9af6892a2091c58870c9124bb571d2b34b211cb7fc883e1bf9bb07385",
+    "imports": [
+      "vitest",
+      "three",
+      "../src/data/characters.json",
+      "../src/world/characters/CharacterRegistry.js",
+      "../src/world/characters/CharacterAssetLoader.js",
+      "../src/world/characters/CharacterEntity.js"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 0
+  },
+  {
+    "path": "tests/economy.test.js",
+    "lines": 330,
+    "sha256": "edade2d5fb8bf5e6d80ca129e95ad0b154fb9b23795a2b7000841566efc91f12",
+    "imports": [
+      "vitest",
+      "node:fs",
+      "node:path",
+      "node:url",
+      "../src/game/GameState.js",
+      "../src/game/EconomySystem.js",
+      "../src/game/BuildQueue.js",
+      "../src/data/economy.json",
+      "../src/data/balance.json",
+      "../src/data/buildings.json"
+    ],
+    "exports": [],
+    "dom": 0,
+    "random": 1
+  },
+  {
+    "path": "tests/hud.test.js",
+    "lines": 243,
+    "sha256": "1837222932e736ecd1af8ac3f604cc811bdcd6e9f16fc3ef1d766b18e53f85e3",
+    "imports": [
+      "vitest",
+      "../src/ui/HUD.js",
+      "../src/core/EventBus.js",
+      "../src/data/economy.json",
+      "../src/data/buildings.json"
+    ],
+    "exports": [],
+    "dom": 5,
+    "random": 0
+  },
+  {
+    "path": "tests/perf-monitor.test.js",
+    "lines": 53,
+    "sha256": "7f45e1fb8a4ac2cf21b40f44ab7f9e5c5f454d7db7f5eda367e3c5be8653fb4f",
+    "imports": [
+      "vitest",
+      "../src/ui/PerfMonitor.js"
+    ],
+    "exports": [],
+    "dom": 1,
+    "random": 0
+  }
+]

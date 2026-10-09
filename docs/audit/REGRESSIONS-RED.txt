@@ -1,0 +1,460 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-security.test.js [2m([22m[2m32 tests[22m[2m | [22m[31m20 failed[39m[2m)[22m[32m 63[2mms[22m[39m
+   [31m❯[39m untrusted query endpoints [2m(9)[22m
+[31m     [31m×[31m rejects automatic credential forwarding to wss://external.invalid/social-ws[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m rejects automatic credential forwarding to ws://external.invalid/[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m rejects automatic credential forwarding to wss://user:pw@localhost/social-ws[39m[32m 4[2mms[22m[39m
+     [32m✓[39m retains a same-origin secure websocket endpoint[32m 2[2mms[22m[39m
+[31m     [31m×[31m ignores unsafe Quran override https://external.invalid/quran.json[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m ignores unsafe Quran override //external.invalid/quran.json[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m ignores unsafe Quran override data:application/json,{}[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m ignores unsafe Quran override ../outside.json[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m ignores unsafe Quran override ./quran/%2e%2e/other.json[39m[32m 1[2mms[22m[39m
+   [31m❯[39m RFC6455 negative / split-frame regression matrix [2m(14)[22m
+[31m     [31m×[31m rejects unmasked without delivering a message[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m rejects RSV1 without delivering a message[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m rejects orphan FIN continuation without delivering a message[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m rejects interleaved text fragments without delivering a message[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m rejects fragmented ping without delivering a message[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m rejects oversized control without delivering a message[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m rejects invalid UTF-8 without delivering a message[39m[32m 1[2mms[22m[39m
+     [32m✓[39m rejects one-byte close without delivering a message[32m 1[2mms[22m[39m
+     [32m✓[39m rejects reserved opcode without delivering a message[32m 0[2mms[22m[39m
+     [32m✓[39m accepts every TCP split point and a control frame interleaved with valid fragmentation[32m 5[2mms[22m[39m
+[31m     [31m×[31m enforces the cumulative message limit across fragments[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m times out a partial header and force-destroys a peer that never closes[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m bounds a slow reader instead of growing the TCP write queue[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m rejects an invalid handshake key/version[39m[32m 3[2mms[22m[39m
+   [31m❯[39m moderation normalization [2m(9)[22m
+[31m     [31m×[31m matches a blocked word separated by " "[39m[32m 1[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "‌"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "‍"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "َ"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "ـ"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "."[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "⁠"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "​"[32m 0[2mms[22m[39m
+     [32m✓[39m preserves innocent Persian and does not join whole unrelated words[32m 0[2mms[22m[39m
+ [31m❯[39m tests/upgrade-render.test.js [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 21[2mms[22m[39m
+   [31m❯[39m render lifecycle regression contracts [2m(4)[22m
+[31m     [31m×[31m does not halve normal rendering when RAF timestamps jitter around 60 Hz[39m[32m 9[2mms[22m[39m
+[31m     [31m×[31m sets both global and light shadow dirty flags at the solar cadence[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m disposes per-clone skeleton textures but does not dispose shared geometry/materials[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m disposes a parsed asset when skinned-mesh validation fails[39m[32m 2[2mms[22m[39m
+ [31m❯[39m tests/upgrade-panels.test.js [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 105[2mms[22m[39m
+   [31m❯[39m BattlePanel smoke regressions [2m(3)[22m
+[31m     [31m×[31m keeps the withdrawal report visible and lets the player close the session[39m[32m 60[2mms[22m[39m
+[31m     [31m×[31m does not display the live controls over a finished replay report[39m[32m 18[2mms[22m[39m
+     [32m✓[39m unsubscribes when disposed and renders hostile encounter text literally[32m 9[2mms[22m[39m
+   [31m❯[39m BarracksPanel smoke [2m(1)[22m
+[31m     [31m×[31m opens, starts deterministic training, closes and reopens with queue intact[39m[32m 17[2mms[22m[39m
+ [31m❯[39m tests/upgrade-battle.test.js [2m([22m[2m3 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 229[2mms[22m[39m
+   [31m❯[39m BTL-01: data-driven field exit / replay compatibility [2m(3)[22m
+[31m     [31m×[31m ends a depleted column after both priority towers fall, not at timeout[39m[32m 181[2mms[22m[39m
+     [32m✓[39m keeps archived v1 recordings bit-identical, including event hash and checkpoints[32m 45[2mms[22m[39m
+[31m     [31m×[31m migrates a v6 save without changing any old battle record or resources[39m[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 29 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-battle.test.js[2m > [22mBTL-01: data-driven field exit / replay compatibility[2m > [22mends a depleted column after both priority towers fall, not at timeout
+[31m[1mAssertionError[22m: expected 'timeout' to be 'victory' // Object.is equality[39m
+
+Expected: [32m"victory"[39m
+Received: [31m"timeout"[39m
+
+[36m [2m❯[22m tests/upgrade-battle.test.js:[2m24:24[22m[39m
+    [90m 22|[39m     const sim = new BattleSim({ scenario: scenario(), ...deps });
+    [90m 23|[39m     sim.runToEnd();
+    [90m 24|[39m     expect(sim.result).toBe('victory');
+    [90m   |[39m                        [31m^[39m
+    [90m 25|[39m     expect(sim.finishTick).toBeLessThan(2000);
+    [90m 26|[39m     const exit = sim.events.find((event) => event.type === 'retreat' &…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-battle.test.js[2m > [22mBTL-01: data-driven field exit / replay compatibility[2m > [22mmigrates a v6 save without changing any old battle record or resources
+[31m[1mAssertionError[22m: expected 6 to be greater than 6[39m
+[36m [2m❯[22m tests/upgrade-battle.test.js:[2m41:33[22m[39m
+    [90m 39|[39m     const payload = { resources: { rizq: 17 }, battles: { history: [le…
+    [90m 40|[39m     const migrated = migrateRecord({ schemaVersion: 6, payload, savedA…
+    [90m 41|[39m     expect(SAVE_SCHEMA_VERSION).toBeGreaterThan(6);
+    [90m   |[39m                                 [31m^[39m
+    [90m 42|[39m     expect(migrated.migratedFrom).toBe(6);
+    [90m 43|[39m     expect(migrated.payload.battles.history[0]).toEqual(legacy);
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-panels.test.js[2m > [22mBattlePanel smoke regressions[2m > [22mkeeps the withdrawal report visible and lets the player close the session
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-panels.test.js:[2m22:27[22m[39m
+    [90m 20|[39m   it('keeps the withdrawal report visible and lets the player close th…
+    [90m 21|[39m     const panel = makePanel(); panel.show(); panel.startBattle(); pane…
+    [90m 22|[39m     expect(panel.visible).toBe(true);
+    [90m   |[39m                           [31m^[39m
+    [90m 23|[39m     expect(panel.resultBox.classList.contains('is-hidden')).toBe(false…
+    [90m 24|[39m     expect(panel.liveBox.classList.contains('is-hidden')).toBe(true);
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-panels.test.js[2m > [22mBattlePanel smoke regressions[2m > [22mdoes not display the live controls over a finished replay report
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-panels.test.js:[2m30:43[22m[39m
+    [90m 28|[39m   it('does not display the live controls over a finished replay report…
+    [90m 29|[39m     const panel = makePanel(); panel.show(); panel.startBattle(); game…
+    [90m 30|[39m     expect(game.battle.startReplay(0).ok).toBe(true);
+    [90m   |[39m                                           [31m^[39m
+    [90m 31|[39m     game.battle.sim.runToEnd(); game.battle.update(0.1);
+    [90m 32|[39m     expect(panel.resultBox.classList.contains('is-hidden')).toBe(false…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-panels.test.js[2m > [22mBarracksPanel smoke[2m > [22mopens, starts deterministic training, closes and reopens with queue intact
+[31m[1mTypeError[22m: game.barracks.train is not a function[39m
+[36m [2m❯[22m tests/upgrade-panels.test.js:[2m49:26[22m[39m
+    [90m 47|[39m     panels.push(panel); panel.show();
+    [90m 48|[39m     expect(loader).toHaveBeenCalledOnce();
+    [90m 49|[39m     expect(game.barracks.train('guard', 0).ok).toBe(true);
+    [90m   |[39m                          [31m^[39m
+    [90m 50|[39m     panel.render(); expect(game.state.army.training).toHaveLength(1);
+    [90m 51|[39m     panel.hide(); panel.show(); expect(game.state.army.training).toHav…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22mdoes not halve normal rendering when RAF timestamps jitter around 60 Hz
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called 60 times, but got 30 times[39m
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m25:36[22m[39m
+    [90m 23|[39m     engine.setRuntimeSettings({ qualityTier: 'low', batterySaver: fals…
+    [90m 24|[39m     for (let i = 1; i <= 60; i += 1) engine._tick(i * (1000 / 60) + (i…
+    [90m 25|[39m     expect(engine.renderer.render).toHaveBeenCalledTimes(60);
+    [90m   |[39m                                    [31m^[39m
+    [90m 26|[39m   });
+    [90m 27|[39m   it('sets both global and light shadow dirty flags at the solar caden…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22msets both global and light shadow dirty flags at the solar cadence
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m36:51[22m[39m
+    [90m 34|[39m     world.animationTime = 2;
+    [90m 35|[39m     world._applyDayNight(world.dayNight.sample(), engine);
+    [90m 36|[39m     expect(engine.renderer.shadowMap.needsUpdate).toBe(true);
+    [90m   |[39m                                                   [31m^[39m
+    [90m 37|[39m     expect(world.lights.sun.shadow.needsUpdate).toBe(true);
+    [90m 38|[39m     world.dispose();
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22mdisposes per-clone skeleton textures but does not dispose shared geometry/materials
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called once, but got 0 times[39m
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m47:35[22m[39m
+    [90m 45|[39m     const geometryDispose = vi.spyOn(mesh.geometry, 'dispose'), materi…
+    [90m 46|[39m     entity.dispose();
+    [90m 47|[39m     expect(mesh.skeleton.dispose).toHaveBeenCalledOnce();
+    [90m   |[39m                                   [31m^[39m
+    [90m 48|[39m     expect(geometryDispose).not.toHaveBeenCalled(); expect(materialDis…
+    [90m 49|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22mdisposes a parsed asset when skinned-mesh validation fails
+[31m[1mAssertionError[22m: expected "dispose" to be called once, but got 0 times[39m
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m55:21[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mrejects automatic credential forwarding to wss://external.invalid/social-ws
+[31m[1mAssertionError[22m: expected 'wss://external.invalid/social-ws' to be null[39m
+
+[32m- Expected:[39m
+null
+
+[31m+ Received:[39m
+"wss://external.invalid/social-ws"
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m46:30[22m[39m
+    [90m 44|[39m   it.each(['wss://external.invalid/social-ws', 'ws://external.invalid/…
+    [90m 45|[39m     const config = new Config({ search: `?social=${encodeURIComponent(…
+    [90m 46|[39m     expect(config.socialUrl).toBeNull();
+    [90m   |[39m                              [31m^[39m
+    [90m 47|[39m   });
+    [90m 48|[39m   it('retains a same-origin secure websocket endpoint', () => {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mrejects automatic credential forwarding to ws://external.invalid/
+[31m[1mAssertionError[22m: expected 'ws://external.invalid/' to be null[39m
+
+[32m- Expected:[39m
+null
+
+[31m+ Received:[39m
+"ws://external.invalid/"
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m46:30[22m[39m
+    [90m 44|[39m   it.each(['wss://external.invalid/social-ws', 'ws://external.invalid/…
+    [90m 45|[39m     const config = new Config({ search: `?social=${encodeURIComponent(…
+    [90m 46|[39m     expect(config.socialUrl).toBeNull();
+    [90m   |[39m                              [31m^[39m
+    [90m 47|[39m   });
+    [90m 48|[39m   it('retains a same-origin secure websocket endpoint', () => {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mrejects automatic credential forwarding to wss://user:pw@localhost/social-ws
+[31m[1mAssertionError[22m: expected 'wss://user:pw@localhost/social-ws' to be null[39m
+
+[32m- Expected:[39m
+null
+
+[31m+ Received:[39m
+"wss://user:pw@localhost/social-ws"
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m46:30[22m[39m
+    [90m 44|[39m   it.each(['wss://external.invalid/social-ws', 'ws://external.invalid/…
+    [90m 45|[39m     const config = new Config({ search: `?social=${encodeURIComponent(…
+    [90m 46|[39m     expect(config.socialUrl).toBeNull();
+    [90m   |[39m                              [31m^[39m
+    [90m 47|[39m   });
+    [90m 48|[39m   it('retains a same-origin secure websocket endpoint', () => {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mignores unsafe Quran override https://external.invalid/quran.json
+[31m[1mAssertionError[22m: expected 'https://external.invalid/quran.json' to be './quran/quran.json' // Object.is equality[39m
+
+Expected: [32m"[7m./quran[27m/quran.json"[39m
+Received: [31m"[7mhttps://external.invalid[27m/quran.json"[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m54:33[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mignores unsafe Quran override //external.invalid/quran.json
+[31m[1mAssertionError[22m: expected '//external.invalid/quran.json' to be './quran/quran.json' // Object.is equality[39m
+
+Expected: [32m"[7m./quran[27m/quran.json"[39m
+Received: [31m"[7m//external.invalid[27m/quran.json"[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m54:33[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mignores unsafe Quran override data:application/json,{}
+[31m[1mAssertionError[22m: expected 'data:application/json,{}' to be './quran/quran.json' // Object.is equality[39m
+
+Expected: [32m"[7m./quran/quran.[27mjson"[39m
+Received: [31m"[7mdata:application/[27mjson[7m,{}[27m"[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m54:33[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mignores unsafe Quran override ../outside.json
+[31m[1mAssertionError[22m: expected '../outside.json' to be './quran/quran.json' // Object.is equality[39m
+
+Expected: [32m".[7m/quran/quran[27m.json"[39m
+Received: [31m".[7m./outside[27m.json"[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m54:33[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22muntrusted query endpoints[2m > [22mignores unsafe Quran override ./quran/%2e%2e/other.json
+[31m[1mAssertionError[22m: expected './quran/%2e%2e/other.json' to be './quran/quran.json' // Object.is equality[39m
+
+Expected: [32m"./quran/[7mquran[27m.json"[39m
+Received: [31m"./quran/[7m%2e%2e/other[27m.json"[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m54:33[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects unmasked without delivering a message
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects RSV1 without delivering a message
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects orphan FIN continuation without delivering a message
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects interleaved text fragments without delivering a message
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects fragmented ping without delivering a message
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects oversized control without delivering a message
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects invalid UTF-8 without delivering a message
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m72:23[22m[39m
+    [90m 70|[39m     const { feed, ws, received } = setup();
+    [90m 71|[39m     bytes.forEach(feed);
+    [90m 72|[39m     expect(ws.closed).toBe(true);
+    [90m   |[39m                       [31m^[39m
+    [90m 73|[39m     expect(received).toEqual([]);
+    [90m 74|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22menforces the cumulative message limit across fragments
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m87:23[22m[39m
+    [90m 85|[39m     const { ws, feed, received } = setup({ maxMessageBytes: 12, maxFra…
+    [90m 86|[39m     feed(frame(1, 'a'.repeat(8), { fin: false })); feed(frame(0, 'b'.r…
+    [90m 87|[39m     expect(ws.closed).toBe(true); expect(received).toEqual([]);
+    [90m   |[39m                       [31m^[39m
+    [90m 88|[39m   });
+    [90m 89|[39m   it('times out a partial header and force-destroys a peer that never …
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mtimes out a partial header and force-destroys a peer that never closes
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m94:23[22m[39m
+    [90m 92|[39m     feed(Buffer.from([0x81]));
+    [90m 93|[39m     vi.advanceTimersByTime(101);
+    [90m 94|[39m     expect(ws.closed).toBe(true);
+    [90m   |[39m                       [31m^[39m
+    [90m 95|[39m     vi.advanceTimersByTime(51);
+    [90m 96|[39m     expect(socket.destroyed).toBe(true);
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mbounds a slow reader instead of growing the TCP write queue
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m102:32[22m[39m
+    [90m100|[39m     const { ws, socket } = setup({ maxBufferedBytes: 100 });
+    [90m101|[39m     socket.writableLength = 101;
+    [90m102|[39m     expect(ws.send('message')).toBe(false);
+    [90m   |[39m                                [31m^[39m
+    [90m103|[39m     expect(ws.closed).toBe(true);
+    [90m104|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mRFC6455 negative / split-frame regression matrix[2m > [22mrejects an invalid handshake key/version
+[31m[1mAssertionError[22m: expected WSConnection{ …(9) } to be null[39m
+
+[32m- Expected:[39m
+null
+
+[31m+ Received:[39m
+WSConnection {
+  "_closeFired": false,
+  "buffer": Buffer [],
+  "closed": false,
+  "fragments": [],
+  "isAlive": true,
+  "onClose": null,
+  "onError": null,
+  "onMessage": null,
+  "socket": Socket {
+    "_events": {
+      "close": [Function anonymous],
+      "data": [Function anonymous],
+      "error": [Function anonymous],
+    },
+    "_eventsCount": 3,
+    "_maxListeners": undefined,
+    "destroyed": false,
+    "writableLength": 0,
+    "writes": [
+      "HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: ILSOjoEw3lH2R0X+T9uBSJ2g+js=
+Sec-WebSocket-Version: 13
+
+",
+    ],
+    Symbol(shapeMode): false,
+    Symbol(kCapture): false,
+  },
+}
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m108:88[22m[39m
+    [90m106|[39m     const socket = new Socket();
+    [90m107|[39m     const req = { url: '/social-ws', headers: { upgrade: 'websocket', …
+    [90m108|[39m     expect(handleUpgradeRequest(req, socket, Buffer.alloc(0), { path: …
+    [90m   |[39m                                                                                        [31m^[39m
+    [90m109|[39m   });
+    [90m110|[39m });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/29]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mmoderation normalization[2m > [22mmatches a blocked word separated by " "
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m116:28[22m[39m
+    [90m114|[39m     const word = social.chat.profanity[0];
+    [90m115|[39m     const result = filterChat(`سلام ${[...word].join(separator)} پایان…
+    [90m116|[39m     expect(result.blocked).toBe(true);
+    [90m   |[39m                            [31m^[39m
+    [90m117|[39m     expect(result.text).toContain('سلام'); expect(result.text).toConta…
+    [90m118|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/29]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m4 failed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[31m29 failed[39m[22m[2m | [22m[1m[32m14 passed[39m[22m[90m (43)[39m
+[2m   Start at [22m 07:25:34
+[2m   Duration [22m 2.80s[2m (transform 34%, environment 32%, tests 20%, import 13%, worker 1%)[22m
+
+[2m    Isolate [22m [33m4 workers spawned[39m[2m · ~273ms startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~818ms faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+

@@ -1,0 +1,66 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-unit-models.test.js [2m([22m[2m5 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 26[2mms[22m[39m
+[31m   [31m×[31m consumes indexed source geometry when merging painted parts[39m[32m 8[2mms[22m[39m
+[31m   [31m×[31m has a faceless multipart guard silhouette inside its JSON triangle cap[39m[32m 5[2mms[22m[39m
+[31m   [31m×[31m has a faceless multipart archer silhouette inside its JSON triangle cap[39m[32m 4[2mms[22m[39m
+   [32m✓[39m has a faceless multipart healer silhouette inside its JSON triangle cap[32m 6[2mms[22m[39m
+[31m   [31m×[31m has a faceless multipart breaker silhouette inside its JSON triangle cap[39m[32m 2[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-unit-models.test.js[2m > [22mconsumes indexed source geometry when merging painted parts
+[31m[1mAssertionError[22m: expected "dispose" to be called once, but got 0 times[39m
+[36m [2m❯[22m tests/upgrade-unit-models.test.js:[2m7:18[22m[39m
+    [90m  5|[39m it('consumes indexed source geometry when merging painted parts', () =…
+    [90m  6|[39m  const original=paint(new THREE.BoxGeometry(),0xffffff),dispose=vi.spy…
+    [90m  7|[39m  expect(dispose).toHaveBeenCalledOnce();merged.dispose();
+    [90m   |[39m                  [31m^[39m
+    [90m  8|[39m });
+    [90m  9|[39m it.each(units.units)('has a faceless multipart $id silhouette inside i…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-unit-models.test.js[2m > [22mhas a faceless multipart guard silhouette inside its JSON triangle cap
+[31m[1mAssertionError[22m: expected 156 to be greater than or equal to 300[39m
+[36m [2m❯[22m tests/upgrade-unit-models.test.js:[2m11:47[22m[39m
+    [90m  9|[39m it.each(units.units)('has a faceless multipart $id silhouette inside i…
+    [90m 10|[39m  const geometry=createUnitGeometry(unit.id,BATTLE_PALETTES.defender);
+    [90m 11|[39m  expect(geometry.attributes.position.count/3).toBeGreaterThanOrEqual(3…
+    [90m   |[39m                                               [31m^[39m
+    [90m 12|[39m  expect(geometry.attributes.position.count/3).toBeLessThanOrEqual(unit…
+    [90m 13|[39m  expect(geometry.attributes.color.count).toBe(geometry.attributes.posi…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-unit-models.test.js[2m > [22mhas a faceless multipart archer silhouette inside its JSON triangle cap
+[31m[1mAssertionError[22m: expected 252 to be greater than or equal to 300[39m
+[36m [2m❯[22m tests/upgrade-unit-models.test.js:[2m11:47[22m[39m
+    [90m  9|[39m it.each(units.units)('has a faceless multipart $id silhouette inside i…
+    [90m 10|[39m  const geometry=createUnitGeometry(unit.id,BATTLE_PALETTES.defender);
+    [90m 11|[39m  expect(geometry.attributes.position.count/3).toBeGreaterThanOrEqual(3…
+    [90m   |[39m                                               [31m^[39m
+    [90m 12|[39m  expect(geometry.attributes.position.count/3).toBeLessThanOrEqual(unit…
+    [90m 13|[39m  expect(geometry.attributes.color.count).toBe(geometry.attributes.posi…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-unit-models.test.js[2m > [22mhas a faceless multipart breaker silhouette inside its JSON triangle cap
+[31m[1mAssertionError[22m: expected 174 to be greater than or equal to 300[39m
+[36m [2m❯[22m tests/upgrade-unit-models.test.js:[2m11:47[22m[39m
+    [90m  9|[39m it.each(units.units)('has a faceless multipart $id silhouette inside i…
+    [90m 10|[39m  const geometry=createUnitGeometry(unit.id,BATTLE_PALETTES.defender);
+    [90m 11|[39m  expect(geometry.attributes.position.count/3).toBeGreaterThanOrEqual(3…
+    [90m   |[39m                                               [31m^[39m
+    [90m 12|[39m  expect(geometry.attributes.position.count/3).toBeLessThanOrEqual(unit…
+    [90m 13|[39m  expect(geometry.attributes.color.count).toBe(geometry.attributes.posi…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 08:44:54
+[2m   Duration [22m 299ms[2m (import 40%, transform 37%, tests 19%, worker 3%)[22m
+

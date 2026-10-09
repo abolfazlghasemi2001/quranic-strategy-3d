@@ -1,0 +1,60 @@
+[
+  {
+    "name": "unmasked",
+    "closed": false,
+    "messages": [
+      "hello"
+    ],
+    "buffer": 0
+  },
+  {
+    "name": "rsv",
+    "closed": false,
+    "messages": [
+      "a"
+    ],
+    "buffer": 0
+  },
+  {
+    "name": "orphanContinuation",
+    "closed": false,
+    "messages": [
+      "hello"
+    ],
+    "buffer": 0
+  },
+  {
+    "name": "interleavedFragment",
+    "closed": false,
+    "messages": [
+      "second"
+    ],
+    "buffer": 0
+  },
+  {
+    "name": "fragmentedPing",
+    "closed": false,
+    "messages": [],
+    "buffer": 0
+  },
+  {
+    "name": "invalidOpcode",
+    "closed": true,
+    "messages": [],
+    "buffer": 0
+  },
+  {
+    "name": "incomplete",
+    "closed": false,
+    "messages": [],
+    "buffer": 2
+  },
+  {
+    "name": "badUtf8",
+    "closed": false,
+    "messages": [
+      "��"
+    ],
+    "buffer": 0
+  }
+]

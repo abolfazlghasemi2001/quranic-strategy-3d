@@ -41,6 +41,7 @@ const shotsDir = argValue('--shots', null);
 
 /** Viewport matrix from the HUD brief (portrait phones, a tablet, landscape). */
 const VIEWPORTS = [
+  { name: '360x640', width: 360, height: 640 },
   { name: '360x740', width: 360, height: 740 },
   { name: '390x844', width: 390, height: 844 },
   { name: '412x915', width: 412, height: 915 },

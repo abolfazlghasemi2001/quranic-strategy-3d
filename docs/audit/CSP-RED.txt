@@ -1,0 +1,135 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-security.test.js [2m([22m[2m34 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 174[2mms[22m[39m
+   [32m✓[39m untrusted query endpoints [2m(9)[22m
+     [32m✓[39m rejects automatic credential forwarding to wss://external.invalid/social-ws[32m 5[2mms[22m[39m
+     [32m✓[39m rejects automatic credential forwarding to ws://external.invalid/[32m 2[2mms[22m[39m
+     [32m✓[39m rejects automatic credential forwarding to wss://user:pw@localhost/social-ws[32m 1[2mms[22m[39m
+     [32m✓[39m retains a same-origin secure websocket endpoint[32m 3[2mms[22m[39m
+     [32m✓[39m ignores unsafe Quran override https://external.invalid/quran.json[32m 1[2mms[22m[39m
+     [32m✓[39m ignores unsafe Quran override //external.invalid/quran.json[32m 0[2mms[22m[39m
+     [32m✓[39m ignores unsafe Quran override data:application/json,{}[32m 0[2mms[22m[39m
+     [32m✓[39m ignores unsafe Quran override ../outside.json[32m 0[2mms[22m[39m
+     [32m✓[39m ignores unsafe Quran override ./quran/%2e%2e/other.json[32m 1[2mms[22m[39m
+   [32m✓[39m RFC6455 negative / split-frame regression matrix [2m(14)[22m
+     [32m✓[39m rejects unmasked without delivering a message[32m 2[2mms[22m[39m
+     [32m✓[39m rejects RSV1 without delivering a message[32m 0[2mms[22m[39m
+     [32m✓[39m rejects orphan FIN continuation without delivering a message[32m 0[2mms[22m[39m
+     [32m✓[39m rejects interleaved text fragments without delivering a message[32m 1[2mms[22m[39m
+     [32m✓[39m rejects fragmented ping without delivering a message[32m 0[2mms[22m[39m
+     [32m✓[39m rejects oversized control without delivering a message[32m 0[2mms[22m[39m
+     [32m✓[39m rejects invalid UTF-8 without delivering a message[32m 0[2mms[22m[39m
+     [32m✓[39m rejects one-byte close without delivering a message[32m 0[2mms[22m[39m
+     [32m✓[39m rejects reserved opcode without delivering a message[32m 1[2mms[22m[39m
+     [32m✓[39m accepts every TCP split point and a control frame interleaved with valid fragmentation[32m 4[2mms[22m[39m
+     [32m✓[39m enforces the cumulative message limit across fragments[32m 0[2mms[22m[39m
+     [32m✓[39m times out a partial header and force-destroys a peer that never closes[32m 3[2mms[22m[39m
+     [32m✓[39m bounds a slow reader instead of growing the TCP write queue[32m 0[2mms[22m[39m
+     [32m✓[39m rejects an invalid handshake key/version[32m 0[2mms[22m[39m
+   [32m✓[39m moderation normalization [2m(9)[22m
+     [32m✓[39m matches a blocked word separated by " "[32m 3[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "‌"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "‍"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "َ"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "ـ"[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "."[32m 0[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "⁠"[32m 1[2mms[22m[39m
+     [32m✓[39m matches a blocked word separated by "​"[32m 0[2mms[22m[39m
+     [32m✓[39m preserves innocent Persian and does not join whole unrelated words[32m 0[2mms[22m[39m
+   [31m❯[39m CSP and transport fuzz [2m(2)[22m
+[31m     [31m×[31m declares a restrictive application CSP without inline script permission[39m[32m 19[2mms[22m[39m
+     [32m✓[39m bounds buffers and deadlines in 1024 deterministic malformed/split inputs[32m 120[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-security.test.js[2m > [22mCSP and transport fuzz[2m > [22mdeclares a restrictive application CSP without inline script permission
+[31m[1mAssertionError[22m: expected '<!doctype html>\n<html lang="fa" dir=…' to contain 'Content-Security-Policy'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Content-Security-Policy[39m
+[31m+ <!doctype html>[39m
+[31m+ <html lang="fa" dir="rtl">[39m
+[31m+   <head>[39m
+[31m+     <meta charset="utf-8" />[39m
+[31m+     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />[39m
+[31m+     <meta name="theme-color" content="#0b1a20" />[39m
+[31m+     <meta name="color-scheme" content="dark" />[39m
+[31m+     <meta name="mobile-web-app-capable" content="yes" />[39m
+[31m+     <meta name="apple-mobile-web-app-capable" content="yes" />[39m
+[31m+     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />[39m
+[31m+     <meta name="description" content="شهر نور — بازی شهرسازی و استراتژی سه‌بعدی با الهام از قصه‌های قرآنی" />[39m
+[31m+     <link rel="manifest" href="./manifest.webmanifest" />[39m
+[31m+     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />[39m
+[31m+     <link rel="apple-touch-icon" href="./icons/icon-192.png" />[39m
+[31m+     <title>شهر نور — شهرسازی سه‌بعدی</title>[39m
+[31m+     <style>[39m
+[31m+       html,[39m
+[31m+       body {[39m
+[31m+         margin: 0;[39m
+[31m+         padding: 0;[39m
+[31m+         height: 100%;[39m
+[31m+         background: #0a1418;[39m
+[31m+         overflow: hidden;[39m
+[31m+         overscroll-behavior: none;[39m
+[31m+         touch-action: none;[39m
+[31m+         -webkit-user-select: none;[39m
+[31m+         user-select: none;[39m
+[31m+         font-family: 'Vazirmatn', 'IRANSans', 'Noto Sans Arabic', Tahoma, system-ui, sans-serif;[39m
+[31m+         color: #f7f2e6;[39m
+[31m+       }[39m
+[31m+       #app {[39m
+[31m+         position: fixed;[39m
+[31m+         inset: 0;[39m
+[31m+       }[39m
+[31m+       #scene {[39m
+[31m+         display: block;[39m
+[31m+         width: 100%;[39m
+[31m+         height: 100%;[39m
+[31m+         touch-action: none;[39m
+[31m+         outline: none;[39m
+[31m+       }[39m
+[31m+       .no-script {[39m
+[31m+         position: fixed;[39m
+[31m+         inset: 0;[39m
+[31m+         display: grid;[39m
+[31m+         place-items: center;[39m
+[31m+         padding: 24px;[39m
+[31m+         text-align: center;[39m
+[31m+         line-height: 2;[39m
+[31m+         font-size: 14px;[39m
+[31m+       }[39m
+[31m+     </style>[39m
+[31m+   </head>[39m
+[31m+   <body>[39m
+[31m+     <div id="app">[39m
+[31m+       <canvas id="scene" tabindex="0" aria-label="نمای سه‌بعدی شهر"></canvas>[39m
+[31m+     </div>[39m
+[31m+     <noscript>[39m
+[31m+       <div class="no-script">[39m
+[31m+         برای اجرای «شهر نور» باید جاوااسکریپت مرورگر فعال باشد.[39m
+[31m+       </div>[39m
+[31m+     </noscript>[39m
+[31m+     <script type="module" src="/src/main.js"></script>[39m
+[31m+   </body>[39m
+[31m+ </html>[39m
+[31m+[39m
+
+[36m [2m❯[22m tests/upgrade-security.test.js:[2m132:18[22m[39m
+    [90m130|[39m   it('declares a restrictive application CSP without inline script per…
+    [90m131|[39m     const html = readFileSync(new URL('../index.html', import.meta.url…
+    [90m132|[39m     expect(html).toContain('Content-Security-Policy');
+    [90m   |[39m                  [31m^[39m
+    [90m133|[39m     expect(html).toContain("default-src 'self'");
+    [90m134|[39m     expect(html).toContain("object-src 'none'");
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m33 passed[39m[22m[90m (34)[39m
+[2m   Start at [22m 07:34:51
+[2m   Duration [22m 522ms[2m (tests 44%, transform 43%, import 11%, worker 1%)[22m
+

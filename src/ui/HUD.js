@@ -17,20 +17,20 @@ import { el, button, formatFa, faDigits } from './dom.js';
 import { EVENTS } from '../core/EventBus.js';
 
 /**
- * Text-glyph icon set. The project ships ZERO external assets, so the HUD uses
+ * Self-authored SVG icon set; user input is never interpolated into markup. The HUD uses
  * a small, consistent glyph vocabulary instead of image icons or emoji soup.
  * The big emoji are kept as secondary marks only where they were already used
  * in the world markers (see Markers.js) — never as the primary affordance.
  */
+const svg = (path) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${path}"/></svg>`;
 const ICON = {
-  builders: '⚒',
-  level: '★',
-  settings: '⚙',
-  build: '⚒',        // hammer & pick: «ساخت‌وساز» (the builder badge sits on it)
-  study: '❖',       // «دارالقرآن» — a plain diamond; U+06DE (۞) is missing from
-  missions: '☼',     // many phone fonts, so it is not used as a HUD affordance
-  community: '◈',
-  report: '☰',
+  level: svg('m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z'),
+  build: svg('m4 20 10-10M10 4l2-2 10 10-2 2-4-4-4 4-4-4 4-4Z'),
+  settings: svg('M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-5v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4'),
+  study: svg('M3 5c4-1 6 0 9 2 3-2 5-3 9-2v14c-4-1-6 0-9 2-3-2-5-3-9-2Zm9 2v14'),
+  missions: svg('M12 3v2m0 14v2M3 12h2m14 0h2m-9-3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M5.5 5.5 7 7m10 10 1.5 1.5M5.5 18.5 7 17M17 7l1.5-1.5'),
+  community: svg('m12 3 9 9-9 9-9-9Zm0 5 4 4-4 4-4-4Z'),
+  report: svg('M4 5h16M4 12h16M4 19h16'),
 };
 
 /**
@@ -111,7 +111,7 @@ export class HUD {
           children: [el('span', { text: 'ن' }), this.avatarLevel],
         }),
         el('div', { className: 'game-player__info', children: [
-          el('span', { className: 'game-player__cell', children: [el('small', { text: 'سطح شهر' }), el('span', { className: 'game-player__stat', children: [el('i', { className: 'game-player__icon', text: ICON.level, attrs: { 'aria-hidden': 'true' } }), this.levelValue] })] }),
+          el('span', { className: 'game-player__cell', children: [el('small', { text: 'سطح شهر' }), el('span', { className: 'game-player__stat', children: [el('i', { className: 'game-player__icon', html: ICON.level, attrs: { 'aria-hidden': 'true' } }), this.levelValue] })] }),
           el('span', { className: 'game-player__cell game-player__cell--player', children: [el('small', { className: 'game-player__meta-label', text: 'سطح بازیکن' }), this.playerLevelValue] }),
           this.playerXpText, this.playerXpBar,
         ] }),
@@ -166,7 +166,7 @@ export class HUD {
         this.toggleShop();
       },
     });
-    this.shopButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.build }));
+    this.shopButton.prepend(el('span', { className: 'hud-action__icon', html: ICON.build }));
     this.shopButton.classList.add('hud-action--has-badge');
     this.shopButton.append(this.buildersBadge);
     this.settingsButton = button('تنظیمات', {
@@ -174,7 +174,7 @@ export class HUD {
       dataset: { hudAction: 'settings' },
       onClick: () => this.onOpenSettings?.(),
     });
-    this.settingsButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.settings }));
+    this.settingsButton.prepend(el('span', { className: 'hud-action__icon', html: ICON.settings }));
     // Phase 6: دروازهٔ کمپین قصص (نشان = شمار ستاره‌ها و مأموریت باز).
     this.questBadge = el('span', { className: 'hud-badge game-corner-badge game-corner-badge--quest', text: '★۰' });
     this.questButton = button(t('campaign.button', 'قصه‌ها'), {
@@ -183,7 +183,7 @@ export class HUD {
       title: t('campaign.panelTitle', 'کمپین قصص'),
       onClick: () => this.onOpenMissions?.(),
     });
-    this.questButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.missions }));
+    this.questButton.prepend(el('span', { className: 'hud-action__icon', html: ICON.missions }));
     this.questButton.append(this.questBadge);
 
     // Phase 4: دارالقرآن gateway + spaced-repetition badge (due count).
@@ -194,7 +194,7 @@ export class HUD {
       title: 'درس و مرور فاصله‌دار',
       onClick: () => onOpenStudy?.(),
     });
-    this.studyButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.study }));
+    this.studyButton.prepend(el('span', { className: 'hud-action__icon', html: ICON.study }));
     this.studyButton.append(this.studyBadge);
 
     // Phase 5: پادگان (آموزش سپاه) و میدان نبرد — از پنل کارنامه/نبرد باز می‌شوند.
@@ -226,7 +226,7 @@ export class HUD {
       title: t('social.title', '◈ جماعت'),
       onClick: () => this.onOpenSocial?.(),
     });
-    this.socialButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.community }));
+    this.socialButton.prepend(el('span', { className: 'hud-action__icon', html: ICON.community }));
     this.socialButton.append(this.socialBadge);
 
     // کارنامه: second entry point (the level chip above stays the primary one).
@@ -236,7 +236,7 @@ export class HUD {
       title: 'کارنامه، XP، دستاوردها و مأموریت روزانه',
       onClick: () => this.onOpenMeta?.(),
     });
-    this.reportButton.prepend(el('span', { className: 'hud-action__icon', text: ICON.report }));
+    this.reportButton.prepend(el('span', { className: 'hud-action__icon', html: ICON.report }));
 
     // «راهنمای متن» moved out of the map: it is now a control inside the
     // report/settings flow so it can never float unlabelled over the terrain.
@@ -784,7 +784,7 @@ export class HUD {
   /* --------------------------------------------------------------- loop */
 
   update(dt, engine) {
-    this.monitor.update(dt, engine.stats);
+    this.monitor.update(engine.frameDelta ?? dt, engine.stats);
     // live countdowns (~4 Hz, cheap string updates only)
     this._countdownAcc = (this._countdownAcc || 0) + dt;
     if (this._countdownAcc < 0.25) return;

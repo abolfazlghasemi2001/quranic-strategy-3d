@@ -1,0 +1,57 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-save.test.js [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 11[2mms[22m[39m
+[31m   [31m×[31m does not report a durable save when an IDB transaction failed[39m[32m 8[2mms[22m[39m
+[31m   [31m×[31m still permits memory fallback for ordinary play, but never for update/reload consent[39m[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-save.test.js[2m > [22mdoes not report a durable save when an IDB transaction failed
+[31m[1mAssertionError[22m: promise resolved "1791536298342" instead of rejecting[39m
+
+[32m- Expected:[39m
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m
+1791536298342
+
+[36m [2m❯[22m tests/upgrade-save.test.js:[2m5:66[22m[39m
+    [90m  3|[39m it('does not report a durable save when an IDB transaction failed', as…
+    [90m  4|[39m  const saves=new SaveSystem({backend:'idb'});vi.spyOn(saves,'_idbPut')…
+    [90m  5|[39m  await expect(saves.save({entities:[]},{requirePersistent:true})).reje…
+    [90m   |[39m                                                                  [31m^[39m
+    [90m  6|[39m });
+    [90m  7|[39m it('still permits memory fallback for ordinary play, but never for upd…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-save.test.js[2m > [22mstill permits memory fallback for ordinary play, but never for update/reload consent
+[31m[1mAssertionError[22m: promise resolved "1791536298349" instead of rejecting[39m
+
+[32m- Expected:[39m
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m
+1791536298349
+
+[36m [2m❯[22m tests/upgrade-save.test.js:[2m9:66[22m[39m
+    [90m  7|[39m it('still permits memory fallback for ordinary play, but never for upd…
+    [90m  8|[39m  const saves=new SaveSystem({backend:'memory'});await expect(saves.sav…
+    [90m  9|[39m  await expect(saves.save({entities:[]},{requirePersistent:true})).reje…
+    [90m   |[39m                                                                  [31m^[39m
+    [90m 10|[39m });
+    [90m 11|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m   Start at [22m 08:58:18
+[2m   Duration [22m 210ms[2m (transform 64%, import 19%, tests 12%, worker 5%)[22m
+

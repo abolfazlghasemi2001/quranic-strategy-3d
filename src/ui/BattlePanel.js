@@ -109,7 +109,6 @@ export class BattlePanel {
       className: 'ui-btn battle-withdraw',
       onClick: () => {
         this.battle.withdraw();
-        this.hide();
       },
     });
     this.replayBadge = el('span', { className: 'battle-badge is-hidden', text: this.t('battle.replayRunning', 'بازپخش') });
@@ -189,6 +188,7 @@ export class BattlePanel {
         this.resultBox.classList.add('is-hidden');
         this.liveBox.classList.remove('is-hidden');
         this.setDeployType(null);
+        this.show();
       }),
       bus.on(EVENTS.BATTLE_REPLAY_VERIFIED, (verification) => {
         this.replayBadge.classList.add('is-hidden');
@@ -365,6 +365,7 @@ export class BattlePanel {
   }
 
   startReplay() {
+    if (this.battle.sim?.done) this.battle.closeSession();
     const result = this.battle.startReplay(0);
     if (!result.ok) {
       this.bus.emit(EVENTS.UI_TOAST, this.t(`battle.blocked.${result.reason}`, this.t('battle.noBattle', '')));
@@ -439,7 +440,7 @@ export class BattlePanel {
       this.renderSetup();
     } else if (this.battle.active) {
       this.setupBox.classList.add('is-hidden');
-      this.liveBox.classList.toggle('is-hidden', this.mode === 'result');
+      this.liveBox.classList.toggle('is-hidden', this.mode === 'result' || Boolean(this.battle.sim?.done));
       this.renderLive(this.battle.status());
     }
   }

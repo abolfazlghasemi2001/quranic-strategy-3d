@@ -14,6 +14,8 @@
  * خروجی نرمال‌شده: { meta, verses:Map, verseList, lessons, issues, stats }
  */
 import { clamp } from '../../core/MathUtils.js';
+import { quranPath } from '../../core/EndpointPolicy.js';
+import { verseId, parseVerseId } from './VerseIds.js';
 
 /** برچسب‌های ثابت رابط کاربری (بدون هیچ متن قرآنی). */
 export const PLACEHOLDER_LABEL = 'نمونه — جایگزین شود';
@@ -28,16 +30,7 @@ export function hasDiacritics(text) {
   return typeof text === 'string' && DIACRITICS_RE.test(text);
 }
 
-/** شناسهٔ استاندارد یک آیه: ayah:سوره:آیه */
-export function verseId(surahIndex, ayahIndex) {
-  return `ayah:${Number(surahIndex)}:${Number(ayahIndex)}`;
-}
-
-export function parseVerseId(id) {
-  const match = /^ayah:(\d+):(\d+)$/.exec(String(id || ''));
-  if (!match) return null;
-  return { surahIndex: Number(match[1]), ayahIndex: Number(match[2]) };
-}
+export { verseId, parseVerseId } from './VerseIds.js';
 
 /** توکن‌های متنی یک آیه (برای مینی‌گیم‌ها). نشان تزئینی ۞ (U+06DE) توکن نیست. */
 export function tokenize(text) {
@@ -447,84 +440,121 @@ export function datasetSummary(dataset) {
  *   ۳) نمونهٔ داخلی `src/data/quran-sample.json` (جای‌نگهدار)
  */
 export class QuranDatasetLoader {
-  /**
-   * @param {object} options
-   * @param {object} options.sample — محتوای src/data/quran-sample.json
-   * @param {object} options.learning — src/data/quran-learning.json
-   * @param {string} [options.search] — location.search
-   * @param {typeof fetch} [options.fetchImpl]
-   * @param {string} [options.baseUrl]
-   */
-  constructor({ sample, learning, search = '', fetchImpl = null, baseUrl = '' }) {
-    this.sample = sample;
-    this.learning = learning;
-    this.search = search;
-    this.fetchImpl = fetchImpl;
-    this.baseUrl = baseUrl;
-    this.dataset = null;
-    this.loadReport = null;
+  constructor({ sample, learning, search = '', fetchImpl = null, baseUrl = 'https://shahr-nur.invalid/' }) {
+    this.sample = sample; this.learning = learning; this.search = search;
+    this.fetchImpl = fetchImpl; this.baseUrl = baseUrl;
+    this.dataset = null; this.loadReport = null; this.urlWarning = null;
   }
 
   resolveUrl() {
-    const override = new URLSearchParams(this.search).get(this.learning?.dataset?.queryParam || 'quran');
-    if (override) return override;
-    const expected = this.learning?.dataset?.expectedPath || './quran/quran.json';
-    if (/^https?:/i.test(expected) || expected.startsWith('./') || expected.startsWith('/')) return expected;
-    return `./${expected}`;
+    const cfg = this.learning?.dataset || {};
+    const override = new URLSearchParams(this.search).get(cfg.queryParam || 'quran');
+    const fallback = quranPath(cfg.expectedPath || './quran/quran.json', { baseUrl: this.baseUrl });
+    const candidate = quranPath(override, { baseUrl: this.baseUrl });
+    if (override && (!candidate || !/^[a-f0-9]{64}$/i.test(cfg.checksums?.[candidate] || ''))) {
+      this.urlWarning = 'quran-endpoint-rejected';
+      return fallback;
+    }
+    return candidate || fallback;
   }
 
-  /** @returns {Promise<{dataset:object, validation:object, loadReport:object}>} */
   async load() {
     const bundled = normalizeDataset(this.sample, { origin: 'bundled' });
-    const bundledValidation = validateDataset(bundled);
-
     let remote = null;
     const url = this.resolveUrl();
-    const report = { url, remoteLoaded: false, remoteError: null, usedSample: true, lessonsFrom: 'bundled' };
-
-    const doFetch =
-      this.fetchImpl ||
-      (typeof fetch === 'function' ? fetch.bind(globalThis) : null);
-
+    const report = { url, remoteLoaded: false, remoteError: null, warning: this.urlWarning, usedSample: true, lessonsFrom: 'bundled' };
+    const doFetch = this.fetchImpl || (typeof fetch === 'function' ? fetch.bind(globalThis) : null);
     if (doFetch && url) {
+      const cfg = this.learning?.dataset || {};
+      const controller = new AbortController();
+      let timer;
       try {
-        const response = await doFetch(url, { cache: this.learning?.dataset?.cacheBust ? 'no-store' : 'default' });
-        const contentType = response?.headers?.get?.('content-type') || '';
-        if (response && response.ok && contentType && !/json/i.test(contentType)) {
-          // Dev servers answer unknown paths with index.html (SPA fallback): that is
-          // «no dataset here», not a broken one — fall back to the placeholder sample.
-          report.remoteError = 'not-json-response';
-        } else if (response && response.ok) {
-          const json = await response.json();
+        const expected = cfg.checksums?.[url];
+        if (!/^[a-f0-9]{64}$/i.test(expected || '')) throw new Error('checksum-missing');
+        const request = async () => {
+          const response = await doFetch(url, { cache: cfg.cacheBust ? 'no-store' : 'default', credentials: 'same-origin', redirect: 'error', signal: controller.signal });
+          if (!response?.ok) throw new Error(`http-${response?.status ?? 'error'}`);
+          const type = response.headers?.get?.('content-type');
+          if (type && !/json/i.test(type)) throw new Error('not-json-response');
+          if (response.url && new URL(response.url, this.baseUrl).origin !== new URL(this.baseUrl).origin) throw new Error('cross-origin-response');
+          const bytes = await readBoundedBytes(response, cfg.maxBytes || 8388608);
+          if (!globalThis.crypto?.subtle) throw new Error('checksum-unavailable');
+          const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+          const actual = [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, '0')).join('');
+          if (actual !== expected.toLowerCase()) throw new Error('checksum-mismatch');
+          const json = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+          validateRawDataset(json);
           const normalized = normalizeDataset(json, { origin: 'remote' });
           const validation = validateDataset(normalized);
-          if (normalized.verseList.length > 0 && validation.errors === 0) {
-            remote = normalized;
-            report.remoteLoaded = true;
-          } else if (normalized.verseList.length > 0) {
-            report.remoteError = `validation-errors:${validation.errors}`;
-          } else {
-            report.remoteError = 'no-verses';
-          }
-        } else {
-          report.remoteError = `http-${response ? response.status : 'error'}`;
-        }
+          if (!normalized.verseList.length || validation.errors > 0) throw new Error(`validation-errors:${validation.errors}`);
+          if (cfg.rejectPlaceholderFromRemote && normalized.stats.placeholder) throw new Error('placeholder-remote');
+          return normalized;
+        };
+        remote = await Promise.race([
+          request(),
+          new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('fetch-timeout')); }, cfg.timeoutMs || 8000); }),
+        ]);
+        report.remoteLoaded = true;
       } catch (error) {
         report.remoteError = String(error?.message || error);
-      }
-    } else {
-      report.remoteError = 'fetch-unavailable';
-    }
-
+        controller.abort();
+      } finally { clearTimeout(timer); }
+    } else report.remoteError = 'fetch-unavailable';
     const dataset = remote ? mergeDatasets(bundled, remote) : bundled;
-    report.usedSample = !remote;
-    report.lessonsFrom = dataset.meta.lessonsFrom || 'bundled';
-
+    report.usedSample = !remote; report.lessonsFrom = dataset.meta.lessonsFrom || 'bundled';
     const validation = validateDataset(dataset);
     this.dataset = dataset;
-    this.loadReport = { ...report, validation: { errors: validation.errors, warnings: validation.warnings } };
+    this.loadReport = { ...report, error: report.remoteError, validation: { errors: validation.errors, warnings: validation.warnings } };
     return { dataset, validation, loadReport: this.loadReport };
   }
+}
+
+async function readBoundedBytes(response, maxBytes) {
+  const declared = Number(response.headers?.get?.('content-length') || 0);
+  if (declared > maxBytes) throw new Error('dataset-too-large');
+  if (response.body?.getReader) {
+    const reader = response.body.getReader();
+    const parts = []; let size = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > maxBytes) { await reader.cancel(); throw new Error('dataset-too-large'); }
+        parts.push(value);
+      }
+    } finally { reader.releaseLock(); }
+    const bytes = new Uint8Array(size); let cursor = 0;
+    for (const part of parts) { bytes.set(part, cursor); cursor += part.byteLength; }
+    return bytes;
+  }
+  const bytes = new TextEncoder().encode(await response.text());
+  if (bytes.byteLength > maxBytes) throw new Error('dataset-too-large');
+  return bytes;
+}
+
+/** Reject ambiguous IDs/types before normalization can silently overwrite them. */
+function validateRawDataset(raw) {
+  const fail = () => { throw new Error('dataset-schema'); };
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.surahs) || !raw.surahs.length || raw.surahs.length > 114) fail();
+  const surahs = new Set();
+  for (const surah of raw.surahs) {
+    if (!surah || !Number.isInteger(surah.index) || surah.index < 1 || surah.index > 114 || surahs.has(surah.index)) fail();
+    surahs.add(surah.index);
+    if (!Array.isArray(surah.ayahs) || !surah.ayahs.length || surah.ayahs.length > 286) fail();
+    if (surah.ayahCount != null && (!Number.isInteger(surah.ayahCount) || surah.ayahCount < surah.ayahs.length || surah.ayahCount > 286)) fail();
+    const indices = new Set();
+    for (const ayah of surah.ayahs) {
+      if (!ayah || !Number.isInteger(ayah.index) || ayah.index < 1 || ayah.index > 286 || indices.has(ayah.index)) fail();
+      indices.add(ayah.index);
+      if (ayah.id != null && ayah.id !== verseId(surah.index, ayah.index)) fail();
+      for (const value of [ayah.textUthmani ?? ayah.text, ayah.translationFa ?? ayah.translation]) {
+        if (typeof value !== 'string' || !value.trim() || value.length > 10000) fail();
+      }
+      if (ayah.reviewed != null && typeof ayah.reviewed !== 'boolean') fail();
+    }
+  }
+  if ((raw.meta?.reviewed != null && typeof raw.meta.reviewed !== 'boolean') || (raw.reviewed != null && typeof raw.reviewed !== 'boolean')) fail();
 }
 
 /** Parses a lesson duration budget into a human Persian phrase. */

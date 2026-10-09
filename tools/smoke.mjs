@@ -147,6 +147,7 @@ async function boot() {
     if (window.__NUR__) {
       // A real browser would rAF-loop from engine.start(); drive one frame so
       // Game's dirty flags flush into the freshly-built HUD (initial render).
+      await window.__NUR__.ensureAll?.();
       window.__NUR__.engine.tick(0.3);
       return window.__NUR__;
     }
@@ -1089,6 +1090,8 @@ await test('phase 8: real server link — adopt ledger, panel chat, online build
   const url = `ws://127.0.0.1:${port}/social-ws`;
   let helper = null;
   try {
+    // Explicitly inject the test application's HTTP origin; query URLs never widen the policy.
+    nur.game.social.baseUrl = `http://127.0.0.1:${port}/`;
     await nur.game.social.connect({ displayName: 'آزمون', url });
     assert(nur.game.social.isOnline(), 'city linked to the jamaat server');
     assert(nur.game.queue.online, 'queue runs in server-validated mode');

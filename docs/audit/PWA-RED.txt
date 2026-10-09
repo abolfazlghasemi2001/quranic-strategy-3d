@@ -1,0 +1,41 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-pwa.test.js [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 9[2mms[22m[39m
+[31m   [31m×[31m does not replace an active offline release until the user accepts after saving[39m[32m 8[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-pwa.test.js[2m > [22mdoes not replace an active offline release until the user accepts after saving
+[31m[1mAssertionError[22m: expected 'self.addEventListener(\'install\', (e…' not to contain 'self.skipWaiting()'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- self.[7mskipWaiting()[27m[39m
+[31m+ self.[7maddEventListener('install', (event) => {[27m[39m
+[31m+   event.waitUntil([39m
+[31m+     caches.open(CACHE_NAME)[39m
+[31m+       .then((cache) => cache.addAll(PRECACHE_PATHS.map(appUrl)))[39m
+[31m+       .then(() => self.skipWaiting()),[39m
+[31m+   );[39m
+[31m+ });[39m
+[31m+[39m
+[31m+[39m
+
+[36m [2m❯[22m tests/upgrade-pwa.test.js:[2m6:22[22m[39m
+    [90m  4|[39m  const source=readFileSync(new URL('../src/pwa/service-worker.js',impo…
+    [90m  5|[39m  const install=source.slice(source.indexOf("self.addEventListener('ins…
+    [90m  6|[39m  expect(install).not.toContain('self.skipWaiting()');
+    [90m   |[39m                      [31m^[39m
+    [90m  7|[39m  expect(source).toContain('SKIP_WAITING');
+    [90m  8|[39m });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m   Start at [22m 08:52:52
+[2m   Duration [22m 163ms[2m (transform 42%, import 25%, tests 22%, worker 10%)[22m
+

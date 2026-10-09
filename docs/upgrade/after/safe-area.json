@@ -1,0 +1,534 @@
+{
+  "method": "Synthetic CSS safe insets: top24/bottom20/left12/right18; not a physical notch.",
+  "failures": 0,
+  "rows": [
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 19.1875,
+          "y": 28.390625,
+          "right": 63.1875,
+          "bottom": 72.390625
+        },
+        {
+          "action": "build",
+          "w": 71.5,
+          "h": 48,
+          "x": 258.3125,
+          "y": 570,
+          "right": 329.8125,
+          "bottom": 618
+        },
+        {
+          "action": "study",
+          "w": 54.53125,
+          "h": 48,
+          "x": 199.78125,
+          "y": 570,
+          "right": 254.3125,
+          "bottom": 618
+        },
+        {
+          "action": "missions",
+          "w": 54.53125,
+          "h": 48,
+          "x": 141.25,
+          "y": 570,
+          "right": 195.78125,
+          "bottom": 618
+        },
+        {
+          "action": "community",
+          "w": 54.53125,
+          "h": 48,
+          "x": 82.71875,
+          "y": 570,
+          "right": 137.25,
+          "bottom": 618
+        },
+        {
+          "action": "report",
+          "w": 54.53125,
+          "h": 48,
+          "x": 24.1875,
+          "y": 570,
+          "right": 78.71875,
+          "bottom": 618
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "setting": "normal"
+    },
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 19.1875,
+          "y": 28.390625,
+          "right": 63.1875,
+          "bottom": 72.390625
+        },
+        {
+          "action": "build",
+          "w": 71.5,
+          "h": 48,
+          "x": 258.3125,
+          "y": 570,
+          "right": 329.8125,
+          "bottom": 618
+        },
+        {
+          "action": "study",
+          "w": 54.53125,
+          "h": 48,
+          "x": 199.78125,
+          "y": 570,
+          "right": 254.3125,
+          "bottom": 618
+        },
+        {
+          "action": "missions",
+          "w": 54.53125,
+          "h": 48,
+          "x": 141.25,
+          "y": 570,
+          "right": 195.78125,
+          "bottom": 618
+        },
+        {
+          "action": "community",
+          "w": 54.53125,
+          "h": 48,
+          "x": 82.71875,
+          "y": 570,
+          "right": 137.25,
+          "bottom": 618
+        },
+        {
+          "action": "report",
+          "w": 54.53125,
+          "h": 48,
+          "x": 24.1875,
+          "y": 570,
+          "right": 78.71875,
+          "bottom": 618
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "setting": "larger"
+    },
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 20.234375,
+          "y": 32.234375,
+          "right": 64.234375,
+          "bottom": 76.234375
+        },
+        {
+          "action": "build",
+          "w": 82.625,
+          "h": 50.84375,
+          "x": 295.203125,
+          "y": 839.21875,
+          "right": 377.828125,
+          "bottom": 890.0625
+        },
+        {
+          "action": "study",
+          "w": 62.75,
+          "h": 50.84375,
+          "x": 228.453125,
+          "y": 839.21875,
+          "right": 291.203125,
+          "bottom": 890.0625
+        },
+        {
+          "action": "missions",
+          "w": 62.765625,
+          "h": 50.84375,
+          "x": 161.6875,
+          "y": 839.21875,
+          "right": 224.453125,
+          "bottom": 890.0625
+        },
+        {
+          "action": "community",
+          "w": 62.75,
+          "h": 50.84375,
+          "x": 94.9375,
+          "y": 839.21875,
+          "right": 157.6875,
+          "bottom": 890.0625
+        },
+        {
+          "action": "report",
+          "w": 62.765625,
+          "h": 50.84375,
+          "x": 28.171875,
+          "y": 839.21875,
+          "right": 90.9375,
+          "bottom": 890.0625
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "setting": "normal"
+    },
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 20.234375,
+          "y": 37.671875,
+          "right": 64.234375,
+          "bottom": 81.671875
+        },
+        {
+          "action": "build",
+          "w": 82.625,
+          "h": 48,
+          "x": 295.203125,
+          "y": 842.0625,
+          "right": 377.828125,
+          "bottom": 890.0625
+        },
+        {
+          "action": "study",
+          "w": 62.75,
+          "h": 48,
+          "x": 228.453125,
+          "y": 842.0625,
+          "right": 291.203125,
+          "bottom": 890.0625
+        },
+        {
+          "action": "missions",
+          "w": 62.765625,
+          "h": 48,
+          "x": 161.6875,
+          "y": 842.0625,
+          "right": 224.453125,
+          "bottom": 890.0625
+        },
+        {
+          "action": "community",
+          "w": 62.75,
+          "h": 48,
+          "x": 94.9375,
+          "y": 842.0625,
+          "right": 157.6875,
+          "bottom": 890.0625
+        },
+        {
+          "action": "report",
+          "w": 62.765625,
+          "h": 48,
+          "x": 28.171875,
+          "y": 842.0625,
+          "right": 90.9375,
+          "bottom": 890.0625
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "setting": "larger"
+    },
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 22,
+          "y": 28,
+          "right": 66,
+          "bottom": 72
+        },
+        {
+          "action": "build",
+          "w": 101.1875,
+          "h": 48,
+          "x": 590.8125,
+          "y": 316,
+          "right": 692,
+          "bottom": 364
+        },
+        {
+          "action": "study",
+          "w": 101.203125,
+          "h": 48,
+          "x": 479.609375,
+          "y": 316,
+          "right": 580.8125,
+          "bottom": 364
+        },
+        {
+          "action": "missions",
+          "w": 101.203125,
+          "h": 48,
+          "x": 368.40625,
+          "y": 316,
+          "right": 469.609375,
+          "bottom": 364
+        },
+        {
+          "action": "community",
+          "w": 101.203125,
+          "h": 48,
+          "x": 257.203125,
+          "y": 316,
+          "right": 358.40625,
+          "bottom": 364
+        },
+        {
+          "action": "report",
+          "w": 101.203125,
+          "h": 48,
+          "x": 146,
+          "y": 316,
+          "right": 247.203125,
+          "bottom": 364
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "setting": "normal"
+    },
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 22,
+          "y": 28,
+          "right": 66,
+          "bottom": 72
+        },
+        {
+          "action": "build",
+          "w": 101.1875,
+          "h": 48.96875,
+          "x": 590.8125,
+          "y": 315.03125,
+          "right": 692,
+          "bottom": 364
+        },
+        {
+          "action": "study",
+          "w": 101.203125,
+          "h": 48.96875,
+          "x": 479.609375,
+          "y": 315.03125,
+          "right": 580.8125,
+          "bottom": 364
+        },
+        {
+          "action": "missions",
+          "w": 101.203125,
+          "h": 48.96875,
+          "x": 368.40625,
+          "y": 315.03125,
+          "right": 469.609375,
+          "bottom": 364
+        },
+        {
+          "action": "community",
+          "w": 101.203125,
+          "h": 48.96875,
+          "x": 257.203125,
+          "y": 315.03125,
+          "right": 358.40625,
+          "bottom": 364
+        },
+        {
+          "action": "report",
+          "w": 101.203125,
+          "h": 48.96875,
+          "x": 146,
+          "y": 315.03125,
+          "right": 247.203125,
+          "bottom": 364
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "setting": "larger"
+    },
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 22,
+          "y": 41,
+          "right": 66,
+          "bottom": 85
+        },
+        {
+          "action": "build",
+          "w": 124.0625,
+          "h": 50.84375,
+          "x": 527.9375,
+          "y": 947.15625,
+          "right": 652,
+          "bottom": 998
+        },
+        {
+          "action": "study",
+          "w": 94.484375,
+          "h": 50.84375,
+          "x": 423.453125,
+          "y": 947.15625,
+          "right": 517.9375,
+          "bottom": 998
+        },
+        {
+          "action": "missions",
+          "w": 94.484375,
+          "h": 50.84375,
+          "x": 318.96875,
+          "y": 947.15625,
+          "right": 413.453125,
+          "bottom": 998
+        },
+        {
+          "action": "community",
+          "w": 94.484375,
+          "h": 50.84375,
+          "x": 214.484375,
+          "y": 947.15625,
+          "right": 308.96875,
+          "bottom": 998
+        },
+        {
+          "action": "report",
+          "w": 94.484375,
+          "h": 50.84375,
+          "x": 110,
+          "y": 947.15625,
+          "right": 204.484375,
+          "bottom": 998
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "setting": "normal"
+    },
+    {
+      "overflow": false,
+      "boxes": [
+        {
+          "action": "settings",
+          "w": 44,
+          "h": 44,
+          "x": 22,
+          "y": 42.71875,
+          "right": 66,
+          "bottom": 86.71875
+        },
+        {
+          "action": "build",
+          "w": 124.0625,
+          "h": 57.78125,
+          "x": 527.9375,
+          "y": 940.21875,
+          "right": 652,
+          "bottom": 998
+        },
+        {
+          "action": "study",
+          "w": 94.484375,
+          "h": 57.78125,
+          "x": 423.453125,
+          "y": 940.21875,
+          "right": 517.9375,
+          "bottom": 998
+        },
+        {
+          "action": "missions",
+          "w": 94.484375,
+          "h": 57.78125,
+          "x": 318.96875,
+          "y": 940.21875,
+          "right": 413.453125,
+          "bottom": 998
+        },
+        {
+          "action": "community",
+          "w": 94.484375,
+          "h": 57.78125,
+          "x": 214.484375,
+          "y": 940.21875,
+          "right": 308.96875,
+          "bottom": 998
+        },
+        {
+          "action": "report",
+          "w": 94.484375,
+          "h": 57.78125,
+          "x": 110,
+          "y": 940.21875,
+          "right": 204.484375,
+          "bottom": 998
+        }
+      ],
+      "allSafe": true,
+      "touchTargets": true,
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "setting": "larger"
+    }
+  ]
+}

@@ -1,0 +1,605 @@
+[
+  {
+    "level": 1,
+    "p": [
+      [
+        17,
+        17
+      ],
+      [
+        17,
+        23
+      ]
+    ],
+    "seed": 33,
+    "lastTowerDown": 1152,
+    "postHits": 204,
+    "report": {
+      "result": "timeout",
+      "ticks": 3000,
+      "seconds": 150,
+      "stateHash": 1226110089,
+      "eventHash": 214625525,
+      "raidersSpawned": 12,
+      "raidersLeft": 5,
+      "defendersLeft": 0,
+      "defendersDeployed": 0,
+      "wallsBreached": 0,
+      "destroyedStructures": 2,
+      "damagedStructures": 3,
+      "healed": 0,
+      "pathRequests": 19,
+      "pathFailures": 0,
+      "commands": 0,
+      "lost": {
+        "raider:guard": 4,
+        "raider:archer": 3
+      },
+      "left": {
+        "raider:guard": 2,
+        "raider:archer": 1,
+        "raider:breaker": 2
+      },
+      "structures": [
+        {
+          "sourceId": 1,
+          "type": "town-center",
+          "hp": 384,
+          "maxHp": 2800,
+          "destroyed": false
+        },
+        {
+          "sourceId": 2,
+          "type": "watchtower",
+          "hp": 0,
+          "maxHp": 2400,
+          "destroyed": true
+        },
+        {
+          "sourceId": 3,
+          "type": "watchtower",
+          "hp": 0,
+          "maxHp": 2400,
+          "destroyed": true
+        }
+      ],
+      "checkpoints": 140
+    },
+    "scenario": {
+      "version": 1,
+      "seed": 33,
+      "encounter": {
+        "id": "raid-column",
+        "name": "ستون مهاجم",
+        "threat": 2
+      },
+      "cols": 40,
+      "rows": 40,
+      "tileSize": 2,
+      "structures": [
+        {
+          "index": 0,
+          "sourceId": 1,
+          "type": "town-center",
+          "kind": "building",
+          "col": 19,
+          "row": 19,
+          "w": 3,
+          "h": 3,
+          "level": 1,
+          "maxHp": 2800,
+          "hp": 2800,
+          "damageTaken": 0
+        },
+        {
+          "index": 1,
+          "sourceId": 2,
+          "type": "watchtower",
+          "kind": "defense",
+          "col": 17,
+          "row": 17,
+          "w": 2,
+          "h": 2,
+          "level": 1,
+          "maxHp": 2400,
+          "hp": 2400,
+          "damageTaken": 0
+        },
+        {
+          "index": 2,
+          "sourceId": 3,
+          "type": "watchtower",
+          "kind": "defense",
+          "col": 17,
+          "row": 23,
+          "w": 2,
+          "h": 2,
+          "level": 1,
+          "maxHp": 2400,
+          "hp": 2400,
+          "damageTaken": 0
+        }
+      ],
+      "garrison": {},
+      "spawns": [
+        {
+          "tick": 0,
+          "unit": "guard",
+          "x": 27,
+          "z": 2.6601
+        },
+        {
+          "tick": 2,
+          "unit": "guard",
+          "x": 31,
+          "z": 3.8826
+        },
+        {
+          "tick": 4,
+          "unit": "guard",
+          "x": 39,
+          "z": 2.5687
+        },
+        {
+          "tick": 6,
+          "unit": "guard",
+          "x": 43,
+          "z": 3.6327
+        },
+        {
+          "tick": 8,
+          "unit": "guard",
+          "x": 51,
+          "z": 3.3908
+        },
+        {
+          "tick": 10,
+          "unit": "guard",
+          "x": 55,
+          "z": 4.2518
+        },
+        {
+          "tick": 160,
+          "unit": "archer",
+          "x": 25,
+          "z": 3.509
+        },
+        {
+          "tick": 162,
+          "unit": "archer",
+          "x": 31,
+          "z": 3.5469
+        },
+        {
+          "tick": 164,
+          "unit": "archer",
+          "x": 37,
+          "z": 3.5871
+        },
+        {
+          "tick": 166,
+          "unit": "archer",
+          "x": 45,
+          "z": 4.0778
+        },
+        {
+          "tick": 440,
+          "unit": "breaker",
+          "x": 25,
+          "z": 2.75
+        },
+        {
+          "tick": 442,
+          "unit": "breaker",
+          "x": 31,
+          "z": 1.8213
+        }
+      ],
+      "commands": [],
+      "note": "آرایش نبرد: snapshot کامل و قابل‌ذخیره؛ مبنای بازپخش و اعتبارسنجی.",
+      "scenarioHash": 1777453346
+    }
+  },
+  {
+    "level": 1,
+    "p": [
+      [
+        17,
+        17
+      ],
+      [
+        17,
+        23
+      ]
+    ],
+    "seed": 56,
+    "lastTowerDown": 1145,
+    "postHits": 293,
+    "report": {
+      "result": "timeout",
+      "ticks": 3000,
+      "seconds": 150,
+      "stateHash": 704494060,
+      "eventHash": 1317728559,
+      "raidersSpawned": 12,
+      "raidersLeft": 5,
+      "defendersLeft": 0,
+      "defendersDeployed": 0,
+      "wallsBreached": 0,
+      "destroyedStructures": 2,
+      "damagedStructures": 3,
+      "healed": 0,
+      "pathRequests": 21,
+      "pathFailures": 0,
+      "commands": 0,
+      "lost": {
+        "raider:guard": 4,
+        "raider:archer": 1,
+        "raider:breaker": 2
+      },
+      "left": {
+        "raider:guard": 2,
+        "raider:archer": 3
+      },
+      "structures": [
+        {
+          "sourceId": 1,
+          "type": "town-center",
+          "hp": 339,
+          "maxHp": 2800,
+          "destroyed": false
+        },
+        {
+          "sourceId": 2,
+          "type": "watchtower",
+          "hp": 0,
+          "maxHp": 2400,
+          "destroyed": true
+        },
+        {
+          "sourceId": 3,
+          "type": "watchtower",
+          "hp": 0,
+          "maxHp": 2400,
+          "destroyed": true
+        }
+      ],
+      "checkpoints": 140
+    },
+    "scenario": {
+      "version": 1,
+      "seed": 56,
+      "encounter": {
+        "id": "raid-column",
+        "name": "ستون مهاجم",
+        "threat": 2
+      },
+      "cols": 40,
+      "rows": 40,
+      "tileSize": 2,
+      "structures": [
+        {
+          "index": 0,
+          "sourceId": 1,
+          "type": "town-center",
+          "kind": "building",
+          "col": 19,
+          "row": 19,
+          "w": 3,
+          "h": 3,
+          "level": 1,
+          "maxHp": 2800,
+          "hp": 2800,
+          "damageTaken": 0
+        },
+        {
+          "index": 1,
+          "sourceId": 2,
+          "type": "watchtower",
+          "kind": "defense",
+          "col": 17,
+          "row": 17,
+          "w": 2,
+          "h": 2,
+          "level": 1,
+          "maxHp": 2400,
+          "hp": 2400,
+          "damageTaken": 0
+        },
+        {
+          "index": 2,
+          "sourceId": 3,
+          "type": "watchtower",
+          "kind": "defense",
+          "col": 17,
+          "row": 23,
+          "w": 2,
+          "h": 2,
+          "level": 1,
+          "maxHp": 2400,
+          "hp": 2400,
+          "damageTaken": 0
+        }
+      ],
+      "garrison": {},
+      "spawns": [
+        {
+          "tick": 0,
+          "unit": "guard",
+          "x": 25,
+          "z": 3.3129
+        },
+        {
+          "tick": 2,
+          "unit": "guard",
+          "x": 33,
+          "z": 2.4506
+        },
+        {
+          "tick": 4,
+          "unit": "guard",
+          "x": 39,
+          "z": 4.1795
+        },
+        {
+          "tick": 6,
+          "unit": "guard",
+          "x": 43,
+          "z": 4.2531
+        },
+        {
+          "tick": 8,
+          "unit": "guard",
+          "x": 51,
+          "z": 3.7857
+        },
+        {
+          "tick": 10,
+          "unit": "guard",
+          "x": 55,
+          "z": 4.0668
+        },
+        {
+          "tick": 160,
+          "unit": "archer",
+          "x": 27,
+          "z": 3.009
+        },
+        {
+          "tick": 162,
+          "unit": "archer",
+          "x": 33,
+          "z": 4.2427
+        },
+        {
+          "tick": 164,
+          "unit": "archer",
+          "x": 39,
+          "z": 3.2179
+        },
+        {
+          "tick": 166,
+          "unit": "archer",
+          "x": 45,
+          "z": 2.4491
+        },
+        {
+          "tick": 440,
+          "unit": "breaker",
+          "x": 25,
+          "z": 2.8766
+        },
+        {
+          "tick": 442,
+          "unit": "breaker",
+          "x": 31,
+          "z": 3.4321
+        }
+      ],
+      "commands": [],
+      "note": "آرایش نبرد: snapshot کامل و قابل‌ذخیره؛ مبنای بازپخش و اعتبارسنجی.",
+      "scenarioHash": 2814821169
+    }
+  },
+  {
+    "level": 1,
+    "p": [
+      [
+        15,
+        15
+      ],
+      [
+        23,
+        23
+      ]
+    ],
+    "seed": 79,
+    "lastTowerDown": 1307,
+    "postHits": 267,
+    "report": {
+      "result": "timeout",
+      "ticks": 3000,
+      "seconds": 150,
+      "stateHash": 1212894030,
+      "eventHash": 320678959,
+      "raidersSpawned": 12,
+      "raidersLeft": 5,
+      "defendersLeft": 0,
+      "defendersDeployed": 0,
+      "wallsBreached": 0,
+      "destroyedStructures": 2,
+      "damagedStructures": 3,
+      "healed": 0,
+      "pathRequests": 19,
+      "pathFailures": 0,
+      "commands": 0,
+      "lost": {
+        "raider:guard": 4,
+        "raider:archer": 1,
+        "raider:breaker": 2
+      },
+      "left": {
+        "raider:guard": 2,
+        "raider:archer": 3
+      },
+      "structures": [
+        {
+          "sourceId": 1,
+          "type": "town-center",
+          "hp": 557,
+          "maxHp": 2800,
+          "destroyed": false
+        },
+        {
+          "sourceId": 2,
+          "type": "watchtower",
+          "hp": 0,
+          "maxHp": 2400,
+          "destroyed": true
+        },
+        {
+          "sourceId": 3,
+          "type": "watchtower",
+          "hp": 0,
+          "maxHp": 2400,
+          "destroyed": true
+        }
+      ],
+      "checkpoints": 140
+    },
+    "scenario": {
+      "version": 1,
+      "seed": 79,
+      "encounter": {
+        "id": "raid-column",
+        "name": "ستون مهاجم",
+        "threat": 2
+      },
+      "cols": 40,
+      "rows": 40,
+      "tileSize": 2,
+      "structures": [
+        {
+          "index": 0,
+          "sourceId": 1,
+          "type": "town-center",
+          "kind": "building",
+          "col": 19,
+          "row": 19,
+          "w": 3,
+          "h": 3,
+          "level": 1,
+          "maxHp": 2800,
+          "hp": 2800,
+          "damageTaken": 0
+        },
+        {
+          "index": 1,
+          "sourceId": 2,
+          "type": "watchtower",
+          "kind": "defense",
+          "col": 15,
+          "row": 15,
+          "w": 2,
+          "h": 2,
+          "level": 1,
+          "maxHp": 2400,
+          "hp": 2400,
+          "damageTaken": 0
+        },
+        {
+          "index": 2,
+          "sourceId": 3,
+          "type": "watchtower",
+          "kind": "defense",
+          "col": 23,
+          "row": 23,
+          "w": 2,
+          "h": 2,
+          "level": 1,
+          "maxHp": 2400,
+          "hp": 2400,
+          "damageTaken": 0
+        }
+      ],
+      "garrison": {},
+      "spawns": [
+        {
+          "tick": 0,
+          "unit": "guard",
+          "x": 27,
+          "z": 2.4825
+        },
+        {
+          "tick": 2,
+          "unit": "guard",
+          "x": 31,
+          "z": 2.0599
+        },
+        {
+          "tick": 4,
+          "unit": "guard",
+          "x": 39,
+          "z": 1.7207
+        },
+        {
+          "tick": 6,
+          "unit": "guard",
+          "x": 43,
+          "z": 1.9891
+        },
+        {
+          "tick": 8,
+          "unit": "guard",
+          "x": 49,
+          "z": 3.5427
+        },
+        {
+          "tick": 10,
+          "unit": "guard",
+          "x": 55,
+          "z": 1.9864
+        },
+        {
+          "tick": 160,
+          "unit": "archer",
+          "x": 27,
+          "z": 1.9129
+        },
+        {
+          "tick": 162,
+          "unit": "archer",
+          "x": 31,
+          "z": 4.1537
+        },
+        {
+          "tick": 164,
+          "unit": "archer",
+          "x": 37,
+          "z": 4.1506
+        },
+        {
+          "tick": 166,
+          "unit": "archer",
+          "x": 45,
+          "z": 2.0437
+        },
+        {
+          "tick": 440,
+          "unit": "breaker",
+          "x": 25,
+          "z": 4.042
+        },
+        {
+          "tick": 442,
+          "unit": "breaker",
+          "x": 33,
+          "z": 2.5691
+        }
+      ],
+      "commands": [],
+      "note": "آرایش نبرد: snapshot کامل و قابل‌ذخیره؛ مبنای بازپخش و اعتبارسنجی.",
+      "scenarioHash": 1391513670
+    }
+  }
+]

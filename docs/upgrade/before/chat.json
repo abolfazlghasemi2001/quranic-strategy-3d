@@ -1,0 +1,37 @@
+[
+  {
+    "text": "⁂⁂⁂",
+    "blocked": true,
+    "hits": 1
+  },
+  {
+    "text": "ک ی ر",
+    "blocked": false,
+    "hits": 0
+  },
+  {
+    "text": "⁂⁂⁂⁂⁂",
+    "blocked": true,
+    "hits": 1
+  },
+  {
+    "text": "⁂⁂⁂⁂⁂",
+    "blocked": true,
+    "hits": 1
+  },
+  {
+    "text": "⁂⁂⁂⁂⁂",
+    "blocked": true,
+    "hits": 1
+  },
+  {
+    "text": "⁂⁂⁂⁂⁂",
+    "blocked": true,
+    "hits": 1
+  },
+  {
+    "text": "⁂⁂⁂⁂⁂",
+    "blocked": true,
+    "hits": 1
+  }
+]

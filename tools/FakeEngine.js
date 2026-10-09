@@ -146,8 +146,10 @@ export class Engine {
   /** Manual frame for the smoke harness (no rAF loop, fully deterministic). */
   tick(dt = 1 / 60) {
     if (this._disposed) return;
+    this.frameDelta = dt;
     if (this.running && !this.paused) {
       for (const updatable of [...this._updatables]) updatable.update(dt, this);
+      for (const updatable of this._updatables) updatable.beforeRender?.(this);
     }
     this.time += dt;
     this.frame += 1;

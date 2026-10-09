@@ -45,15 +45,18 @@ export function disposeGltf(gltf) {
   const geometries = new Set();
   const materials = new Set();
   const textures = new Set();
+  const skeletons = new Set();
   gltf.scene.traverse((node) => {
     if (!node.isMesh) return;
     if (node.geometry) geometries.add(node.geometry);
+    if (node.isSkinnedMesh && node.skeleton) skeletons.add(node.skeleton);
     for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
       if (!material) continue;
       materials.add(material);
       for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
     }
   });
+  for (const skeleton of skeletons) skeleton.dispose();
   for (const geometry of geometries) geometry.dispose();
   for (const material of materials) material.dispose();
   for (const texture of textures) texture.dispose();
@@ -139,6 +142,7 @@ export class CharacterAssetLoader {
     if (controller) this.controllers.add(controller);
     let timeout = null;
     let stage = 'fetch';
+    let parsed = null;
     try {
       if (typeof this.fetchImpl !== 'function') throw new Error('fetch is unavailable');
       if (controller) timeout = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -148,9 +152,10 @@ export class CharacterAssetLoader {
       if (!(buffer instanceof ArrayBuffer) || buffer.byteLength < 20) throw new Error('GLB response is empty or truncated');
 
       stage = 'parse';
-      const gltf = await this.parseGLTF(buffer, url);
+      const gltf = parsed = await this.parseGLTF(buffer, url);
       if (this.disposed) {
         disposeGltf(gltf);
+        parsed = null;
         return null;
       }
       if (!gltf?.scene || !Array.isArray(gltf.animations)) throw new Error('Parsed GLB has no scene or animation list');
@@ -167,6 +172,7 @@ export class CharacterAssetLoader {
       this._publish({ modelId, status: 'ready', metadata });
       return gltf;
     } catch (error) {
+      if (parsed) disposeGltf(parsed);
       if (this.disposed) return null;
       entry.status = 'fallback';
       entry.gltf = null;

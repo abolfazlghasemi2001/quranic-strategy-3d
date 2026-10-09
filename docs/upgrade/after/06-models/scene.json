@@ -1,0 +1,47 @@
+[
+  {
+    "tier": "low",
+    "stats": {
+      "frame": 54,
+      "calls": 76,
+      "triangles": 34745,
+      "points": 0,
+      "lines": 0
+    },
+    "memory": {
+      "geometries": 81,
+      "textures": 7
+    },
+    "errors": []
+  },
+  {
+    "tier": "medium",
+    "stats": {
+      "frame": 57,
+      "calls": 75,
+      "triangles": 36896,
+      "points": 0,
+      "lines": 0
+    },
+    "memory": {
+      "geometries": 81,
+      "textures": 16
+    },
+    "errors": []
+  },
+  {
+    "tier": "high",
+    "stats": {
+      "frame": 54,
+      "calls": 75,
+      "triangles": 37840,
+      "points": 0,
+      "lines": 0
+    },
+    "memory": {
+      "geometries": 81,
+      "textures": 16
+    },
+    "errors": []
+  }
+]

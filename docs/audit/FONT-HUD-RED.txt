@@ -1,0 +1,222 @@
+  ✓ 360x640 @ font-1: no runtime errors while laying out the HUD
+  ✓ 360x640 @ font-1: no horizontal document overflow
+  ✓ 360x640 @ font-1: HUD does not overflow the viewport
+  ✓ 360x640 @ font-1: every dock action is ≥ 48 px tall
+  ✓ 360x640 @ font-1: every dock action is ≥ 48 px wide
+  ✓ 360x640 @ font-1: dock actions do not overlap each other
+  ✓ 360x640 @ font-1: no HUD boxes overlap
+  ✓ 360x640 @ font-1: no clipped HUD text
+  ✓ 360x640 @ font-1: the floating «راهنمای متن» map label is gone
+  ✓ 360x640 @ font-1: HUD root is click-through for camera panning
+  ✓ 360x640 @ font-1: dock actions stay interactive
+  ✓ 360x640 @ font-1: empty map area still pans the camera (taps reach the canvas)
+  ✓ 360x640 @ font-1: settings gear is ≥ 44 px
+  · 360x640 @ font-1: status bar 38 px (6.0 %), dock 58 px, static HUD total 15.0 %
+  ✓ 360x640 @ font-1: status bar ≤ 6 % of viewport height
+  ✗ 360x640 @ font-1: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+      9.0 %
+  ✗ 360x640 @ font-1: static HUD (status + dock) ≤ 15 % of viewport height
+      15.0 %
+  ✓ 360x640 @ font-max: no runtime errors while laying out the HUD
+  ✓ 360x640 @ font-max: no horizontal document overflow
+  ✓ 360x640 @ font-max: HUD does not overflow the viewport
+  ✓ 360x640 @ font-max: every dock action is ≥ 48 px tall
+  ✓ 360x640 @ font-max: every dock action is ≥ 48 px wide
+  ✓ 360x640 @ font-max: dock actions do not overlap each other
+  ✓ 360x640 @ font-max: no HUD boxes overlap
+  ✓ 360x640 @ font-max: no clipped HUD text
+  ✓ 360x640 @ font-max: the floating «راهنمای متن» map label is gone
+  ✓ 360x640 @ font-max: HUD root is click-through for camera panning
+  ✓ 360x640 @ font-max: dock actions stay interactive
+  ✓ 360x640 @ font-max: empty map area still pans the camera (taps reach the canvas)
+  ✓ 360x640 @ font-max: settings gear is ≥ 44 px
+  · 360x640 @ font-max: status bar 38 px (6.0 %), dock 58 px, static HUD total 15.0 %
+  ✓ 360x640 @ font-max: status bar ≤ 6 % of viewport height
+  ✗ 360x640 @ font-max: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+      9.0 %
+  ✗ 360x640 @ font-max: static HUD (status + dock) ≤ 15 % of viewport height
+      15.0 %
+  ✓ 360x740 @ font-1: no runtime errors while laying out the HUD
+  ✓ 360x740 @ font-1: no horizontal document overflow
+  ✓ 360x740 @ font-1: HUD does not overflow the viewport
+  ✓ 360x740 @ font-1: every dock action is ≥ 48 px tall
+  ✓ 360x740 @ font-1: every dock action is ≥ 48 px wide
+  ✓ 360x740 @ font-1: dock actions do not overlap each other
+  ✓ 360x740 @ font-1: no HUD boxes overlap
+  ✓ 360x740 @ font-1: no clipped HUD text
+  ✓ 360x740 @ font-1: the floating «راهنمای متن» map label is gone
+  ✓ 360x740 @ font-1: HUD root is click-through for camera panning
+  ✓ 360x740 @ font-1: dock actions stay interactive
+  ✓ 360x740 @ font-1: empty map area still pans the camera (taps reach the canvas)
+  ✓ 360x740 @ font-1: settings gear is ≥ 44 px
+  · 360x740 @ font-1: status bar 44 px (5.9 %), dock 60 px, static HUD total 14.1 %
+  ✓ 360x740 @ font-1: status bar ≤ 6 % of viewport height
+  ✓ 360x740 @ font-1: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 360x740 @ font-1: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 360x740 @ font-max: no runtime errors while laying out the HUD
+  ✓ 360x740 @ font-max: no horizontal document overflow
+  ✓ 360x740 @ font-max: HUD does not overflow the viewport
+  ✓ 360x740 @ font-max: every dock action is ≥ 48 px tall
+  ✓ 360x740 @ font-max: every dock action is ≥ 48 px wide
+  ✓ 360x740 @ font-max: dock actions do not overlap each other
+  ✓ 360x740 @ font-max: no HUD boxes overlap
+  ✓ 360x740 @ font-max: no clipped HUD text
+  ✓ 360x740 @ font-max: the floating «راهنمای متن» map label is gone
+  ✓ 360x740 @ font-max: HUD root is click-through for camera panning
+  ✓ 360x740 @ font-max: dock actions stay interactive
+  ✓ 360x740 @ font-max: empty map area still pans the camera (taps reach the canvas)
+  ✓ 360x740 @ font-max: settings gear is ≥ 44 px
+  · 360x740 @ font-max: status bar 44 px (5.9 %), dock 58 px, static HUD total 13.7 %
+  ✓ 360x740 @ font-max: status bar ≤ 6 % of viewport height
+  ✓ 360x740 @ font-max: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 360x740 @ font-max: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 390x844 @ font-1: no runtime errors while laying out the HUD
+  ✓ 390x844 @ font-1: no horizontal document overflow
+  ✓ 390x844 @ font-1: HUD does not overflow the viewport
+  ✓ 390x844 @ font-1: every dock action is ≥ 48 px tall
+  ✓ 390x844 @ font-1: every dock action is ≥ 48 px wide
+  ✓ 390x844 @ font-1: dock actions do not overlap each other
+  ✓ 390x844 @ font-1: no HUD boxes overlap
+  ✓ 390x844 @ font-1: no clipped HUD text
+  ✓ 390x844 @ font-1: the floating «راهنمای متن» map label is gone
+  ✓ 390x844 @ font-1: HUD root is click-through for camera panning
+  ✓ 390x844 @ font-1: dock actions stay interactive
+  ✓ 390x844 @ font-1: empty map area still pans the camera (taps reach the canvas)
+  ✓ 390x844 @ font-1: settings gear is ≥ 44 px
+  · 390x844 @ font-1: status bar 44 px (5.2 %), dock 61 px, static HUD total 12.5 %
+  ✓ 390x844 @ font-1: status bar ≤ 6 % of viewport height
+  ✓ 390x844 @ font-1: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 390x844 @ font-1: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 390x844 @ font-max: no runtime errors while laying out the HUD
+  ✓ 390x844 @ font-max: no horizontal document overflow
+  ✓ 390x844 @ font-max: HUD does not overflow the viewport
+  ✓ 390x844 @ font-max: every dock action is ≥ 48 px tall
+  ✓ 390x844 @ font-max: every dock action is ≥ 48 px wide
+  ✓ 390x844 @ font-max: dock actions do not overlap each other
+  ✓ 390x844 @ font-max: no HUD boxes overlap
+  ✓ 390x844 @ font-max: no clipped HUD text
+  ✓ 390x844 @ font-max: the floating «راهنمای متن» map label is gone
+  ✓ 390x844 @ font-max: HUD root is click-through for camera panning
+  ✓ 390x844 @ font-max: dock actions stay interactive
+  ✓ 390x844 @ font-max: empty map area still pans the camera (taps reach the canvas)
+  ✓ 390x844 @ font-max: settings gear is ≥ 44 px
+  · 390x844 @ font-max: status bar 44 px (5.2 %), dock 58 px, static HUD total 12.1 %
+  ✓ 390x844 @ font-max: status bar ≤ 6 % of viewport height
+  ✓ 390x844 @ font-max: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 390x844 @ font-max: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 412x915 @ font-1: no runtime errors while laying out the HUD
+  ✓ 412x915 @ font-1: no horizontal document overflow
+  ✓ 412x915 @ font-1: HUD does not overflow the viewport
+  ✓ 412x915 @ font-1: every dock action is ≥ 48 px tall
+  ✓ 412x915 @ font-1: every dock action is ≥ 48 px wide
+  ✓ 412x915 @ font-1: dock actions do not overlap each other
+  ✓ 412x915 @ font-1: no HUD boxes overlap
+  ✓ 412x915 @ font-1: no clipped HUD text
+  ✓ 412x915 @ font-1: the floating «راهنمای متن» map label is gone
+  ✓ 412x915 @ font-1: HUD root is click-through for camera panning
+  ✓ 412x915 @ font-1: dock actions stay interactive
+  ✓ 412x915 @ font-1: empty map area still pans the camera (taps reach the canvas)
+  ✓ 412x915 @ font-1: settings gear is ≥ 44 px
+  · 412x915 @ font-1: status bar 46 px (5.0 %), dock 62 px, static HUD total 11.8 %
+  ✓ 412x915 @ font-1: status bar ≤ 6 % of viewport height
+  ✓ 412x915 @ font-1: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 412x915 @ font-1: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 412x915 @ font-max: no runtime errors while laying out the HUD
+  ✓ 412x915 @ font-max: no horizontal document overflow
+  ✓ 412x915 @ font-max: HUD does not overflow the viewport
+  ✓ 412x915 @ font-max: every dock action is ≥ 48 px tall
+  ✓ 412x915 @ font-max: every dock action is ≥ 48 px wide
+  ✓ 412x915 @ font-max: dock actions do not overlap each other
+  ✓ 412x915 @ font-max: no HUD boxes overlap
+  ✓ 412x915 @ font-max: no clipped HUD text
+  ✓ 412x915 @ font-max: the floating «راهنمای متن» map label is gone
+  ✓ 412x915 @ font-max: HUD root is click-through for camera panning
+  ✓ 412x915 @ font-max: dock actions stay interactive
+  ✓ 412x915 @ font-max: empty map area still pans the camera (taps reach the canvas)
+  ✓ 412x915 @ font-max: settings gear is ≥ 44 px
+  · 412x915 @ font-max: status bar 55 px (6.0 %), dock 59 px, static HUD total 12.4 %
+  ✓ 412x915 @ font-max: status bar ≤ 6 % of viewport height
+  ✓ 412x915 @ font-max: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 412x915 @ font-max: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 768x1024 @ font-1: no runtime errors while laying out the HUD
+  ✓ 768x1024 @ font-1: no horizontal document overflow
+  ✓ 768x1024 @ font-1: HUD does not overflow the viewport
+  ✓ 768x1024 @ font-1: every dock action is ≥ 48 px tall
+  ✓ 768x1024 @ font-1: every dock action is ≥ 48 px wide
+  ✓ 768x1024 @ font-1: dock actions do not overlap each other
+  ✓ 768x1024 @ font-1: no HUD boxes overlap
+  ✓ 768x1024 @ font-1: no clipped HUD text
+  ✓ 768x1024 @ font-1: the floating «راهنمای متن» map label is gone
+  ✓ 768x1024 @ font-1: HUD root is click-through for camera panning
+  ✓ 768x1024 @ font-1: dock actions stay interactive
+  ✓ 768x1024 @ font-1: empty map area still pans the camera (taps reach the canvas)
+  ✓ 768x1024 @ font-1: settings gear is ≥ 44 px
+  · 768x1024 @ font-1: status bar 61 px (6.0 %), dock 64 px, static HUD total 12.2 %
+  ✓ 768x1024 @ font-1: status bar ≤ 6 % of viewport height
+  ✓ 768x1024 @ font-1: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 768x1024 @ font-1: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 768x1024 @ font-max: no runtime errors while laying out the HUD
+  ✓ 768x1024 @ font-max: no horizontal document overflow
+  ✓ 768x1024 @ font-max: HUD does not overflow the viewport
+  ✓ 768x1024 @ font-max: every dock action is ≥ 48 px tall
+  ✓ 768x1024 @ font-max: every dock action is ≥ 48 px wide
+  ✓ 768x1024 @ font-max: dock actions do not overlap each other
+  ✓ 768x1024 @ font-max: no HUD boxes overlap
+  ✓ 768x1024 @ font-max: no clipped HUD text
+  ✓ 768x1024 @ font-max: the floating «راهنمای متن» map label is gone
+  ✓ 768x1024 @ font-max: HUD root is click-through for camera panning
+  ✓ 768x1024 @ font-max: dock actions stay interactive
+  ✓ 768x1024 @ font-max: empty map area still pans the camera (taps reach the canvas)
+  ✓ 768x1024 @ font-max: settings gear is ≥ 44 px
+  · 768x1024 @ font-max: status bar 61 px (6.0 %), dock 71 px, static HUD total 12.9 %
+  ✓ 768x1024 @ font-max: status bar ≤ 6 % of viewport height
+  ✓ 768x1024 @ font-max: dock (5 × 48 px targets + insets) ≤ 8.5 % of viewport height
+  ✓ 768x1024 @ font-max: static HUD (status + dock) ≤ 15 % of viewport height
+  ✓ 844x390 @ font-1: no runtime errors while laying out the HUD
+  ✓ 844x390 @ font-1: no horizontal document overflow
+  ✓ 844x390 @ font-1: HUD does not overflow the viewport
+  ✓ 844x390 @ font-1: every dock action is ≥ 48 px tall
+  ✓ 844x390 @ font-1: every dock action is ≥ 48 px wide
+  ✓ 844x390 @ font-1: dock actions do not overlap each other
+  ✓ 844x390 @ font-1: no HUD boxes overlap
+  ✓ 844x390 @ font-1: no clipped HUD text
+  ✓ 844x390 @ font-1: the floating «راهنمای متن» map label is gone
+  ✓ 844x390 @ font-1: HUD root is click-through for camera panning
+  ✓ 844x390 @ font-1: dock actions stay interactive
+  ✓ 844x390 @ font-1: empty map area still pans the camera (taps reach the canvas)
+  ✓ 844x390 @ font-1: settings gear is ≥ 44 px
+  · 844x390 @ font-1: bottom dock 61 px tall, status bar 44 px, map area 73.1 %
+  ✓ 844x390 @ font-1: landscape dock stays at the bottom (≤ 22 % of the height)
+  ✓ 844x390 @ font-1: landscape status bar ≤ 12 % of the height
+  ✓ 844x390 @ font-1: map keeps ≥ 65 % of the viewport area
+  ✓ 844x390 @ font-max: no runtime errors while laying out the HUD
+  ✓ 844x390 @ font-max: no horizontal document overflow
+  ✓ 844x390 @ font-max: HUD does not overflow the viewport
+  ✓ 844x390 @ font-max: every dock action is ≥ 48 px tall
+  ✓ 844x390 @ font-max: every dock action is ≥ 48 px wide
+  ✓ 844x390 @ font-max: dock actions do not overlap each other
+  ✓ 844x390 @ font-max: no HUD boxes overlap
+  ✓ 844x390 @ font-max: no clipped HUD text
+  ✓ 844x390 @ font-max: the floating «راهنمای متن» map label is gone
+  ✓ 844x390 @ font-max: HUD root is click-through for camera panning
+  ✓ 844x390 @ font-max: dock actions stay interactive
+  ✓ 844x390 @ font-max: empty map area still pans the camera (taps reach the canvas)
+  ✓ 844x390 @ font-max: settings gear is ≥ 44 px
+  · 844x390 @ font-max: bottom dock 62 px tall, status bar 52 px, map area 70.9 %
+  ✓ 844x390 @ font-max: landscape dock stays at the bottom (≤ 22 % of the height)
+  ✗ 844x390 @ font-max: landscape status bar ≤ 12 % of the height
+      13.2 %
+  ✓ 844x390 @ font-max: map keeps ≥ 65 % of the viewport area
+  ✓ 412x915 selection-open: selection menu clears the dock
+  ✓ 412x915 selection-open: dock still fully tappable while a menu is open
+  ✓ 412x915 selection-open: queue row renders above the dock (no overlap)
+  ✓ 412x915 placement-active: placement bar sits above the dock without overlap
+  ✓ 412x915 placement-active: confirm/cancel buttons are ≥ 48 px tall
+  ✓ 412x915 placement-active: Construction action is inert, not hidden
+  ✓ 412x915 high-contrast + font-max: no overlap
+  ✓ 412x915 high-contrast + font-max: no clipped text
+  ✓ 412x915 high-contrast + font-max: dock actions ≥ 48 px
+
+HUD layout: 196/201 checks passed.
+
+5 HUD layout check(s) failed.

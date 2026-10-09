@@ -9,6 +9,7 @@
  * the camera clamp rules (the "camera never leaves the map" acceptance item).
  */
 import { readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import * as THREE from 'three';
@@ -1105,7 +1106,8 @@ test('quran: a Tanzil-style dataset swaps in without code changes (verse text fr
     sample: quranSample,
     learning: learningData,
     search: '',
-    fetchImpl: async () => ({ ok: true, status: 200, json: async () => remote }),
+    learning: { ...learningData, dataset: { ...learningData.dataset, checksums: { './quran/quran.json': createHash('sha256').update(JSON.stringify(remote)).digest('hex') } } },
+    fetchImpl: async () => ({ ok: true, status: 200, text: async () => JSON.stringify(remote) }),
   });
   const { dataset, validation, loadReport } = await loader.load();
   assert(loadReport.remoteLoaded === true, 'remote dataset loaded');
@@ -1132,8 +1134,8 @@ test('quran: a broken remote dataset falls back to the placeholder sample (no cr
   assert(dataset.verseList.length >= 6, 'sample verses intact');
 });
 
-test('quran: query param ?quran=… overrides the dataset path', () => {
-  const loader = new QuranDatasetLoader({ sample: quranSample, learning: learningData, search: '?quran=./alt/my.json' });
+test('quran: only a checksummed relative query overrides the dataset path', () => {
+  const loader = new QuranDatasetLoader({ sample: quranSample, learning: { ...learningData, dataset: { ...learningData.dataset, checksums: { './alt/my.json': 'a'.repeat(64) } } }, search: '?quran=./alt/my.json' });
   assert(loader.resolveUrl() === './alt/my.json', 'override honoured');
   const fallback = new QuranDatasetLoader({ sample: quranSample, learning: learningData, search: '' });
   assert(fallback.resolveUrl() === './quran/quran.json', 'default path is public/quran/quran.json');

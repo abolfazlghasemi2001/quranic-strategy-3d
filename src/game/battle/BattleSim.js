@@ -111,6 +111,11 @@ export class BattleSim {
     this.rules = rules;
     this.defenseDefs = defenseDefs;
     this.structureModifiers = structureModifiers;
+    // v1 is a frozen compatibility path. Never apply a new policy to archived recordings.
+    this.columnExit = scenario.version >= 2 ? scenario.columnExit : null;
+    this.initialRaiderHp = 0;
+    this.depletedTicks = 0;
+    this.columnLeaving = false;
 
     this.stepHz = rules.sim.stepHz;
     this.stepSeconds = 1 / this.stepHz;
@@ -481,6 +486,7 @@ export class BattleSim {
       this.units.push(unit);
       this.unitsById.set(unit.id, unit);
       this.stats.raidersSpawned += 1;
+      this.initialRaiderHp += unit.maxHp;
       this._emit({ type: BATTLE_EVENT.SPAWN, unitId: unit.id, unit: unit.type, faction: FACTION.RAIDER, x: unit.x, z: unit.z });
     }
   }
@@ -971,8 +977,38 @@ export class BattleSim {
     return true;
   }
 
+  /** Bounded, deterministic morale rule, snapshotted from battle.json in scenario v2. */
+  _depletedColumnLeaves() {
+    const policy = this.columnExit;
+    if (!policy?.enabled) return false;
+    if (this.columnLeaving) return true;
+    let priorityPresent = 0;
+    let priorityAlive = 0;
+    for (const structure of this.structures) {
+      if (!policy.priorityKinds.includes(structure.kind)) continue;
+      priorityPresent += 1;
+      if (!structure.destroyed) priorityAlive += 1;
+    }
+    let hp = 0;
+    let defending = false;
+    for (const unit of this.units) {
+      if (unit.removed || unit.hp <= 0 || unit.state === UNIT_STATE.DOWN || unit.state === UNIT_STATE.RETREAT) continue;
+      if (unit.faction === FACTION.RAIDER) hp += unit.hp;
+      else if (unit.role !== 'support') defending = true;
+    }
+    const ready = this.initialRaiderHp > 0
+      && priorityPresent >= policy.minDestroyedPriority && priorityAlive === 0
+      && (!policy.requireAllWavesSpawned || this.spawnCursor >= this.spawnQueue.length)
+      && (!policy.requireNoDefenderCombatants || !defending)
+      && hp <= this.initialRaiderHp * policy.healthFraction;
+    this.depletedTicks = ready ? this.depletedTicks + 1 : 0;
+    if (ready && this.depletedTicks >= policy.graceTicks) this.columnLeaving = true;
+    return this.columnLeaving;
+  }
+
   _stepUnits(dt) {
     const columnBroken = this._raiderColumnBroken();
+    const columnLeaving = this._depletedColumnLeaves();
     for (const unit of this.units) {
       if (unit.removed) continue;
       unit.stateTicks += 1;
@@ -994,7 +1030,13 @@ export class BattleSim {
         }
         continue;
       }
-      if (columnBroken && unit.role === 'support' && unit.faction === FACTION.RAIDER) {
+      if (columnLeaving && unit.faction === FACTION.RAIDER) {
+        transition(unit, UNIT_STATE.RETREAT, 'column-depleted');
+        unit.targetKey = null; unit.targetRef = null; unit.path = null; unit.pathPending = false;
+        this._emit({ type: BATTLE_EVENT.RETREAT, reason: 'column-depleted', unitId: unit.id, unit: unit.type, faction: unit.faction, x: unit.x, z: unit.z });
+        continue;
+      }
+      if (columnBroken && unit.role === 'support'  && unit.faction === FACTION.RAIDER) {
         transition(unit, UNIT_STATE.RETREAT, 'column-broken');
         this._emit({ type: BATTLE_EVENT.RETREAT, unitId: unit.id, unit: unit.type, faction: unit.faction, x: unit.x, z: unit.z });
         continue;
@@ -1052,6 +1094,13 @@ export class BattleSim {
         nearestSq = distanceSq;
         nearest = other;
       }
+    }
+    if (!nearest && unit.stateReason === 'column-depleted') {
+      const distances = [unit.x, this.grid.cols * this.tileSize - unit.x, unit.z, this.grid.rows * this.tileSize - unit.z];
+      let edge = 0;
+      for (let i = 1; i < distances.length; i += 1) if (distances[i] < distances[edge]) edge = i;
+      this._moveTo(unit, unit.x + (edge === 0 ? -speed : edge === 1 ? speed : 0), unit.z + (edge === 2 ? -speed : edge === 3 ? speed : 0));
+      return;
     }
     if (!nearest) return;
     const dx = unit.x - nearest.x;
@@ -1366,6 +1415,12 @@ export class BattleSim {
   hashState() {
     let hash = FNV_OFFSET >>> 0;
     hash = mixInt(hash, this.tickIndex);
+    if (this.scenario.version >= 2) {
+      hash = mixInt(hash, this.scenario.version);
+      hash = mixInt(hash, this.initialRaiderHp);
+      hash = mixInt(hash, this.depletedTicks);
+      hash = mixInt(hash, this.columnLeaving ? 1 : 0);
+    }
     hash = mixInt(hash, this.units.length);
     for (const unit of this.units) {
       hash = mixInt(hash, unit.id);

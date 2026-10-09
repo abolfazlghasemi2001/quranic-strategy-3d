@@ -1,0 +1,50 @@
+[
+  {
+    "tier": "low",
+    "stats": {
+      "geometries": 51,
+      "textures": 5
+    },
+    "render": {
+      "frame": 40,
+      "calls": 50,
+      "triangles": 21453,
+      "points": 0,
+      "lines": 0
+    },
+    "quran": true,
+    "errors": []
+  },
+  {
+    "tier": "medium",
+    "stats": {
+      "geometries": 51,
+      "textures": 8
+    },
+    "render": {
+      "frame": 45,
+      "calls": 50,
+      "triangles": 24138,
+      "points": 0,
+      "lines": 0
+    },
+    "quran": true,
+    "errors": []
+  },
+  {
+    "tier": "high",
+    "stats": {
+      "geometries": 51,
+      "textures": 8
+    },
+    "render": {
+      "frame": 43,
+      "calls": 50,
+      "triangles": 25056,
+      "points": 0,
+      "lines": 0
+    },
+    "quran": true,
+    "errors": []
+  }
+]
