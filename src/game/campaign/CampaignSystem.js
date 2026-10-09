@@ -17,7 +17,7 @@ import { EVENTS } from '../../core/EventBus.js';
 import { createCampaignState, normalizeCampaignState, createMissionRecord } from './MissionState.js';
 import { getRuleModule } from './rules/index.js';
 import { missionRefs, missionRefCards, starCount } from './MissionData.js';
-import { toFaDigits } from '../quran/QuranDataset.js';
+import { toFaDigits } from '../../core/Format.js';
 
 export class CampaignSystem {
   /**

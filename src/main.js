@@ -1,508 +1,151 @@
-/**
- * شهر نور — entry point (phase 9: performance, PWA, audio and accessibility)
- *
- * Boot order:
- *   config -> engine -> load save -> Quran dataset -> world -> input/camera ->
- *   game (hydrate + offline catch-up) -> buildings -> UI -> loop
- * Each layer only talks to the others through the event bus or through explicit
- * references handed over here, so later phases can add systems without rewrites.
- */
+/** Composition only: city first; optional battle, study and panels load on demand. */
 import './ui/hud.css';
 import './ui/quran/accessibility.css';
-
-import { Config } from './core/Config.js';
+import { ConfigRuntime as Config } from './core/ConfigRuntime.js';
 import { Engine } from './core/Engine.js';
 import { EventBus, EVENTS } from './core/EventBus.js';
-import { SoundManager } from './core/SoundManager.js';
+import { FeatureLoader } from './core/FeatureLoader.js';
 import { InputManager } from './core/InputManager.js';
 import { OrbitCameraRig } from './core/OrbitCameraRig.js';
 import { World } from './world/World.js';
 import { BuildingView } from './world/BuildingView.js';
 import { WorldInputAdapter } from './world/WorldInputAdapter.js';
-import { Game } from './game/Game.js';
+import { GameRuntime as Game } from './game/GameRuntime.js';
 import { BuildingSystem } from './game/BuildingSystem.js';
 import { SaveSystem } from './game/SaveSystem.js';
-import { QuranDatasetLoader } from './game/quran/QuranDataset.js';
-import quranSample from './data/quran-sample.json';
 import { PerfMonitor } from './ui/PerfMonitor.js';
 import { HUD } from './ui/HUD.js';
-import { DevPanel } from './ui/DevPanel.js';
-import { QuranPanel } from './ui/QuranPanel.js';
-import { LessonHub } from './ui/quran/LessonHub.js';
-import { BattleView } from './world/battle/BattleView.js';
-import { BattlePanel } from './ui/BattlePanel.js';
-import { BarracksPanel } from './ui/BarracksPanel.js';
-import { MissionZone } from './world/MissionZone.js';
-import { MissionPanel } from './ui/campaign/MissionPanel.js';
-import { MetaPanel } from './ui/MetaPanel.js';
-import { SettingsPanel } from './ui/SettingsPanel.js';
-import { JamaatPanel } from './ui/social/JamaatPanel.js';
-import { FTUEGuide } from './ui/FTUEGuide.js';
 import { LoadingScreen, ErrorOverlay } from './ui/LoadingScreen.js';
-import { setRecitationEnabled, stopRecitation } from './ui/quran/RecitationAudio.js';
-
-function registerPwa() {
-  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
-    .then(() => console.info('[شهر نور] پوستهٔ آفلاین آماده است.'))
-    .catch((error) => console.warn('[شهر نور] ثبت PWA ناموفق بود؛ بازی آنلاین همچنان اجرا می‌شود.', error));
-}
 
 function applyAccessibilitySettings(settings = {}) {
-  const root = document.documentElement;
-  const scales = { normal: 1, large: 1.14, larger: 1.28 };
+  const root = document.documentElement, scales = { normal: 1, large: 1.14, larger: 1.28 };
   root.dataset.fontScale = scales[settings.fontScale] ? settings.fontScale : 'normal';
-  root.style.setProperty('--ui-font-scale', String(scales[settings.fontScale] || scales.normal));
+  root.style.setProperty('--ui-font-scale', String(scales[settings.fontScale] || 1));
   root.classList.toggle('is-high-contrast', Boolean(settings.highContrast));
-  const systemReduceMotion = typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const reduceMotion = Boolean(settings.reduceMotion || systemReduceMotion);
-  root.classList.toggle('is-reduced-motion', reduceMotion);
-  return reduceMotion;
+  const reduceMotion = Boolean(settings.reduceMotion || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  root.classList.toggle('is-reduced-motion', reduceMotion); return reduceMotion;
 }
 
 async function boot() {
-  registerPwa();
-  const canvas = document.getElementById('scene');
-  const config = new Config({ search: window.location.search });
-  const bus = new EventBus();
-
-  const loading = new LoadingScreen({ config, parent: document.body });
-  const errorOverlay = new ErrorOverlay({ config, parent: document.body });
+  const canvas = document.getElementById('scene'), config = new Config({ search: window.location.search }), bus = new EventBus();
+  const loading = new LoadingScreen({ config, parent: document.body }), errorOverlay = new ErrorOverlay({ config, parent: document.body });
   loading.setStep('config', 0.03);
-
   let engine;
-  try {
-    engine = new Engine({ canvas, config, bus });
-  } catch (error) {
-    console.error(error);
-    if (error && error.code === 'WEBGL_UNAVAILABLE') {
-      errorOverlay.show(config.t('errors.webgl', 'WebGL2 در دسترس نیست.'));
-    } else {
-      errorOverlay.show(config.t('errors.boot', 'راه‌اندازی موتور گرافیکی ناموفق بود.'));
-    }
-    loading.hide();
-    throw error;
-  }
-
-  loading.setStep('engine', 0.08);
-
-  // ----------------------------------------------------------- persistence
-  const saveSystem = new SaveSystem();
+  try { engine = new Engine({ canvas, config, bus }); }
+  catch (error) { errorOverlay.show(config.t(error.code === 'WEBGL_UNAVAILABLE' ? 'errors.webgl' : 'errors.boot')); loading.hide(); throw error; }
+  const saveSystem = new SaveSystem(); let saveRecord = null;
   loading.setStep('save', 0.12);
-  let saveRecord = null;
-  try {
-    saveRecord = await saveSystem.load(); // {payload, migratedFrom, savedAt} | null
-    if (saveRecord?.migratedFrom) {
-      console.info(`[شهر نور] ذخیره از نسخهٔ ${saveRecord.migratedFrom} مهاجرت داده شد.`);
-    }
-  } catch (error) {
-    console.warn('[شهر نور] بارگذاری ذخیره ناموفق بود؛ بازی از نو شروع می‌شود.', error);
-    saveRecord = null;
-  }
-
-  // -------------------------------------------------------- quran dataset
-  // The dataset is loaded by the UI/logic entry point only — never by core/ or
-  // world/, so Quran text can never leak into the 3D scene, ground or effects.
-  loading.setStep('quran', 0.15);
-  const datasetLoader = new QuranDatasetLoader({
-    sample: quranSample,
-    learning: config.quranLearning,
-    search: window.location.search,
-  });
-  const quranLoad = await datasetLoader.load();
-  const quran = { dataset: quranLoad.dataset, validation: quranLoad.validation, loadReport: quranLoad.loadReport };
-  if (quranLoad.loadReport.remoteLoaded) {
-    console.info(`[شهر نور] دیتاست قرآن از بیرون بارگذاری شد: ${quranLoad.loadReport.url} (${quranLoad.validation.warnings} هشدار)`);
-  } else {
-    console.info(`[شهر نور] دیتاست قرآن: نمونهٔ داخلی (جای‌نگهدار) — علت: ${quranLoad.loadReport.remoteError}`);
-  }
-  if (quranLoad.validation.errors > 0) {
-    console.warn('[شهر نور] خطاهای اعتبارسنجی دیتاست:', quranLoad.validation.issues.filter((i) => i.level === 'error'));
-  }
-
-  // ---------------------------------------------------------------- world
+  try { saveRecord = await saveSystem.load(); } catch (error) { console.warn(config.t('errors.saveLoad'), error); }
   const world = new World({ config, bus });
-  await world.build((step, ratio) => loading.setStep(step, ratio));
-  engine.addToScene(world.group);
+  await world.build((step, ratio) => loading.setStep(step, ratio)); engine.addToScene(world.group);
   const storedSettings = saveRecord?.payload?.meta?.settings || {};
-  engine.setRuntimeSettings({
-    qualityTier: storedSettings.qualityTier || config.quality.tier,
-    batterySaver: Boolean(storedSettings.batterySaver),
+  engine.setRuntimeSettings({ qualityTier: storedSettings.qualityTier || config.quality.tier, batterySaver: Boolean(storedSettings.batterySaver) });
+  const input = new InputManager(canvas, { config }), rig = new OrbitCameraRig({ camera: engine.camera, config, input, bus });
+  const quran = { dataset: null, validation: null, loadReport: { pending: true } };
+  const game = new Game({ config, bus, record: saveRecord?.payload ?? null });
+  if (saveRecord?.payload?.army?.training?.length || Object.keys(saveRecord?.payload?.army?.garrison || {}).length) { const mod = await import('./game/barracks/ArmyFeature.js'); mod.installArmy(game); }
+  if (saveRecord?.payload?.campaign?.activeRun) { const mod = await import('./game/campaign/CampaignFeature.js'); mod.installCampaign(game); }
+  const worldInput = new WorldInputAdapter({ config, world, rig, input, bus }), bootInfo = game.bootstrap();
+  let disposed = false, saveTimer = 0, openIntent = 0;
+  const saveNow = ({ strict = false } = {}) => { window.clearTimeout(saveTimer); return saveSystem.save(game.serialize(), { requirePersistent: strict }).catch((error) => { console.warn(config.t('errors.save'), error); if (strict) throw error; }); };
+  const requestSave = () => { window.clearTimeout(saveTimer); saveTimer = window.setTimeout(saveNow, 1500); };
+  const autosaveTimer = window.setInterval(saveNow, (config.economy.save.autosaveSeconds || 15) * 1000);
+  const onVisibility = () => { if (document.visibilityState === 'hidden') saveNow(); };
+  document.addEventListener('visibilitychange', onVisibility); game.attachPersist(requestSave);
+  bus.on(EVENTS.HAPTIC_REQUESTED, ({ milliseconds }) => {
+    if (game.meta.settings.hapticsEnabled !== false && typeof navigator.vibrate === 'function') { try { navigator.vibrate(milliseconds); } catch { /* optional hardware */ } }
   });
-
-  // -------------------------------------------------------------- camera
-  const input = new InputManager(canvas, { config });
-  const rig = new OrbitCameraRig({ camera: engine.camera, config, input, bus });
-
-  // ---------------------------------------------------------------- game
-  const game = new Game({ config, bus, record: saveRecord?.payload ?? null, quran });
-  const worldInput = new WorldInputAdapter({ config, world, rig, input, bus });
-  const bootInfo = game.bootstrap(); // hydrate + offline catch-up + seed if fresh
-
-  // ------------------------------------------------------------ save hooks
-  let saveTimer = 0;
-  const saveNow = () => {
-    window.clearTimeout(saveTimer);
-    saveSystem.save(game.serialize()).catch((error) => console.warn('[شهر نور] ذخیره ناموفق:', error));
-  };
-  /** Debounced (~1.5s) save after harvest / spend / enqueue. */
-  const requestSave = () => {
-    window.clearTimeout(saveTimer);
-    saveTimer = window.setTimeout(saveNow, 1500);
-  };
-  const autosaveMs = (config.economy.save.autosaveSeconds || 15) * 1000;
-  const autosaveTimer = window.setInterval(saveNow, autosaveMs);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') saveNow();
-  });
-
-  game.attachPersist(requestSave);
-  const soundManager = new SoundManager({ bus, enabled: game.meta.settings.soundEnabled });
-  setRecitationEnabled(game.meta.settings.recitationEnabled);
-  const reducedMotion = applyAccessibilitySettings(game.meta.settings);
-  world.setReducedMotion(reducedMotion);
-
-  const buildings = new BuildingSystem({
-    config, bus,
-    state: game.state,
-    economy: game.economy,
-    queue: game.queue,
-    game,
-    persist: requestSave,
-  });
+  let reduceMotion = applyAccessibilitySettings(game.meta.settings); world.setReducedMotion(reduceMotion);
+  const buildings = new BuildingSystem({ config, bus, state: game.state, economy: game.economy, queue: game.queue, game, persist: requestSave });
   const buildingView = new BuildingView({ config, world, rig, input, bus, state: game.state, engine });
-  buildingView.setReducedMotion(reducedMotion);
-  game.emitState(Date.now(), true); // seed renderer-only producer markers through a presentation snapshot
-  bus.on(EVENTS.JOB_FINISHED, requestSave);
-  // نتیجهٔ نبرد (آسیب سازه‌ها، سپاه بازمانده، پاداش) بی‌درنگ ذخیره می‌شود.
-  bus.on(EVENTS.BATTLE_ENDED, () => saveNow());
-
-  // ------------------------------------------------------------------ ui
-  const monitor = new PerfMonitor({ windowSeconds: 1.5, sampleInterval: 0.25 });
-  const lessonHub = new LessonHub({
-    config,
-    learning: game.learning,
-    bus,
-    parent: document.body,
-    hasBuilding: () => [...game.state.entities.values()].some((e) => e.type === 'dar-al-quran' && e.status === 'ready'),
-  });
-  const quranPanel = new QuranPanel({ config, parent: document.body, learning: game.learning });
-
-  // Phase 5: لایهٔ رندر نبرد + پنل‌های سپاه و نبرد.
-  const battleView = new BattleView({
-    parent: world.group,
-    config,
-    state: game.state,
-    rig,
-    buildings,
-    buildingView,
-    bus,
-    battleData: game.battle.battleData,
-    unitsData: game.battle.unitsData,
-    getBattle: () => game.battle,
-    engine,
-    seed: config.seed,
-  });
-  battleView.setQuality(game.meta.settings);
-  battleView.setReducedMotion(reducedMotion);
-  const barracksPanel = new BarracksPanel({
-    config,
-    bus,
-    barracks: game.barracks,
-    economy: game.economy,
-    unitsData: game.battle.unitsData,
-    onOpenCharacters: () => battleView.preloadCharacters(),
-    onRetryCharacters: () => battleView.preloadCharacters({ retryFailed: true }),
-  });
-  const battlePanel = new BattlePanel({
-    config,
-    bus,
-    battle: game.battle,
-    barracks: game.barracks,
-    unitsData: game.battle.unitsData,
-    view: battleView,
-    onBattleStart: () => {
-      buildings.cancelPlacement();
-      hud.toggleShop(false);
-      hud.setBattleLive(true);
-      battleView.mount(game.battle.sim);
-      const town = game.battle.sim?.townCenter();
-      const townDef = town ? { x: (town.col + town.w / 2) * config.tileSize, z: (town.row + town.h / 2) * config.tileSize } : null;
-      battleView.focusCamera(townDef || { x: config.cols * config.tileSize / 2, z: config.rows * config.tileSize / 2 });
-      hud.toast(config.t('battle.startedToast', 'نبرد آغاز شد؛ از پادگان نیرو مستقر کنید.'));
-    },
-    onBattleExit: () => {
-      battleView.unmount();
-      hud.setBattleLive(false);
-    },
-    onOpenBarracks: () => {
-      buildings.cancelPlacement();
-      barracksPanel.show();
-    },
-  });
-
-  // Phase 6: نشانگرهای سه‌بعدی مأموریت‌ها + پنل کمپین قصص.
-  const missionZone = new MissionZone({
-    config,
-    parent: world.group,
-    bus,
-    engine,
-    getSnapshot: () => game.campaign?.snapshot() || null,
-  });
-  missionZone.setMissions(game.missions.byId);
-  const missionPanel = new MissionPanel({
-    config,
-    bus,
-    campaign: game.campaign,
-    economy: game.economy,
-    dataset: quran.dataset,
-    parent: document.body,
-    onOpenLesson: () => {
-      missionPanel.close();
-      buildings.cancelPlacement();
-      lessonHub.show();
-    },
-  });
-
-  const replayFTUE = () => game.meta.replayTutorial();
-  const settingsPanel = new SettingsPanel({
-    config,
-    bus,
-    metaSystem: game.meta,
-    parent: document.body,
-    onReplay: replayFTUE,
-    onPause: () => engine.pause('settings'),
-    onResume: () => engine.resume('settings'),
-  });
-  const metaPanel = new MetaPanel({
-    config,
-    bus,
-    metaSystem: game.meta,
-    parent: document.body,
-    onReplay: replayFTUE,
-    onPause: () => engine.pause('meta-panel'),
-    onResume: () => engine.resume('meta-panel'),
-  });
-
-  // Phase 8: جماعت — chat, mutual help and the weekly cooperative event.
-  const jamaatPanel = new JamaatPanel({
-    config,
-    bus,
-    social: game.social,
-    game,
-    parent: document.body,
-  });
-
-  const hud = new HUD({
-    config,
-    engine,
-    bus,
-    monitor,
-    rig,
-    buildings,
-    economy: game.economy,
-    queue: game.queue,
-    game,
-    learning: game.learning,
-    campaign: game.campaign,
-    onOpenSocial: () => {
-      buildings.cancelPlacement();
-      jamaatPanel.show();
-    },
-    onOpenMissions: () => {
-      buildings.cancelPlacement();
-      missionPanel.show();
-    },
-    // پادگان/نبرد/راهنمای متن از کارنامه باز می‌شوند؛ پیش از بازکردن، کارنامه
-    // بسته می‌شود تا توقف موتور (pause('meta-panel')) با پنل بعدی قاطی نشود.
-    onOpenBattle: () => {
-      buildings.cancelPlacement();
-      metaPanel.close();
-      battlePanel.show();
-    },
-    onOpenBarracks: () => {
-      buildings.cancelPlacement();
-      metaPanel.close();
-      barracksPanel.show();
-    },
-    onOpenQuran: () => {
-      metaPanel.close();
-      quranPanel.show();
-      engine.pause('modal');
-    },
-    onOpenStudy: () => {
-      // Lessons run with the city live behind the modal, so builders keep
-      // working while the player studies — only camera input is suspended.
-      buildings.cancelPlacement();
-      lessonHub.show();
-    },
-    onOpenSettings: () => {
-      buildings.cancelPlacement();
-      settingsPanel.show();
-    },
-    onOpenMeta: () => {
-      buildings.cancelPlacement();
-      metaPanel.close(); // دکمهٔ «کارنامه» همان لحظه باز و بسته نشود
-      metaPanel.show();
-    },
-  });
-  // کنش‌های ثانویهٔ HUD (پادگان، نبرد، راهنمای متن) در کارنامه جا می‌گیرند:
-  // نوار بالا فقط وضعیت است و داک پایین پنج کنش شست‌رس دارد.
-  metaPanel.setExtraActions([hud.armyButton, hud.battleButton, hud.policyButton]);
-  const modalIsVisible = (panel) => Boolean(panel?.root && !panel.root.classList.contains('is-hidden'));
-  const ftueGuide = new FTUEGuide({
-    config,
-    bus,
-    metaSystem: game.meta,
-    engine,
-    hud,
-    buildings,
-    rig,
-    parent: document.body,
-    isModalOpen: () => [settingsPanel, metaPanel, lessonHub, quranPanel, missionPanel, battlePanel, barracksPanel, jamaatPanel].some(modalIsVisible),
-  });
-  bus.on(EVENTS.SETTINGS_CHANGED, (settings) => {
-    engine.setRuntimeSettings(settings);
-    battleView.setQuality(settings);
-    soundManager.setEnabled(settings.soundEnabled);
-    setRecitationEnabled(settings.recitationEnabled);
-    const reduceMotion = applyAccessibilitySettings(settings);
-    world.setReducedMotion(reduceMotion);
-    buildingView.setReducedMotion(reduceMotion);
-    battleView.setReducedMotion(reduceMotion);
-    saveNow();
-  });
-  const devPanel = new DevPanel({
-    config,
-    engine,
-    bus,
-    monitor,
-    rig,
-    world,
-    characters: battleView.characterSystem,
-    onSaveNow: () => {
-      saveNow();
-      hud.toast('بازی ذخیره شد.');
-    },
-    onSimulateOffline: () => {
-      const result = game.simulateOffline(60 * 60 * 1000);
-      const gainedText = Object.entries(result.gained)
-        .map(([key, value]) => `${config.t(`economy.${key}`, key)} ${value}`)
-        .join('، ');
-      hud.toast(`غیبت ۱ ساعته شبیه‌سازی شد${gainedText ? `: +${gainedText}` : ''}`);
-      saveNow();
-    },
-  });
-
-  // پایان مأموریت بی‌درنگ ذخیره می‌شود (ستاره‌ها و باز شدن مأموریت بعدی).
-  bus.on(EVENTS.MISSION_FINISHED, () => saveNow());
-
-  bus.on(EVENTS.QURAN_LESSON_REQUESTED, () => {
-    buildings.cancelPlacement();
-    lessonHub.show();
-  });
-  bus.on(EVENTS.QURAN_PANEL_OPENED, () => input.setEnabled(false));
-  bus.on(EVENTS.QURAN_PANEL_CLOSED, () => input.setEnabled(true));
-
-  quranPanel.root.addEventListener('click', (event) => {
-    if (event.target.classList.contains('ui-modal__backdrop') || event.target.classList.contains('ui-icon-btn')) {
-      engine.resume('modal');
-    }
-  });
-
-  // Welcome-back toast (acceptance ⑤).
-  if (game.offlineReport) hud.showOfflineReport(game.offlineReport);
-
-  // ---------------------------------------------------------------- loop
-  engine.addUpdatable(world, 10);
-  engine.addUpdatable(rig, 20);
-  engine.addUpdatable(game, 30);
-  engine.addUpdatable(game.social, 31);
-  engine.addUpdatable(buildingView, 36);
-  engine.addUpdatable(lessonHub, 95);
-  engine.addUpdatable(battleView, 40);
-  engine.addUpdatable(battleView.characterSystem, 41);
-  engine.addUpdatable(missionZone, 45);
-  engine.addUpdatable(missionPanel, 98);
-  engine.addUpdatable(battlePanel, 96);
-  engine.addUpdatable(barracksPanel, 97);
-  engine.addUpdatable(jamaatPanel, 99);
-  engine.addUpdatable(hud, 100);
-  engine.addUpdatable(ftueGuide, 105);
-  engine.addUpdatable(devPanel, 110);
-
-  engine.start();
-  loading.setStep('ui', 1);
-  window.setTimeout(() => loading.hide(), 260);
-
-  // --------------------------------------------------------- debug handle
-  window.__NUR__ = {
-    config, engine, world, worldInput, game, buildings, buildingView, rig, input, bus, monitor, hud, devPanel, quranPanel,
-    lessonHub, datasetLoader, quran, saveSystem, saveNow,
-    battleView, battlePanel, barracksPanel, missionZone, missionPanel,
-    metaSystem: game.meta, metaPanel, settingsPanel, ftueGuide, soundManager,
-    social: game.social, jamaatPanel,
+  buildingView.setReducedMotion(reduceMotion); game.emitState(Date.now(), true);
+  bus.on(EVENTS.JOB_FINISHED, requestSave); bus.on(EVENTS.BATTLE_ENDED, saveNow); bus.on(EVENTS.MISSION_FINISHED, saveNow);
+  const monitor = new PerfMonitor({ windowSeconds: 1.5, sampleInterval: 0.25 }), features = new FeatureLoader();
+  let ctx;
+  const open = (key, action) => {
+    const intent = ++openIntent;
+    buildings.cancelPlacement(); if (key !== 'meta') features.get('meta')?.panel.close();
+    const ready = features.get(key);
+    if (ready) { action(ready); return Promise.resolve(ready); }
+    hud.toast(config.t('security.featureLoading'));
+    return features.load(key).then((value) => { if (!disposed && openIntent === intent && value) { hud.toast(''); action(value); } return value; }).catch((error) => { if (!disposed && openIntent === intent) hud.toast(config.t('security.featureFailed')); console.warn(error); });
   };
-
-  // Phase 8: ?social=ws://… auto-links the city to the jamaat server.
-  if (config.socialUrl) {
-    console.info(`[شهر نور] اتصال خودکار به سرور جماعت: ${config.socialUrl}`);
-    game.social.connect({ url: config.socialUrl }).catch(() => {});
-  }
-
-  window.addEventListener('pagehide', (event) => {
-    if (event.persisted) return; // keep everything for the back/forward cache
-    window.clearInterval(autosaveTimer);
-    window.clearTimeout(saveTimer);
-    saveNow();
-    devPanel.dispose();
-    ftueGuide.dispose();
-    settingsPanel.dispose();
-    metaPanel.dispose();
-    jamaatPanel.dispose();
-    soundManager.dispose();
-    stopRecitation();
-    hud.dispose();
-    quranPanel.dispose();
-    lessonHub.dispose();
-    missionPanel.dispose();
-    missionZone.dispose();
-    battlePanel.dispose();
-    barracksPanel.dispose();
-    battleView.dispose();
-    buildings.dispose();
-    buildingView.dispose();
-    worldInput.dispose();
-    game.dispose();
-    input.dispose();
-    rig.dispose();
-    engine.removeUpdatable(buildingView);
-    engine.removeUpdatable(battleView);
-    engine.removeUpdatable(battleView.characterSystem);
-    engine.removeUpdatable(world);
-    world.dispose();
-    engine.dispose();
-    bus.clear();
+  const hud = new HUD({
+    config, engine, bus, monitor, rig, buildings, economy: game.economy, queue: game.queue, game,
+    onOpenSocial: () => open('social', ({ panel }) => panel.show()),
+    onOpenMissions: () => open('missions', ({ panel }) => panel.show()),
+    onOpenBattle: () => open('battle', ({ battlePanel }) => battlePanel.show()),
+    onOpenBarracks: () => open('battle', ({ barracksPanel }) => barracksPanel.show()),
+    onOpenQuran: () => open('study', ({ policy }) => { policy.show(); engine.pause('modal'); }),
+    onOpenStudy: () => open('study', ({ hub }) => hub.show()),
+    onOpenSettings: () => open('settings', ({ panel }) => panel.show()),
+    onOpenMeta: () => open('meta', ({ panel }) => panel.show()),
   });
+  ctx = { config, engine, bus, game, world, rig, input, buildings, buildingView, hud, monitor, features, saveNow, quran, search: window.location.search, reducedMotion: () => reduceMotion, openStudy: () => open('study', ({ hub }) => hub.show()) };
+  let stringsPromise;
+  const ensureStrings = () => stringsPromise ||= import('./data/strings.fa.json').then((module) => config.installStrings(module.default));
+  features.register('audio', async (signal) => {
+    const { SoundManager } = await import('./core/SoundManager.js');
+    if (signal.aborted) return null;
+    const manager = new SoundManager({ bus, enabled: game.meta.settings.soundEnabled });
+    return { manager, dispose: () => manager.dispose() };
+  });
+  const onGesture = () => features.load('audio').then((audio) => audio?.manager.unlockGesture()).catch(() => {});
+  window.addEventListener('pointerdown', onGesture, { capture: true, passive: true });
+  window.addEventListener('keydown', onGesture, { capture: true, passive: true });
+  features.register('battle', async (signal) => { await ensureStrings(); const mod = await import('./ui/features/BattleFeature.js'); return signal.aborted ? null : mod.createBattleFeature(ctx); });
+  features.register('study', async (signal) => { await ensureStrings(); const mod = await import('./ui/features/StudyFeature.js'); return signal.aborted ? null : mod.createStudyFeature(ctx, signal); });
+  for (const key of ['settings', 'meta', 'social', 'missions', 'debug']) features.register(key, async (signal) => {
+    await ensureStrings(); const mod = await import('./ui/features/PanelsFeature.js');
+    if (key === 'missions') await features.load('study');
+    return signal.aborted ? null : mod.createPanelFeature(key, ctx);
+  });
+  const modalVisible = (panel) => panel?.root && !panel.root.classList.contains('is-hidden');
+  features.register('guide', async (signal) => {
+    await ensureStrings(); const { FTUEGuide } = await import('./ui/FTUEGuide.js');
+    if (signal.aborted) return null;
+    const guide = new FTUEGuide({ config, bus, metaSystem: game.meta, engine, hud, buildings, rig, parent: document.body, isModalOpen: () => [features.get('study')?.hub, features.get('study')?.policy, features.get('battle')?.battlePanel, features.get('battle')?.barracksPanel, ...['meta', 'settings', 'social', 'missions'].map((key) => features.get(key)?.panel)].some(modalVisible) }); engine.addUpdatable(guide, 105);
+    return { guide, dispose() { engine.removeUpdatable(guide); guide.dispose(); } };
+  });
+  bus.on(EVENTS.QURAN_LESSON_REQUESTED, ctx.openStudy);
+  bus.on(EVENTS.QURAN_PANEL_OPENED, () => input.setEnabled(false)); bus.on(EVENTS.QURAN_PANEL_CLOSED, () => input.setEnabled(true));
+  bus.on(EVENTS.SETTINGS_CHANGED, (settings) => {
+    engine.setRuntimeSettings(settings); features.get('audio')?.manager.setEnabled(settings.soundEnabled);
+    reduceMotion = applyAccessibilitySettings(settings); world.setReducedMotion(reduceMotion); buildingView.setReducedMotion(reduceMotion);
+    features.get('battle')?.setSettings(settings, reduceMotion); features.get('study')?.setSettings(settings); saveNow();
+  });
+  if (game.offlineReport) hud.showOfflineReport(game.offlineReport);
+  for (const warning of config.warnings) if (warning === 'social-endpoint-rejected') hud.toast(config.t('security.socialRejected'));
+  for (const [item, priority] of [[world, 10], [rig, 20], [game, 30], [game.social, 31], [buildingView, 36], [hud, 100]]) engine.addUpdatable(item, priority);
+  engine.start(); loading.setStep('ui', 1); const loadingTimer = window.setTimeout(() => loading.hide(), 260);
 
-  console.info(
-    `[شهر نور] فاز ۷ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ` +
-    `ذخیره: ${saveRecord ? `بازیابی (${bootInfo.secondsAway}s غیبت)` : 'جدید'}، ` +
-    `صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}، ` +
-    `دیتاست قرآن: ${quran.dataset.stats.datasetId} (آیه ${quran.dataset.stats.verseCount}، درس ${quran.dataset.stats.lessonCount}، بازبینی‌شده ${quran.dataset.stats.reviewedVerseCount})، ` +
-    `در نوبت مرور: ${game.learning.stats().dueCount}، ` +
-    `سپاه: ${game.barracks.total()} (ظرفیت ${game.barracks.capacity()})، ` +
-    `سابقهٔ نبرد: ${game.state.battles.history.length}، ` +
-    `کمپین: ${game.campaign.list().filter((m) => m.status !== 'locked').length}/${game.campaign.list().length} مأموریت باز، ★${game.campaign.totalStars()}، ` +
-    `مأموریت فعال: ${game.campaign.activeRun ? game.campaign.mission(game.campaign.activeRun.missionId)?.title : 'ندارد'}`, 
-  );
-  return window.__NUR__;
+  let pwaDispose = null;
+  const idle = () => {
+    if (game.meta.settings.soundEnabled) features.load('audio').catch(console.warn);
+    features.load('guide').catch(console.warn);
+    features.load('study').catch((error) => { if (!disposed) console.warn(error); });
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) import('./ui/PwaUpdateNotice.js').then(({ registerPwaUpdates }) => registerPwaUpdates({ config, saveNow: () => saveNow({ strict: true }), workerUrl: `${import.meta.env.BASE_URL}sw.js` })).then((cleanup) => { if (disposed) cleanup(); else pwaDispose = cleanup; }).catch(console.warn);
+  };
+  const idleApi = typeof window.requestIdleCallback === 'function';
+  const idleId = idleApi ? window.requestIdleCallback(idle, { timeout: config.quranLearning.dataset.idleDelayMs || 5000 }) : window.setTimeout(idle, config.quranLearning.dataset.idleDelayMs || 5000);
+  if (config.dev) features.load('debug').catch(console.warn);
+  const dispose = () => {
+    if (disposed) return; disposed = true; ++openIntent;
+    window.clearInterval(autosaveTimer); window.clearTimeout(saveTimer); window.clearTimeout(loadingTimer);
+    if (idleApi) window.cancelIdleCallback(idleId); else window.clearTimeout(idleId);
+    window.removeEventListener('pointerdown', onGesture, true); window.removeEventListener('keydown', onGesture, true);
+    document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('pagehide', onPageHide);
+    saveNow(); pwaDispose?.(); features.dispose(); hud.dispose(); buildings.dispose(); buildingView.dispose(); worldInput.dispose(); game.dispose(); input.dispose(); rig.dispose(); world.dispose(); engine.dispose(); bus.clear();
+  };
+  const onPageHide = (event) => { if (!event.persisted) dispose(); };
+  window.addEventListener('pagehide', onPageHide);
+  const handle = { config, engine, world, worldInput, game, buildings, buildingView, rig, input, bus, monitor, hud, quran, saveSystem, saveNow, dispose, features, metaSystem: game.meta,
+    ensureBattle: () => features.load('battle'), ensureStudy: () => features.load('study'), ensureGuide: () => features.load('guide'), ensureSettings: () => features.load('settings'), ensureMissions: () => features.load('missions'), ensureAll: () => features.loadAll() };
+  const refs = { battleView: ['battle', 'view'], battlePanel: ['battle', 'battlePanel'], barracksPanel: ['battle', 'barracksPanel'], lessonHub: ['study', 'hub'], quranPanel: ['study', 'policy'], datasetLoader: ['study', 'loader'], settingsPanel: ['settings', 'panel'], metaPanel: ['meta', 'panel'], jamaatPanel: ['social', 'panel'], missionPanel: ['missions', 'panel'], missionZone: ['missions', 'zone'], devPanel: ['debug', 'panel'], ftueGuide: ['guide', 'guide'], soundManager: ['audio', 'manager'] };
+  for (const [key, [feature, property]] of Object.entries(refs)) Object.defineProperty(handle, key, { get: () => features.get(feature)?.[property] || null });
+  Object.defineProperty(handle, 'social', { get: () => game.social }); window.__NUR__ = handle;
+  if (config.socialUrl) features.load('social').then(() => game.social.connect({ url: config.socialUrl })).catch(() => {});
+  console.info(`[شهر نور] فاز ۷ آماده شد — کیفیت: ${config.quality.tier}، بذر: ${config.seed}، ذخیره: ${saveRecord ? `بازیابی (${bootInfo.secondsAway}s غیبت)` : 'جدید'}، صف: ${game.queue.jobs.length}، منابع: ${JSON.stringify(game.state.resources)}`);
+  return handle;
 }
-
-boot().catch((error) => {
-  console.error('[شهر نور] خطای راه‌اندازی:', error);
-  const overlay = document.querySelector('.ui-error');
-  if (overlay && overlay.classList.contains('is-hidden')) overlay.classList.remove('is-hidden');
-});
+boot().catch((error) => { console.error('[شهر نور] خطای راه‌اندازی:', error); document.querySelector('.ui-error')?.classList.remove('is-hidden'); });

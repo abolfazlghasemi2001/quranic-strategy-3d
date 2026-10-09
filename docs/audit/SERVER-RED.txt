@@ -1,0 +1,74 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-server.test.js [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 19[2mms[22m[39m
+   [31m❯[39m WS-03: connection admission and authentication deadlines [2m(3)[22m
+[31m     [31m×[31m refuses a second connection from one IP, and releases the slot on close[39m[32m 13[2mms[22m[39m
+[31m     [31m×[31m rejects a browser Origin outside the same host / explicit configured allowlist[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m closes a socket that never sends authenticated hello[39m[32m 2[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-server.test.js[2m > [22mWS-03: connection admission and authentication deadlines[2m > [22mrefuses a second connection from one IP, and releases the slot on close
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-server.test.js:[2m22:30[22m[39m
+    [90m 20|[39m     const first = new Socket(), second = new Socket();
+    [90m 21|[39m     server._onUpgrade(request(), first, Buffer.alloc(0)); server._onUp…
+    [90m 22|[39m     expect(second.destroyed).toBe(true); expect(server.conns.size).toB…
+    [90m   |[39m                              [31m^[39m
+    [90m 23|[39m     [...server.conns][0].ws.close(); expect(server.connectionsByIp.siz…
+    [90m 24|[39m     const third = new Socket(); server._onUpgrade(request(), third, Bu…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-server.test.js[2m > [22mWS-03: connection admission and authentication deadlines[2m > [22mrejects a browser Origin outside the same host / explicit configured allowlist
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-server.test.js:[2m28:30[22m[39m
+    [90m 26|[39m   it('rejects a browser Origin outside the same host / explicit config…
+    [90m 27|[39m     const socket = new Socket(); server._onUpgrade(request('https://fo…
+    [90m 28|[39m     expect(socket.destroyed).toBe(true); expect(server.conns.size).toB…
+    [90m   |[39m                              [31m^[39m
+    [90m 29|[39m   });
+    [90m 30|[39m   it('closes a socket that never sends authenticated hello', () => {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-server.test.js[2m > [22mWS-03: connection admission and authentication deadlines[2m > [22mcloses a socket that never sends authenticated hello
+[31m[1mAssertionError[22m: expected 1 to be +0 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+[36m [2m❯[22m tests/upgrade-server.test.js:[2m32:60[22m[39m
+    [90m 30|[39m   it('closes a socket that never sends authenticated hello', () => {
+    [90m 31|[39m     const socket = new Socket(); server._onUpgrade(request(), socket, …
+    [90m 32|[39m     vi.advanceTimersByTime(101); expect(server.conns.size).toBe(0);
+    [90m   |[39m                                                            [31m^[39m
+    [90m 33|[39m     vi.advanceTimersByTime(1001); expect(socket.destroyed).toBe(true);
+    [90m 34|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[90m (3)[39m
+[2m   Start at [22m 07:31:14
+[2m   Duration [22m 325ms[2m (transform 58%, import 29%, tests 10%, worker 2%)[22m
+

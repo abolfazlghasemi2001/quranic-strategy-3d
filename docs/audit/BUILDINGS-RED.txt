@@ -1,0 +1,29 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-buildings.test.js [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 63[2mms[22m[39m
+   [31m❯[39m PERF-01: repeated city presentation draw budget [2m(3)[22m
+[31m     [31m×[31m renders 30 real buildings inside the 150-call scene budget before battle overhead[39m[32m 50[2mms[22m[39m
+     [32m✓[39m keeps transforms and building lifecycle independent from gameplay objects[32m 7[2mms[22m[39m
+     [32m✓[39m does not dispose a shared template while another instance still uses it[32m 3[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-buildings.test.js[2m > [22mPERF-01: repeated city presentation draw budget[2m > [22mrenders 30 real buildings inside the 150-call scene budget before battle overhead
+[31m[1mAssertionError[22m: expected 342 to be less than 130[39m
+[36m [2m❯[22m tests/upgrade-buildings.test.js:[2m32:55[22m[39m
+    [90m 30|[39m     const types = ['farm', 'warehouse', 'light-spring', 'watchtower', …
+    [90m 31|[39m     for (let i = 0; i < 30; i += 1) add(types[i % types.length], i);
+    [90m 32|[39m     expect(view.roots.size).toBe(30); expect(draws()).toBeLessThan(130…
+    [90m   |[39m                                                       [31m^[39m
+    [90m 33|[39m   });
+    [90m 34|[39m   it('keeps transforms and building lifecycle independent from gamepla…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 07:49:45
+[2m   Duration [22m 1.11s[2m (environment 67%, transform 16%, import 8%, tests 6%, worker 2%)[22m
+

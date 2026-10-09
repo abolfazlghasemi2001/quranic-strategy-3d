@@ -1,0 +1,92 @@
+{
+  "cycles": [
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    },
+    {
+      "geometries": 14,
+      "textures": 4,
+      "programs": 10
+    }
+  ],
+  "shadow": [
+    {
+      "dt": 0.1,
+      "globalDirty": true,
+      "lightDirty": false,
+      "mapId": null,
+      "matrixChange": true,
+      "sunPosition": [
+        24.40119275015175,
+        272.0947714501958,
+        -85.38386085078017
+      ]
+    },
+    {
+      "dt": 0.1,
+      "globalDirty": false,
+      "lightDirty": false,
+      "mapId": null,
+      "matrixChange": false,
+      "sunPosition": [
+        24.337249109907926,
+        272.18291438735054,
+        -85.1844213557068
+      ]
+    },
+    {
+      "dt": 1.6,
+      "globalDirty": false,
+      "lightDirty": true,
+      "mapId": null,
+      "matrixChange": false,
+      "sunPosition": [
+        23.352114365974963,
+        273.5751307913431,
+        -81.98153842453348
+      ]
+    }
+  ]
+}

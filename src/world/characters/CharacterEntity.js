@@ -165,6 +165,10 @@ export class CharacterEntity {
   dispose() {
     this.resetForPool();
     this.mixer?.stopAllAction();
+    const skeletons = new Set();
+    this.visual?.traverse((node) => { if (node.isSkinnedMesh && node.skeleton) skeletons.add(node.skeleton); });
+    for (const skeleton of skeletons) skeleton.dispose();
+    if (this.visual) this.mixer?.uncacheRoot(this.visual);
     this.root.removeFromParent();
     this.root.clear();
     this.clips.clear();

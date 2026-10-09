@@ -23,7 +23,7 @@ export function sanitizeDisplayName(value) {
   if (typeof value !== 'string') return null;
   const cleaned = value
     // eslint-disable-next-line no-control-regex
-    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/[\u0000-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, MAX_DISPLAY_NAME)

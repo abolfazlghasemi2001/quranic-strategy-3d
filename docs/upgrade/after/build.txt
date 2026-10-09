@@ -1,0 +1,37 @@
+
+> shahr-nur@0.3.0 prebuild
+> node tools/generate-pwa-icons.mjs
+
+Generated /home/user/quranic-strategy-3d/public/icons/icon-192.png
+Generated /home/user/quranic-strategy-3d/public/icons/icon-512.png
+
+> shahr-nur@0.3.0 build
+> vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 520 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                2.64 kB │ gzip:   1.17 kB
+dist/sw.js                                     3.34 kB
+dist/.vite/manifest.json                       3.98 kB │ gzip:   0.76 kB
+dist/quran/quran.json.br                     541.77 kB
+dist/assets/index-0pDypMT3.css                72.88 kB │ gzip:  12.76 kB
+dist/assets/VerseIds-_iqcZdS_.js               0.07 kB │ gzip:   0.08 kB
+dist/assets/FrameTimeGovernor-CStVnbIj.js      0.90 kB │ gzip:   0.42 kB
+dist/assets/BuildingSurfaceMaps-BeSlNyW6.js    1.23 kB │ gzip:   0.70 kB
+dist/assets/PwaUpdateNotice-Cj9z49vQ.js        1.28 kB │ gzip:   0.69 kB
+dist/assets/ShadowRig-D48yv96l.js              2.71 kB │ gzip:   1.15 kB
+dist/assets/characters-BZd4g6JF.js             5.10 kB │ gzip:   1.82 kB
+dist/assets/SoundManager-CBgPHd2s.js           5.54 kB │ gzip:   1.92 kB
+dist/assets/FTUEGuide-DE5-80uQ.js              6.25 kB │ gzip:   2.47 kB
+dist/assets/ArmyFeature-Bzwoijrl.js           14.81 kB │ gzip:   5.74 kB
+dist/assets/strings.fa-_ITr6Dc5.js            19.92 kB │ gzip:   6.90 kB
+dist/assets/CampaignFeature-wna4x-cl.js       53.07 kB │ gzip:  16.55 kB
+dist/assets/PanelsFeature-BGM82D-n.js         71.55 kB │ gzip:  20.42 kB
+dist/assets/quran-DWDQuD4d.js                 88.41 kB │ gzip:  25.25 kB
+dist/assets/battle-T4MFPDi0.js               196.37 kB │ gzip:  57.63 kB
+dist/assets/index-N6wBDXgW.js                239.84 kB │ gzip:  74.50 kB
+dist/assets/three-CRFS15zL.js                513.85 kB │ gzip: 127.14 kB
+✓ built in 12.96s

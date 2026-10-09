@@ -293,7 +293,7 @@ export class BarracksPanel {
           },
         });
         row.append(speedBtn);
-        this._rows.push({ job, timer, duration: job.durationMs });
+        this._rows.push({ job, timer, row, duration: job.durationMs });
       }
       const cancelBtn = button('✕', {
         className: 'ui-btn barracks-cancel',

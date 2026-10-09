@@ -20,7 +20,10 @@
     "minDistance": 26,
     "maxDistance": 152,
     "focusPadding": 2,
-    "startFocus": { "x": null, "z": null },
+    "startFocus": {
+      "x": null,
+      "z": null
+    },
     "rotateDegPerPixel": 0.34,
     "panSmoothing": 18,
     "zoomSmoothing": 14,
@@ -42,8 +45,15 @@
       "intensity": 2.25,
       "distance": 300,
       "shadowBias": -0.0007,
-      "shadowNormalBias": 0.35,
-      "shadowPadding": 14
+      "shadowNormalBias": 0.06,
+      "shadowPadding": 14,
+      "stableShadow": {
+        "casterMargin": 8,
+        "maxCasterHeight": 12,
+        "fitPadding": 3,
+        "extentQuantum": 4,
+        "minSunElevation": 0.08
+      }
     },
     "hemisphere": {
       "skyColor": "#bcd8ff",
@@ -101,18 +111,19 @@
     "gradientPower": 0.5,
     "glowFalloff": 7.0,
     "glowStrength": 0.85,
-    "radius": 620
+    "radius": 620,
+    "starsStrength": 0.7
   },
   "fog": {
     "enabled": true,
     "color": "#d8d3bd",
-    "near": 120,
-    "far": 420
+    "near": 85,
+    "far": 235
   },
   "renderer": {
     "clearColor": "#cfe0ef",
-    "toneMapping": "neutral",
-    "toneMappingExposure": 1.0,
+    "toneMapping": "aces",
+    "toneMappingExposure": 1.08,
     "shadowType": "pcfsoft"
   }
 }

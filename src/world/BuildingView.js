@@ -7,15 +7,17 @@ import economyData from '../data/economy.json';
 import buildingData from '../data/buildings.json';
 import { EVENTS } from '../core/EventBus.js';
 import { BuildingFactory } from './BuildingFactory.js';
+import { BuildingBatches } from './BuildingBatches.js';
 
 export class BuildingView {
   constructor({ config, world, rig, input, bus, state, engine = null }) {
     Object.assign(this, { config, world, rig, input, bus, state, engine });
-    this.factory = new BuildingFactory(config.tileSize);
+    this.factory = new BuildingFactory(config.tileSize, { tier: config.quality.tier, anisotropy: Math.min(config.quality.textureAnisotropy || 1, engine?.renderer?.capabilities?.getMaxAnisotropy?.() || 1) });
     this._definitions = new Map(buildingData.buildings.map((definition) => [definition.id, definition]));
     this.group = new THREE.Group();
     this.group.name = 'buildings';
     world.group.add(this.group);
+    this.batches = new BuildingBatches({ parent: this.group, factory: this.factory, engine, initialCapacity: config.sources?.quality?.batching?.initialCapacity || 4 });
     this.roots = new Map();
     this.indicators = new Map();
     this.producerStates = new Map();
@@ -58,10 +60,13 @@ export class BuildingView {
     const definition = this._definition(entity.type);
     if (!definition) return null;
     const ready = entity.status === 'ready';
-    const root = ready ? this.factory.create(definition) : this.factory.createScaffold(definition);
+    const root = new THREE.Group();
+    root.name = `${ready ? 'building' : 'scaffold'}:${entity.type}`;
     this._placeRoot(root, entity, ready ? entity.level : 1);
     this.roots.set(entity.id, root);
     this.group.add(root);
+    this.batches.add(root, definition, { ready, level: ready ? entity.level : 1 });
+    this.batches.flush();
     this.engine?.applyRuntimeSettingsTo?.(root);
     return root;
   }
@@ -86,7 +91,7 @@ export class BuildingView {
   _updateVisual(entity, jobKind = null) {
     const definition = this._definition(entity.type);
     if (!definition) return;
-    if (jobKind === 'build' || !this.roots.has(entity.id)) {
+    if (jobKind === 'build' || jobKind === 'upgrade' || !this.roots.has(entity.id)) {
       this._removeVisual(entity.id);
       this._attachVisual(entity);
       return;
@@ -98,6 +103,7 @@ export class BuildingView {
   _removeVisual(entityId) {
     const root = this.roots.get(entityId);
     if (root) {
+      this.batches.remove(root);
       root.removeFromParent();
       this._disposeRootGeometry(root);
       this.roots.delete(entityId);
@@ -285,6 +291,8 @@ export class BuildingView {
     }
   }
 
+  beforeRender() { this.factory.setQuality(this.engine?.governor?.scale < 1 ? 'low' : this.engine?.runtimeQualityTier || this.config.quality.tier); this.factory.setDaylight(this.world.dayNightState?.daylight ?? 1); this.batches.flush(); }
+
   dispose() {
     for (const off of this._unsubscribers) off();
     this._unsubscribers.length = 0;
@@ -299,6 +307,7 @@ export class BuildingView {
     for (const texture of Object.values(this.indicatorTextures)) texture.dispose();
     this.highlightGeometry.dispose();
     this.highlightMaterial.dispose();
+    this.batches.dispose();
     this.factory.dispose();
     this.group.removeFromParent();
   }

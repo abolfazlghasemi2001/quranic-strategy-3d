@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import visuals from '../data/building-visuals.json';
 
 const mat = (color, texture = null) => new THREE.MeshStandardMaterial({ color, map: texture, roughness: 0.78, metalness: 0.03 });
 
@@ -78,7 +79,8 @@ function arch(group, width, height, z, material) {
 }
 
 export class BuildingFactory {
-  constructor(tileSize) {
+  constructor(tileSize, { tier = 'low', anisotropy = 1 } = {}) {
+    this.disposed = false; this.tier = tier; this.anisotropy = anisotropy;
     this.tileSize = tileSize;
     this.textures = [canvasTexture('brick'), canvasTexture('tile'), starTexture()];
     this.materials = {
@@ -90,10 +92,27 @@ export class BuildingFactory {
       lantern: new THREE.MeshStandardMaterial({ color: 0xffe6a8, emissive: 0xffb761, emissiveIntensity: 0.55, roughness: 0.4 }),
       signal: new THREE.MeshStandardMaterial({ color: 0xd8fbff, emissive: 0x6fd8e6, emissiveIntensity: 0.9, roughness: 0.25, transparent: true, opacity: 0.92 }),
       banner: mat(0x2f8f96),
+      window: new THREE.MeshStandardMaterial({ color: 0x7a6544, emissive: 0xffc573, emissiveIntensity: visuals.windowsDayIntensity, roughness: .9 }),
+      blob: new THREE.MeshBasicMaterial({ color: 0x302b1c, transparent: true, opacity: visuals.blobOpacity, depthWrite: false }),
     };
+    this.materials.blob.userData.noShadow = true;
+    this.surfaceReady = tier === 'low' ? Promise.resolve() : import('./BuildingSurfaceMaps.js').then(({ applyBuildingSurfaceMaps }) => applyBuildingSurfaceMaps(this, { tier, anisotropy, normalStrength: visuals.normalStrength })).catch(() => {});
   }
 
-  create(def) {
+  setQuality(tier) {
+    if (this.tier === tier) return; this.tier = tier;
+    for (const material of [this.materials.brick, this.materials.tile, this.materials.star]) {
+      if (material.normalMap) { material.userData.normalMap = material.normalMap; material.userData.roughnessMap = material.roughnessMap; }
+      material.normalMap = tier === 'low' ? null : material.userData.normalMap || null;
+      material.roughnessMap = tier === 'low' ? null : material.userData.roughnessMap || null;
+      material.needsUpdate = true;
+    }
+    if (tier !== 'low' && !this.materials.brick.normalMap) this.surfaceReady = import('./BuildingSurfaceMaps.js').then(({ applyBuildingSurfaceMaps }) => applyBuildingSurfaceMaps(this, { tier, anisotropy: this.anisotropy, normalStrength: visuals.normalStrength })).catch(() => {});
+  }
+
+  setDaylight(daylight) { this.materials.window.emissiveIntensity = visuals.windowsDayIntensity + (1 - daylight) * visuals.windowsNightIntensity; }
+
+  create(def, { level = 1 } = {}) {
     const g = new THREE.Group();
     g.name = `building:${def.id}`;
     const s = this.tileSize, w = def.size[0] * s * .86, d = def.size[1] * s * .86;
@@ -245,6 +264,18 @@ export class BuildingFactory {
       base(1.05, m.brick);
       g.add(mesh(new THREE.BoxGeometry(w * .92, .18, d * 1.04), m.tile, 0, 1.12, 0));
     }
+    const rank = Math.max(1, Math.min(visuals.levels.length, Math.floor(level)));
+    g.scale.y = visuals.levels[rank - 1];
+    if (def.id !== 'wall' && def.id !== 'farm' && def.id !== 'light-spring') {
+      for (let i = 0; i < rank - 1; i++) g.add(mesh(new THREE.BoxGeometry(w * 1.015,.08,d * 1.015), i % 2 ? m.gold : m.tile, 0, .5 + i * .15, 0));
+      for (const side of [-1, 1]) g.add(mesh(new THREE.BoxGeometry(.25,.35,.05), m.window, side*w*.28, .8, d/2+.03));
+      if (rank >= 4) {
+        const h = .4 + rank*.1;
+        g.add(mesh(new THREE.BoxGeometry(w*.12,h,d*.15),m.plaster,-w*.32,1.8+h/2,-d*.28));
+        g.add(mesh(new THREE.BoxGeometry(w*.17,.12,d*.19),m.tile,-w*.32,1.8+h,-d*.28));
+      }
+    } else if (rank > 1) g.add(mesh(new THREE.CylinderGeometry(w*.1,w*.13,.12*rank,8),m.tile,w*.3,.4+rank*.06,-d*.25));
+    const blob=mesh(new THREE.CircleGeometry(Math.max(w,d)*.52,16),m.blob,0,.025,0);blob.rotation.x=-Math.PI/2;blob.userData.noShadow=true;g.add(blob);
     g.traverse((o) => { if (o.isMesh) o.userData.buildingRoot = g; });
     return g;
   }
@@ -284,6 +315,7 @@ export class BuildingFactory {
   }
 
   dispose() {
+    this.disposed = true;
     for (const t of this.textures) t.dispose();
     for (const m of Object.values(this.materials)) m.dispose();
   }

@@ -1,0 +1,106 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-quran.test.js [2m([22m[2m6 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 331[2mms[22m[39m
+   [31m❯[39m QUR-01: relative path, byte integrity and schema boundary [2m(6)[22m
+     [32m✓[39m accepts a checksummed relative dataset and preserves its reviewed flags[32m 5[2mms[22m[39m
+[31m     [31m×[31m rejects different bytes even if the JSON value is identical[39m[32m 14[2mms[22m[39m
+[31m     [31m×[31m rejects duplicate ayah indices even with a matching checksum[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m ignores an override without a pinned checksum[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m rejects a response beyond the configured byte budget[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m has an absolute fetch deadline even for a stalled mock ignoring AbortSignal[39m[33m 302[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-quran.test.js[2m > [22mQUR-01: relative path, byte integrity and schema boundary[2m > [22mrejects different bytes even if the JSON value is identical
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m tests/upgrade-quran.test.js:[2m20:37[22m[39m
+    [90m 18|[39m     vi.stubGlobal('crypto', webcrypto);
+    [90m 19|[39m     const { loadReport } = await make(text + '\n').load();
+    [90m 20|[39m     expect(loadReport.remoteLoaded).toBe(false);
+    [90m   |[39m                                     [31m^[39m
+    [90m 21|[39m     expect(loadReport.error).toMatch(/checksum/i);
+    [90m 22|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-quran.test.js[2m > [22mQUR-01: relative path, byte integrity and schema boundary[2m > [22mrejects duplicate ayah indices even with a matching checksum
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m tests/upgrade-quran.test.js:[2m28:37[22m[39m
+    [90m 26|[39m     const content = JSON.stringify(duplicate);
+    [90m 27|[39m     const { loadReport } = await make(content, { dataset: { checksums:…
+    [90m 28|[39m     expect(loadReport.remoteLoaded).toBe(false);
+    [90m   |[39m                                     [31m^[39m
+    [90m 29|[39m     expect(loadReport.error).toMatch(/schema/i);
+    [90m 30|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-quran.test.js[2m > [22mQUR-01: relative path, byte integrity and schema boundary[2m > [22mignores an override without a pinned checksum
+[31m[1mAssertionError[22m: expected './unknown.json' to be './quran/quran.json' // Object.is equality[39m
+
+Expected: [32m"./[7mquran/qura[27mn.json"[39m
+Received: [31m"./[7munknow[27mn.json"[39m
+
+[36m [2m❯[22m tests/upgrade-quran.test.js:[2m33:33[22m[39m
+    [90m 31|[39m   it('ignores an override without a pinned checksum', () => {
+    [90m 32|[39m     const loader = new QuranDatasetLoader({ sample, learning, search: …
+    [90m 33|[39m     expect(loader.resolveUrl()).toBe('./quran/quran.json');
+    [90m   |[39m                                 [31m^[39m
+    [90m 34|[39m   });
+    [90m 35|[39m   it('rejects a response beyond the configured byte budget', async () …
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-quran.test.js[2m > [22mQUR-01: relative path, byte integrity and schema boundary[2m > [22mrejects a response beyond the configured byte budget
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m tests/upgrade-quran.test.js:[2m37:94[22m[39m
+    [90m 35|[39m   it('rejects a response beyond the configured byte budget', async () …
+    [90m 36|[39m     vi.stubGlobal('crypto', webcrypto);
+    [90m 37|[39m     expect((await make(text, { dataset: { maxBytes: 20 } }).load()).lo…
+    [90m   |[39m                                                                                              [31m^[39m
+    [90m 38|[39m   });
+    [90m 39|[39m   it('has an absolute fetch deadline even for a stalled mock ignoring …
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-quran.test.js[2m > [22mQUR-01: relative path, byte integrity and schema boundary[2m > [22mhas an absolute fetch deadline even for a stalled mock ignoring AbortSignal
+[31m[1mError[22m: Test timed out in 300ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m tests/upgrade-quran.test.js:[2m39:5[22m[39m
+    [90m 37|[39m     expect((await make(text, { dataset: { maxBytes: 20 } }).load()).lo…
+    [90m 38|[39m   });
+    [90m 39|[39m   it('has an absolute fetch deadline even for a stalled mock ignoring …
+    [90m   |[39m     [31m^[39m
+    [90m 40|[39m     vi.stubGlobal('crypto', webcrypto);
+    [90m 41|[39m     const { loadReport } = await make(text, { dataset: { timeoutMs: 15…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 07:31:40
+[2m   Duration [22m 583ms[2m (tests 76%, transform 18%, import 5%, worker 1%)[22m
+

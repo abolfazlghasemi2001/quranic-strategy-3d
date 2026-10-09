@@ -36,6 +36,9 @@ jobs:
 
       - run: npm run build
 
+      - name: Initial JavaScript static-import budget (all shared chunks)
+        run: npm run test:bundle
+
       - name: PWA release gate (manifest, icons, precache)
         run: npm run test:pwa
 
@@ -68,7 +71,7 @@ jobs:
           done
           echo "dev server did not come up"; cat /tmp/hud-dev.log; exit 1
 
-      - name: HUD layout geometry + screenshots (5 viewports × 2 font scales, RTL)
+      - name: HUD layout geometry + screenshots (6 viewports × 2 font scales, RTL)
         env:
           HUD_CHROMIUM_PATH: ${{ steps.chromium.outputs.path }}
         run: node tools/hud-layout.mjs --url http://127.0.0.1:5173/ --shots docs/hud-redesign/after

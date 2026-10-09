@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.3.0",
   "type": "module",
-  "description": "شهر نور — شهرسازی و استراتژی سه‌بعدی فارسی (بتای انتشار، فاز ۹)",
+  "description": "\u0634\u0647\u0631 \u0646\u0648\u0631 \u2014 \u0634\u0647\u0631\u0633\u0627\u0632\u06cc \u0648 \u0627\u0633\u062a\u0631\u0627\u062a\u0698\u06cc \u0633\u0647\u200c\u0628\u0639\u062f\u06cc \u0641\u0627\u0631\u0633\u06cc (\u0628\u062a\u0627\u06cc \u0627\u0646\u062a\u0634\u0627\u0631\u060c \u0641\u0627\u0632 \u06f9)",
   "scripts": {
     "dev": "vite",
     "prebuild": "node tools/generate-pwa-icons.mjs",
@@ -17,7 +17,10 @@
     "smoke": "node tools/smoke.mjs",
     "server": "node server/src/index.js",
     "server:start": "node server/src/index.js",
-    "hud:screenshots": "node tools/hud-layout.mjs --shots docs/hud-redesign/after"
+    "hud:screenshots": "node tools/hud-layout.mjs --shots docs/hud-redesign/after",
+    "test:bundle": "node tools/bundle-budget.mjs",
+    "audit:perf": "node tools/perf-audit.mjs",
+    "audit:battle": "node tools/battle-matrix.mjs"
   },
   "keywords": [
     "threejs",
@@ -34,6 +37,7 @@
     "@playwright/test": "^1.64.0",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.1.2",
+    "terser": "5.44.0",
     "vite": "^7.3.7",
     "vitest": "^5.0.3"
   }

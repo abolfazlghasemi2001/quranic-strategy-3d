@@ -74,7 +74,10 @@
       "unitDamageMultiplier": 1,
       "structureDamageMultiplier": 0.85,
       "splashTiles": 0,
-      "projectile": null
+      "projectile": null,
+      "render": {
+        "maxTriangles": 800
+      }
     },
     {
       "id": "archer",
@@ -99,7 +102,10 @@
       "unitDamageMultiplier": 1,
       "structureDamageMultiplier": 0.7,
       "splashTiles": 0,
-      "projectile": "arrow"
+      "projectile": "arrow",
+      "render": {
+        "maxTriangles": 800
+      }
     },
     {
       "id": "healer",
@@ -125,7 +131,10 @@
       "unitDamageMultiplier": 0,
       "structureDamageMultiplier": 0,
       "splashTiles": 0,
-      "projectile": null
+      "projectile": null,
+      "render": {
+        "maxTriangles": 800
+      }
     },
     {
       "id": "breaker",
@@ -150,8 +159,16 @@
       "unitDamageMultiplier": 0.6,
       "structureDamageMultiplier": 4.5,
       "splashTiles": 0,
-      "projectile": null
+      "projectile": null,
+      "render": {
+        "maxTriangles": 800
+      }
     }
   ],
-  "defaults_note": "followTiles خالی (null) = ترمیم‌گر بدون سقف فاصله دنبال هم‌رزم می‌رود تا از ستون عقب نماند."
+  "defaults_note": "followTiles خالی (null) = ترمیم‌گر بدون سقف فاصله دنبال هم‌رزم می‌رود تا از ستون عقب نماند.",
+  "rendering": {
+    "proceduralDefault": true,
+    "shaderPoseDistance": 85,
+    "poseMaxFrameMs": 45
+  }
 }

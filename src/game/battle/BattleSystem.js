@@ -387,7 +387,7 @@ export class BattleSystem {
     this.lastReport = report;
 
     if (session.mode === BATTLE_MODE.REPLAY) {
-      const expected = session.record?.report || null;
+      const expected = session.recorded?.report || null;
       const match = !!expected
         && expected.stateHash === report.stateHash
         && expected.eventHash === report.eventHash

@@ -1,0 +1,79 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-render.test.js [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 32[2mms[22m[39m
+   [31m❯[39m render lifecycle regression contracts [2m(5)[22m
+[31m     [31m×[31m does not halve normal rendering when RAF timestamps jitter around 60 Hz[39m[32m 15[2mms[22m[39m
+[31m     [31m×[31m cancels hidden-tab RAF and does not reschedule a late callback[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m sets both global and light shadow dirty flags at the solar cadence[39m[32m 7[2mms[22m[39m
+[31m     [31m×[31m disposes per-clone skeleton textures but does not dispose shared geometry/materials[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m disposes a parsed asset when skinned-mesh validation fails[39m[32m 2[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22mdoes not halve normal rendering when RAF timestamps jitter around 60 Hz
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called 60 times, but got 30 times[39m
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m25:36[22m[39m
+    [90m 23|[39m     engine.setRuntimeSettings({ qualityTier: 'low', batterySaver: fals…
+    [90m 24|[39m     for (let i = 1; i <= 60; i += 1) engine._tick(i * (1000 / 60) + (i…
+    [90m 25|[39m     expect(engine.renderer.render).toHaveBeenCalledTimes(60);
+    [90m   |[39m                                    [31m^[39m
+    [90m 26|[39m   });
+    [90m 27|[39m   it('cancels hidden-tab RAF and does not reschedule a late callback',…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22mcancels hidden-tab RAF and does not reschedule a late callback
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ 7 ][90m
+
+Number of calls: [1m0[22m
+[31m[39m
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m31:44[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22msets both global and light shadow dirty flags at the solar cadence
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m45:51[22m[39m
+    [90m 43|[39m     world.animationTime = 2;
+    [90m 44|[39m     world._applyDayNight(world.dayNight.sample(), engine);
+    [90m 45|[39m     expect(engine.renderer.shadowMap.needsUpdate).toBe(true);
+    [90m   |[39m                                                   [31m^[39m
+    [90m 46|[39m     expect(world.lights.sun.shadow.needsUpdate).toBe(true);
+    [90m 47|[39m     world.dispose();
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22mdisposes per-clone skeleton textures but does not dispose shared geometry/materials
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called once, but got 0 times[39m
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m56:35[22m[39m
+    [90m 54|[39m     const geometryDispose = vi.spyOn(mesh.geometry, 'dispose'), materi…
+    [90m 55|[39m     entity.dispose();
+    [90m 56|[39m     expect(mesh.skeleton.dispose).toHaveBeenCalledOnce();
+    [90m   |[39m                                   [31m^[39m
+    [90m 57|[39m     expect(geometryDispose).not.toHaveBeenCalled(); expect(materialDis…
+    [90m 58|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-render.test.js[2m > [22mrender lifecycle regression contracts[2m > [22mdisposes a parsed asset when skinned-mesh validation fails
+[31m[1mAssertionError[22m: expected "dispose" to be called once, but got 0 times[39m
+[36m [2m❯[22m tests/upgrade-render.test.js:[2m64:21[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[90m (5)[39m
+[2m   Start at [22m 07:43:25
+[2m   Duration [22m 581ms[2m (transform 65%, import 27%, tests 8%, worker 1%)[22m
+

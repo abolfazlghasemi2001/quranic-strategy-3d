@@ -1,0 +1,73 @@
+
+> shahr-nur@0.3.0 smoke
+> node tools/smoke.mjs
+
+[شهر نور] فاز ۷ آماده شد — کیفیت: medium، بذر: 20261007، ذخیره: جدید، صف: 0، منابع: {"rizq":600,"nur":400,"hekmat":250,"gohar":20}
+مسیر یا امضای دیتاست آموزشی تأیید نشد؛ نمونهٔ برچسب‌دار نمایش داده می‌شود. Failed to parse URL from ./quran/quran.json
+  ✓ boot: fresh game starts in jsdom with no runtime errors
+  ✓ phase 7: settings affect engine, sound, locale, and the FTUE can be replayed
+  ✓ HUD: starting economy renders in Persian (۶۰۰/۸۰۰ …)
+  ✓ placement: preview starts invalid at centre, valid on a free tile
+  ✓ acceptance ①/③: confirm farm → active job, queue visible instantly (Bug-A regression)
+  ✓ acceptance ③: two active builders, third job queued, wall placement chains
+  ✓ queue: live countdown renders in Persian digits
+  ✓ speedup (گوهر): finishes the farm instantly and promotes the wall
+  ✓ acceptance ①: tap on the ready farm harvests up to the storage ceiling
+  ✓ acceptance ①: upgrade costs paid, waits for a builder, completes at level 2
+  ✓ acceptance ②: storage ceiling stops production, space resumes it, harvest caps
+  ✓ dev panel: instant save and one-hour offline simulation
+  ✓ pause: «راهنمای متن» opens the Quran panel and freezes the clock
+  ✓ reload prep: an active watchtower job is part of the save
+  ✓ acceptance ④: pagehide persists the game, clock rewound 2 h for offline math
+[شهر نور] فاز ۷ آماده شد — کیفیت: medium، بذر: 20261007، ذخیره: بازیابی (7200s غیبت)، صف: 1، منابع: {"rizq":800,"nur":600,"hekmat":30,"gohar":19}
+مسیر یا امضای دیتاست آموزشی تأیید نشد؛ نمونهٔ برچسب‌دار نمایش داده می‌شود. Failed to parse URL from ./quran/quran.json
+  ✓ acceptance ④/⑤: reload restores state, gains from 2 h offline, capped
+  ✓ phase 4 ①: دارالقرآن opens the lesson hub on tap and keeps Quran text out of the HUD
+  ✓ phase 4 (perf): the دارالقرآن model stays inside the draw-call budget
+  ✓ phase 4 ⑤: a lesson renders the verse with Quranic font class, diacritics and both badges
+  ✓ phase 4 ③: a wrong answer costs nothing and never ends the game
+  ✓ phase 4 ①/②: the full lesson runs all three minigames and pays nur + hekmat + speedup
+  ✓ phase 4 ④: mistaken items are re-queued — the spaced-repetition deck grows and the badge shows
+  ✓ phase 4 ①/④: a review session runs, re-shows a mistaken item and rewards again
+  ✓ phase 4 ⑤: Quran text is confined to the lesson UI (never in the world, HUD or save)
+[شهر نور] فاز ۷ آماده شد — کیفیت: medium، بذر: 20261007، ذخیره: بازیابی (0s غیبت)، صف: 0، منابع: {"rizq":301.33131944444443,"nur":257.5045,"hekmat":158.22982777777779,"gohar":20}
+مسیر یا امضای دیتاست آموزشی تأیید نشد؛ نمونهٔ برچسب‌دار نمایش داده می‌شود. Failed to parse URL from ./quran/quran.json
+  ✓ phase 4: learning progress survives a reload (Leitner boxes, lesson record, totals)
+[شهر نور] فاز ۷ آماده شد — کیفیت: medium، بذر: 20261007، ذخیره: بازیابی (0s غیبت)، صف: 1، منابع: {"rizq":19970,"nur":19990,"hekmat":19995,"gohar":20}
+مسیر یا امضای دیتاست آموزشی تأیید نشد؛ نمونهٔ برچسب‌دار نمایش داده می‌شود. Failed to parse URL from ./quran/quran.json
+  ✓ acceptance ⑤: future timestamps → 0s away, no gains, no toast
+  ✓ phase 8: jamaat panel opens offline with tabs, presets hidden, no quran text
+  ✓ phase 8: failed connect degrades gracefully (no crash, stays local)
+  ✓ phase 8: real server link — adopt ledger, panel chat, online build, remote help
+
+  ✓ boot: fresh game starts in jsdom with no runtime errors
+  ✓ phase 7: settings affect engine, sound, locale, and the FTUE can be replayed
+  ✓ HUD: starting economy renders in Persian (۶۰۰/۸۰۰ …)
+  ✓ placement: preview starts invalid at centre, valid on a free tile
+  ✓ acceptance ①/③: confirm farm → active job, queue visible instantly (Bug-A regression)
+  ✓ acceptance ③: two active builders, third job queued, wall placement chains
+  ✓ queue: live countdown renders in Persian digits
+  ✓ speedup (گوهر): finishes the farm instantly and promotes the wall
+  ✓ acceptance ①: tap on the ready farm harvests up to the storage ceiling
+  ✓ acceptance ①: upgrade costs paid, waits for a builder, completes at level 2
+  ✓ acceptance ②: storage ceiling stops production, space resumes it, harvest caps
+  ✓ dev panel: instant save and one-hour offline simulation
+  ✓ pause: «راهنمای متن» opens the Quran panel and freezes the clock
+  ✓ reload prep: an active watchtower job is part of the save
+  ✓ acceptance ④: pagehide persists the game, clock rewound 2 h for offline math
+  ✓ acceptance ④/⑤: reload restores state, gains from 2 h offline, capped
+  ✓ phase 4 ①: دارالقرآن opens the lesson hub on tap and keeps Quran text out of the HUD
+  ✓ phase 4 (perf): the دارالقرآن model stays inside the draw-call budget
+  ✓ phase 4 ⑤: a lesson renders the verse with Quranic font class, diacritics and both badges
+  ✓ phase 4 ③: a wrong answer costs nothing and never ends the game
+  ✓ phase 4 ①/②: the full lesson runs all three minigames and pays nur + hekmat + speedup
+  ✓ phase 4 ④: mistaken items are re-queued — the spaced-repetition deck grows and the badge shows
+  ✓ phase 4 ①/④: a review session runs, re-shows a mistaken item and rewards again
+  ✓ phase 4 ⑤: Quran text is confined to the lesson UI (never in the world, HUD or save)
+  ✓ phase 4: learning progress survives a reload (Leitner boxes, lesson record, totals)
+  ✓ acceptance ⑤: future timestamps → 0s away, no gains, no toast
+  ✓ phase 8: jamaat panel opens offline with tabs, presets hidden, no quran text
+  ✓ phase 8: failed connect degrades gracefully (no crash, stays local)
+  ✓ phase 8: real server link — adopt ledger, panel chat, online build, remote help
+
+✓ jsdom smoke: all tests passed

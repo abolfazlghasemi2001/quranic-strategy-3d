@@ -15,7 +15,7 @@
  */
 import { BattleSim } from './BattleSim.js';
 
-export const RECORD_VERSION = 1;
+export const RECORD_VERSION = 2;
 
 /**
  * @param {object} options

@@ -23,6 +23,7 @@ const fragmentShader = /* glsl */ `
   uniform float uGradientPower;
   uniform float uGlowFalloff;
   uniform float uGlowStrength;
+  uniform float uStarsStrength;
 
   varying vec3 vSkyDirection;
 
@@ -40,6 +41,13 @@ const fragmentShader = /* glsl */ `
 
     float sun = pow( max( dot( direction, normalize( uSunDirection ) ), 0.0 ), uGlowFalloff );
     color += uGlow * sun * uGlowStrength;
+    if (uStarsStrength > 0.01 && direction.y > 0.0) {
+      vec2 uv = vec2(atan(direction.x, direction.z), acos(clamp(direction.y, -1.0, 1.0))) * 125.0;
+      vec2 cell = floor(uv);
+      float hash = fract(sin(dot(cell, vec2(127.1, 311.7))) * 43758.5453);
+      float star = (1.0 - smoothstep(0.01, 0.11, length(fract(uv) - 0.5))) * step(0.988, hash);
+      color += vec3(0.72, 0.84, 1.0) * star * uStarsStrength;
+    }
     return color;
   }
 
@@ -65,6 +73,7 @@ export class SkyDome {
       uGradientPower: { value: sky.gradientPower ?? 0.62 },
       uGlowFalloff: { value: sky.glowFalloff ?? 7 },
       uGlowStrength: { value: sky.glowStrength ?? 0.85 },
+      uStarsStrength: { value: 0 },
     };
 
     this.geometry = new THREE.SphereGeometry(1, 32, 16);
@@ -80,6 +89,7 @@ export class SkyDome {
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.name = 'sky-dome';
+    this.mesh.userData.noShadow = true;
     this.mesh.scale.setScalar(sky.radius ?? 600);
     this.mesh.renderOrder = -1000;
     this.mesh.frustumCulled = false;
@@ -91,12 +101,13 @@ export class SkyDome {
     this.mesh.position.copy(engine.camera.position);
   }
 
-  setLighting({ sunDirection, zenith, horizon, below, glow, glowStrength } = {}) {
+  setLighting({ sunDirection, zenith, horizon, below, glow, glowStrength, starsStrength } = {}) {
     if (sunDirection) this.uniforms.uSunDirection.value.set(sunDirection.x, sunDirection.y, sunDirection.z).normalize();
     if (zenith) this.uniforms.uZenith.value.copy(zenith);
     if (horizon) this.uniforms.uHorizon.value.copy(horizon);
     if (below) this.uniforms.uBelow.value.copy(below);
     if (glow) this.uniforms.uGlow.value.copy(glow);
+    if (Number.isFinite(starsStrength)) this.uniforms.uStarsStrength.value = starsStrength;
     if (Number.isFinite(glowStrength)) this.uniforms.uGlowStrength.value = glowStrength;
   }
 

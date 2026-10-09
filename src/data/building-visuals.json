@@ -1,0 +1,7 @@
+{
+  "levels": [1, 1.025, 1.05, 1.075, 1.1, 1.125, 1.15, 1.175, 1.2, 1.225],
+  "normalStrength": 0.42,
+  "windowsNightIntensity": 0.85,
+  "windowsDayIntensity": 0.04,
+  "blobOpacity": 0.14
+}

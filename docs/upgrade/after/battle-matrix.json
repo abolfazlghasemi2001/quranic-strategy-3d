@@ -1,0 +1,4697 @@
+{
+  "date": "2026-10-09",
+  "cases": 43,
+  "policy": {
+    "enabled": true,
+    "priorityKinds": [
+      "defense"
+    ],
+    "minDestroyedPriority": 1,
+    "healthFraction": 0.4,
+    "graceTicks": 40,
+    "requireAllWavesSpawned": true,
+    "requireNoDefenderCombatants": true
+  },
+  "legacyCompatibility": "Original rules (scenario v1) remain bit-identical; v2 intentionally adds morale state to the hash.",
+  "summary": {
+    "v1": {
+      "timeout": 19,
+      "victory": 22,
+      "defeat": 2
+    },
+    "v2": {
+      "timeout": 12,
+      "victory": 30,
+      "defeat": 1
+    }
+  },
+  "rows": [
+    {
+      "seed": 1,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          22,
+          17
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 4204462134,
+        "eventHash": 2703776553,
+        "raidersSpawned": 12,
+        "raidersLeft": 3,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 11,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 3
+        },
+        "left": {
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1730,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1755,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 1627829076,
+        "eventHash": 2703776553,
+        "raidersSpawned": 12,
+        "raidersLeft": 3,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 11,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 3
+        },
+        "left": {
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1730,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1755,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 2,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          22,
+          17
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1234,
+        "seconds": 61.7,
+        "stateHash": 3506175894,
+        "eventHash": 1958743794,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 531,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 62,
+        "lastTowerDown": 850,
+        "fieldExitTick": null,
+        "postTowerHits": 10,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1234,
+        "seconds": 61.7,
+        "stateHash": 1869765772,
+        "eventHash": 1958743794,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 531,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 62,
+        "lastTowerDown": 850,
+        "fieldExitTick": null,
+        "postTowerHits": 10,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 42,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          22,
+          17
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1159,
+        "seconds": 58,
+        "stateHash": 239098805,
+        "eventHash": 4010499216,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1195,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": 837,
+        "fieldExitTick": null,
+        "postTowerHits": 16,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1159,
+        "seconds": 58,
+        "stateHash": 250959131,
+        "eventHash": 4010499216,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1195,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": 837,
+        "fieldExitTick": null,
+        "postTowerHits": 16,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 5150,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          22,
+          17
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1189,
+        "seconds": 59.5,
+        "stateHash": 3935772720,
+        "eventHash": 2743139659,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 13,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1017,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 60,
+        "lastTowerDown": 811,
+        "fieldExitTick": null,
+        "postTowerHits": 20,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1189,
+        "seconds": 59.5,
+        "stateHash": 767079482,
+        "eventHash": 2743139659,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 13,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1017,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 60,
+        "lastTowerDown": 811,
+        "fieldExitTick": null,
+        "postTowerHits": 20,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 20261007,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          22,
+          17
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1184,
+        "seconds": 59.2,
+        "stateHash": 1243808262,
+        "eventHash": 1291758605,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 14,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1418,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 60,
+        "lastTowerDown": 849,
+        "fieldExitTick": null,
+        "postTowerHits": 6,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1184,
+        "seconds": 59.2,
+        "stateHash": 3902339080,
+        "eventHash": 1291758605,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 14,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1418,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 60,
+        "lastTowerDown": 849,
+        "fieldExitTick": null,
+        "postTowerHits": 6,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 424242,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          22,
+          17
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 3783864432,
+        "eventHash": 3054269131,
+        "raidersSpawned": 12,
+        "raidersLeft": 3,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1114,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2220,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 3074353678,
+        "eventHash": 3054269131,
+        "raidersSpawned": 12,
+        "raidersLeft": 3,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1114,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2220,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 1,
+      "positions": [
+        [
+          17,
+          14
+        ],
+        [
+          22,
+          14
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1149,
+        "seconds": 57.5,
+        "stateHash": 2411896008,
+        "eventHash": 3832660916,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1599,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1755,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1149,
+        "seconds": 57.5,
+        "stateHash": 2199491646,
+        "eventHash": 3832660916,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1599,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1755,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 2,
+      "positions": [
+        [
+          17,
+          14
+        ],
+        [
+          22,
+          14
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1201,
+        "seconds": 60.1,
+        "stateHash": 3755817283,
+        "eventHash": 826445674,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 409,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 61,
+        "lastTowerDown": 813,
+        "fieldExitTick": null,
+        "postTowerHits": 11,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1201,
+        "seconds": 60.1,
+        "stateHash": 1204565897,
+        "eventHash": 826445674,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 409,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 61,
+        "lastTowerDown": 813,
+        "fieldExitTick": null,
+        "postTowerHits": 11,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 42,
+      "positions": [
+        [
+          17,
+          14
+        ],
+        [
+          22,
+          14
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1101,
+        "seconds": 55.1,
+        "stateHash": 3507870440,
+        "eventHash": 3845916131,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1158,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 56,
+        "lastTowerDown": 825,
+        "fieldExitTick": null,
+        "postTowerHits": 5,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1101,
+        "seconds": 55.1,
+        "stateHash": 2626277170,
+        "eventHash": 3845916131,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1158,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 56,
+        "lastTowerDown": 825,
+        "fieldExitTick": null,
+        "postTowerHits": 5,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 5150,
+      "positions": [
+        [
+          17,
+          14
+        ],
+        [
+          22,
+          14
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1153,
+        "seconds": 57.7,
+        "stateHash": 501354500,
+        "eventHash": 781800261,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1584,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1755,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1153,
+        "seconds": 57.7,
+        "stateHash": 3637875502,
+        "eventHash": 781800261,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1584,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1755,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 20261007,
+      "positions": [
+        [
+          17,
+          14
+        ],
+        [
+          22,
+          14
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1109,
+        "seconds": 55.5,
+        "stateHash": 2034717042,
+        "eventHash": 1096161113,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 308,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2355,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 56,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1109,
+        "seconds": 55.5,
+        "stateHash": 2051751572,
+        "eventHash": 1096161113,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 308,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2355,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 56,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 424242,
+      "positions": [
+        [
+          17,
+          14
+        ],
+        [
+          22,
+          14
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 3159654146,
+        "eventHash": 1526719708,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1816,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2382936752,
+        "eventHash": 1526719708,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1816,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 1,
+      "positions": [
+        [
+          18,
+          12
+        ],
+        [
+          23,
+          12
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1192,
+        "seconds": 59.6,
+        "stateHash": 2266027215,
+        "eventHash": 1325824823,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 15,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1604,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 60,
+        "lastTowerDown": 754,
+        "fieldExitTick": null,
+        "postTowerHits": 36,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1192,
+        "seconds": 59.6,
+        "stateHash": 4291772093,
+        "eventHash": 1325824823,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 15,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1604,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 60,
+        "lastTowerDown": 754,
+        "fieldExitTick": null,
+        "postTowerHits": 36,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 2,
+      "positions": [
+        [
+          18,
+          12
+        ],
+        [
+          23,
+          12
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1358,
+        "seconds": 67.9,
+        "stateHash": 3428795108,
+        "eventHash": 2987312833,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1939,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2107,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 68,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1358,
+        "seconds": 67.9,
+        "stateHash": 187763678,
+        "eventHash": 2987312833,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1939,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2107,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 68,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 42,
+      "positions": [
+        [
+          18,
+          12
+        ],
+        [
+          23,
+          12
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1418,
+        "seconds": 70.9,
+        "stateHash": 3268907822,
+        "eventHash": 1952454885,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 9,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1489,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2191,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 71,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1418,
+        "seconds": 70.9,
+        "stateHash": 2961106392,
+        "eventHash": 1952454885,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 9,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1489,
+            "maxHp": 2400,
+            "destroyed": false
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2191,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 71,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 5150,
+      "positions": [
+        [
+          18,
+          12
+        ],
+        [
+          23,
+          12
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "victory",
+        "ticks": 1156,
+        "seconds": 57.8,
+        "stateHash": 1909588635,
+        "eventHash": 4054279340,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 13,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1545,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": 751,
+        "fieldExitTick": null,
+        "postTowerHits": 43,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1156,
+        "seconds": 57.8,
+        "stateHash": 2236479917,
+        "eventHash": 4054279340,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 13,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1545,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 58,
+        "lastTowerDown": 751,
+        "fieldExitTick": null,
+        "postTowerHits": 43,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 20261007,
+      "positions": [
+        [
+          18,
+          12
+        ],
+        [
+          23,
+          12
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 189292447,
+        "eventHash": 511252475,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 186,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 3407803349,
+        "eventHash": 511252475,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 12,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 186,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 424242,
+      "positions": [
+        [
+          18,
+          12
+        ],
+        [
+          23,
+          12
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 3047200490,
+        "eventHash": 3378576933,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1712,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 731634304,
+        "eventHash": 3378576933,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 10,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 1712,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 1,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "defeat",
+        "ticks": 2001,
+        "seconds": 100.1,
+        "stateHash": 1187760,
+        "eventHash": 2285775447,
+        "raidersSpawned": 12,
+        "raidersLeft": 3,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 3,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 3
+        },
+        "left": {
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 0,
+            "maxHp": 2800,
+            "destroyed": true
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 101,
+        "lastTowerDown": 1382,
+        "fieldExitTick": null,
+        "postTowerHits": 53,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1500,
+        "seconds": 75,
+        "stateHash": 3441416312,
+        "eventHash": 3827734409,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 2661,
+            "maxHp": 2800,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 75,
+        "lastTowerDown": 1382,
+        "fieldExitTick": 1422,
+        "postTowerHits": 3,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 2,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2541497291,
+        "eventHash": 786652467,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 14,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1653,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 704,
+        "fieldExitTick": null,
+        "postTowerHits": 85,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 553210937,
+        "eventHash": 786652467,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 14,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1653,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 704,
+        "fieldExitTick": null,
+        "postTowerHits": 85,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 42,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2124922833,
+        "eventHash": 2090369416,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 9,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 520,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 3983099399,
+        "eventHash": 2090369416,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 9,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 520,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 5150,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "defeat",
+        "ticks": 1326,
+        "seconds": 66.3,
+        "stateHash": 3039068906,
+        "eventHash": 2658857249,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 3,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 1
+        },
+        "left": {
+          "raider:archer": 3,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 0,
+            "maxHp": 2800,
+            "destroyed": true
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 67,
+        "lastTowerDown": 1032,
+        "fieldExitTick": null,
+        "postTowerHits": 66,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "defeat",
+        "ticks": 1326,
+        "seconds": 66.3,
+        "stateHash": 3357985092,
+        "eventHash": 2658857249,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 3,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 1
+        },
+        "left": {
+          "raider:archer": 3,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 0,
+            "maxHp": 2800,
+            "destroyed": true
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 67,
+        "lastTowerDown": 1032,
+        "fieldExitTick": null,
+        "postTowerHits": 66,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 20261007,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2529861565,
+        "eventHash": 562375767,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 17,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2041,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 688,
+        "fieldExitTick": null,
+        "postTowerHits": 38,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2023724027,
+        "eventHash": 562375767,
+        "raidersSpawned": 12,
+        "raidersLeft": 2,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 17,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4
+        },
+        "left": {
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2041,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 688,
+        "fieldExitTick": null,
+        "postTowerHits": 38,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 424242,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2378991649,
+        "eventHash": 3774131714,
+        "raidersSpawned": 12,
+        "raidersLeft": 3,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 15,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1062,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 781,
+        "fieldExitTick": null,
+        "postTowerHits": 34,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 38575407,
+        "eventHash": 3774131714,
+        "raidersSpawned": 12,
+        "raidersLeft": 3,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 15,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 1
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 1062,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 781,
+        "fieldExitTick": null,
+        "postTowerHits": 34,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 33,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 1226110089,
+        "eventHash": 214625525,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 3
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 384,
+            "maxHp": 2800,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 1152,
+        "fieldExitTick": null,
+        "postTowerHits": 204,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1270,
+        "seconds": 63.5,
+        "stateHash": 445231351,
+        "eventHash": 1524205022,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 2768,
+            "maxHp": 2800,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 64,
+        "lastTowerDown": 1152,
+        "fieldExitTick": 1192,
+        "postTowerHits": 3,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 33,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 749,
+        "seconds": 37.5,
+        "stateHash": 1241144426,
+        "eventHash": 3605421368,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 89,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2274,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 749,
+        "seconds": 37.5,
+        "stateHash": 3371146284,
+        "eventHash": 3605421368,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 89,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2274,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 33,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 5,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 1822609225,
+        "eventHash": 232116469,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 3
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 1952,
+            "maxHp": 4368,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 1152,
+        "fieldExitTick": null,
+        "postTowerHits": 204,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1270,
+        "seconds": 63.5,
+        "stateHash": 2528888247,
+        "eventHash": 1505599966,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 4336,
+            "maxHp": 4368,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 64,
+        "lastTowerDown": 1152,
+        "fieldExitTick": 1192,
+        "postTowerHits": 3,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 33,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 5,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 749,
+        "seconds": 37.5,
+        "stateHash": 619203498,
+        "eventHash": 3605421368,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 89,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2274,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 749,
+        "seconds": 37.5,
+        "stateHash": 643832044,
+        "eventHash": 3605421368,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 89,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2274,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 33,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 10,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2759137721,
+        "eventHash": 3622437749,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 3
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 3912,
+            "maxHp": 6328,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 1152,
+        "fieldExitTick": null,
+        "postTowerHits": 204,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1270,
+        "seconds": 63.5,
+        "stateHash": 3795975975,
+        "eventHash": 1635279134,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 6296,
+            "maxHp": 6328,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 64,
+        "lastTowerDown": 1152,
+        "fieldExitTick": 1192,
+        "postTowerHits": 3,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 33,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 10,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 749,
+        "seconds": 37.5,
+        "stateHash": 3349332794,
+        "eventHash": 3605421368,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 89,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2274,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 749,
+        "seconds": 37.5,
+        "stateHash": 961553788,
+        "eventHash": 3605421368,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 89,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2274,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 56,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 704494060,
+        "eventHash": 1317728559,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 21,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:archer": 3
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 339,
+            "maxHp": 2800,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 1145,
+        "fieldExitTick": null,
+        "postTowerHits": 293,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1263,
+        "seconds": 63.2,
+        "stateHash": 2040350050,
+        "eventHash": 3279364386,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 21,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 2750,
+            "maxHp": 2800,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 64,
+        "lastTowerDown": 1145,
+        "fieldExitTick": 1185,
+        "postTowerHits": 6,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 56,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 746,
+        "seconds": 37.3,
+        "stateHash": 3955651848,
+        "eventHash": 3995810290,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 101,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2228,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 746,
+        "seconds": 37.3,
+        "stateHash": 1633583314,
+        "eventHash": 3995810290,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 101,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2228,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 56,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 5,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 410947756,
+        "eventHash": 1888435247,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 21,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:archer": 3
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 1907,
+            "maxHp": 4368,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 1145,
+        "fieldExitTick": null,
+        "postTowerHits": 293,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1263,
+        "seconds": 63.2,
+        "stateHash": 2793335458,
+        "eventHash": 2206046754,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 21,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 4318,
+            "maxHp": 4368,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 64,
+        "lastTowerDown": 1145,
+        "fieldExitTick": 1185,
+        "postTowerHits": 6,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 56,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 5,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 746,
+        "seconds": 37.3,
+        "stateHash": 3949730888,
+        "eventHash": 3995810290,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 101,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2228,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 746,
+        "seconds": 37.3,
+        "stateHash": 875898130,
+        "eventHash": 3995810290,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 101,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2228,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 56,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 10,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 507147772,
+        "eventHash": 209825967,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 21,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:archer": 3
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 3867,
+            "maxHp": 6328,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 1145,
+        "fieldExitTick": null,
+        "postTowerHits": 293,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1263,
+        "seconds": 63.2,
+        "stateHash": 4287637810,
+        "eventHash": 2422046690,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 21,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 6278,
+            "maxHp": 6328,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 64,
+        "lastTowerDown": 1145,
+        "fieldExitTick": 1185,
+        "postTowerHits": 6,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 56,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 10,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 746,
+        "seconds": 37.3,
+        "stateHash": 3706147896,
+        "eventHash": 3995810290,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 101,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2228,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 746,
+        "seconds": 37.3,
+        "stateHash": 3498315778,
+        "eventHash": 3995810290,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 101,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2228,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 38,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 79,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 540747042,
+        "eventHash": 1455260785,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 16,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2111,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 711,
+        "fieldExitTick": null,
+        "postTowerHits": 25,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 897161116,
+        "eventHash": 1455260785,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 16,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2111,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 711,
+        "fieldExitTick": null,
+        "postTowerHits": 25,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 79,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 763,
+        "seconds": 38.2,
+        "stateHash": 1905727352,
+        "eventHash": 515634326,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 84,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2136,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 39,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 763,
+        "seconds": 38.2,
+        "stateHash": 1548365518,
+        "eventHash": 515634326,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 84,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2136,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 39,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 79,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 5,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 912467298,
+        "eventHash": 1455260785,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 16,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2111,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 711,
+        "fieldExitTick": null,
+        "postTowerHits": 25,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2357698268,
+        "eventHash": 1455260785,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 16,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2111,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 711,
+        "fieldExitTick": null,
+        "postTowerHits": 25,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 79,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 5,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 763,
+        "seconds": 38.2,
+        "stateHash": 4442168,
+        "eventHash": 515634326,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 84,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2136,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 39,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 763,
+        "seconds": 38.2,
+        "stateHash": 3303522830,
+        "eventHash": 515634326,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 84,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2136,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 39,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 79,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 10,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 2531641298,
+        "eventHash": 1455260785,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 16,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2111,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 711,
+        "fieldExitTick": null,
+        "postTowerHits": 25,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 3358666860,
+        "eventHash": 1455260785,
+        "raidersSpawned": 12,
+        "raidersLeft": 4,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 1,
+        "damagedStructures": 2,
+        "healed": 0,
+        "pathRequests": 16,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 2
+        },
+        "left": {
+          "raider:archer": 2,
+          "raider:breaker": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 2111,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 711,
+        "fieldExitTick": null,
+        "postTowerHits": 25,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 79,
+      "positions": [
+        [
+          17,
+          17
+        ],
+        [
+          17,
+          23
+        ]
+      ],
+      "townLevel": 10,
+      "towerLevel": 1,
+      "garrison": {
+        "guard": 4,
+        "archer": 2,
+        "healer": 1
+      },
+      "v1": {
+        "result": "victory",
+        "ticks": 763,
+        "seconds": 38.2,
+        "stateHash": 574350792,
+        "eventHash": 515634326,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 84,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2136,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 39,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 763,
+        "seconds": 38.2,
+        "stateHash": 3079785470,
+        "eventHash": 515634326,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 6,
+        "defendersDeployed": 6,
+        "wallsBreached": 0,
+        "destroyedStructures": 0,
+        "damagedStructures": 1,
+        "healed": 0,
+        "pathRequests": 84,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {
+          "defender:guard": 4,
+          "defender:archer": 2
+        },
+        "structures": [
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 2136,
+            "maxHp": 2400,
+            "destroyed": false
+          }
+        ],
+        "checkpoints": 39,
+        "lastTowerDown": null,
+        "fieldExitTick": null,
+        "postTowerHits": 0,
+        "replayIdentical": true
+      }
+    },
+    {
+      "seed": 79,
+      "positions": [
+        [
+          15,
+          15
+        ],
+        [
+          23,
+          23
+        ]
+      ],
+      "townLevel": 1,
+      "towerLevel": 1,
+      "garrison": {},
+      "v1": {
+        "result": "timeout",
+        "ticks": 3000,
+        "seconds": 150,
+        "stateHash": 1212894030,
+        "eventHash": 320678959,
+        "raidersSpawned": 12,
+        "raidersLeft": 5,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 4,
+          "raider:archer": 1,
+          "raider:breaker": 2
+        },
+        "left": {
+          "raider:guard": 2,
+          "raider:archer": 3
+        },
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 557,
+            "maxHp": 2800,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 140,
+        "lastTowerDown": 1307,
+        "fieldExitTick": null,
+        "postTowerHits": 267,
+        "replayIdentical": true
+      },
+      "v2": {
+        "result": "victory",
+        "ticks": 1425,
+        "seconds": 71.3,
+        "stateHash": 2744037986,
+        "eventHash": 3245697950,
+        "raidersSpawned": 12,
+        "raidersLeft": 0,
+        "defendersLeft": 0,
+        "defendersDeployed": 0,
+        "wallsBreached": 0,
+        "destroyedStructures": 2,
+        "damagedStructures": 3,
+        "healed": 0,
+        "pathRequests": 19,
+        "pathFailures": 0,
+        "commands": 0,
+        "lost": {
+          "raider:guard": 6,
+          "raider:archer": 4,
+          "raider:breaker": 2
+        },
+        "left": {},
+        "structures": [
+          {
+            "sourceId": 1,
+            "type": "town-center",
+            "hp": 2750,
+            "maxHp": 2800,
+            "destroyed": false
+          },
+          {
+            "sourceId": 2,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          },
+          {
+            "sourceId": 3,
+            "type": "watchtower",
+            "hp": 0,
+            "maxHp": 2400,
+            "destroyed": true
+          }
+        ],
+        "checkpoints": 72,
+        "lastTowerDown": 1307,
+        "fieldExitTick": 1347,
+        "postTowerHits": 6,
+        "replayIdentical": true
+      }
+    }
+  ]
+}

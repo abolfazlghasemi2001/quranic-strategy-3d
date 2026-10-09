@@ -2,7 +2,7 @@
 
 بازی **شهرسازی و استراتژی سه‌بعدی موبایل‌محور** با الهام از قصه‌های قرآنی.
 دوربین زاویه‌دار ثابت (سبک Clash of Clans)، رابط کاملاً فارسی و RTL، و همهٔ مدل‌ها/تکسچرها
-با کد ساخته می‌شوند (بدون هیچ فایل باینری خارجی).
+به‌صورت پیش‌فرض با کد ساخته می‌شوند؛ فونت‌های self-host با OFL و مدل‌های اختیاری CC0 در `ASSETS.md` ثبت‌اند.
 
 > **وضعیت:** پیاده‌سازی فاز ۹ انجام شده است: چرخهٔ شب‌و‌روز، شیدر آب و باد، صدای محیطی ساخته‌شده با Web Audio، PWA آفلاین، تنظیمات دسترس‌پذیری، برچسب‌گذاری منبع/بازبینی، آزمون‌های واحد Vitest (اقتصاد + شبیه‌ساز نبرد + determinism) و درگاه انتشار PWA افزوده شده‌اند.
 > آزمون‌های خودکار در این مخزن اجراپذیرند؛ سنجش FPS/حافظه روی گوشی میان‌رده، نصب واقعی و قطع شبکه باید روی دستگاه/مرورگر هدف انجام شود. درس‌ها اختیاری‌اند و غیبت جریمه ندارد.
@@ -12,14 +12,14 @@
 ## ۱) اجرا
 
 ```bash
-npm install
+npm ci
 npm run dev          # http://localhost:5173
 ```
 
 سایر دستورها:
 
 ```bash
-npm test             # همهٔ آزمون‌ها: ۱۱۲ بررسی منطق/قرارداد (check.mjs) + ۴۰ آزمون Vitest
+npm test             # همهٔ آزمون‌ها: ۱۱۲ بررسی منطق/قرارداد (check.mjs) + آزمون‌های Vitest (از جمله regressionهای upgrade)
 npm run test:unit    # فقط Vitest (economy، شبیه‌ساز نبرد، determinism، PerfMonitor)
 npm run check        # نام جایگزین برای npm test
 npm run smoke        # بوت کامل در jsdom، تنظیمات و آزمون‌های پذیرش یکپارچه
@@ -33,7 +33,8 @@ npm run preview      # پیش‌نمایش build (ثبت Service Worker فقط �
 | پارامتر | کاربرد |
 | --- | --- |
 | `?quality=low\|medium\|high` | تعیین دستی سطح کیفیت |
-| `?quran=./quran/quran.json` | بارگذاری دیتاست قرآن از مسیر دلخواه (بدون تغییر کد) |
+| `?quran=./quran/quran.json` | فقط مسیر relative همان origin که SHA-256 آن از پیش در quran-learning.json pin شده؛ نشانی خارجی/بدون pin نادیده گرفته و هشدار داده می‌شود |
+| `?social=wss://همین-دامنه/social-ws` | اتصال اختیاری same-origin یا allowlist صریح اپراتور؛ توکن به endpoint ناشناس فرستاده نمی‌شود |
 
 ### کنترل‌ها
 
@@ -269,6 +270,22 @@ npm run smoke        # آزمون یکپارچهٔ jsdom، شامل فاز ۴:
                      #  محدودبودن متن قرآن به رابط درس → ماندگاری پیشرفت پس از reload
 ```
 
+## فاز ۵ — سپاه و نبرد PvE
+
+این فاز واقعاً در مبنای main `9b64be9` موجود بود؛ Open بودن PR #5 هنگام ممیزی نشانهٔ نبود کد نیست. پادگان، چهار نقش faceless، استقرار، A*، برج/دیوار، نتیجه و بازپخش وجود دارند. شبیه‌ساز گام ثابت **۲۰Hz** و RNG بذر‌دار دارد و به DOM/Three.js/ساعت وابسته نیست.
+
+Upgrade سناریو/record را به **v2** و save را با migration **۶→۷** نسخه‌دار می‌کند. قاعدهٔ ترک میدانِ ستون ضعیف در `battle.json` است؛ fixture حقیقی v1 تمام hash/checkpointهای قبلی را حفظ می‌کند. UI پادگان/نتیجه/replay آزمون smoke مستقل دارد. جدول ۴۳ سناریو و ۸۶ replay در `docs/upgrade/after/battle-matrix.json` است.
+
+## فاز ۶ — کمپین قصص
+
+زنجیرهٔ مأموریت‌ها، هدف‌های سه‌ستاره، قواعد قحطی/سد/آبادانی و ذخیرهٔ اجرای نیمه‌کاره در main موجودند. درس و کمپین اختیاری‌اند و غیبت جریمه ندارد. هیچ تصویر پیامبر/امام/فرشته و هیچ متن قرآنی روی صحنهٔ 3D نیست. کد نمایش ارجاع/آیه در `src/ui/quran/` است. منطق مأموریت ذخیره‌شده پیش از bootstrap و بخش‌های تازه هنگام تعامل load می‌شوند.
+
+## وضعیت واقعی دیتاست آموزشی
+
+فایل عمومی فعلی **۱۱۴ سوره / ۶۲۳۶ آیه** دارد: متن منسوب به Tanzil Uthmani 1.1 و ترجمهٔ قرائتی با provenance داخل فایل. `reviewed:true` **تغییر نکرده** است. رکورد موجود از تأیید مالک `abolfazlghasemi2001` در ۲۰۲۶-۱۰-۰۸ و تطبیق مکانیکی/ساختاری با آینه‌ها خبر می‌دهد؛ این ممیزی آن را تأیید مستقل دینی/حقوقی نمی‌نامد. مدرک بازبینی واجدصلاحیتِ مستقل هنوز در ریپو نیست و **پیش از انتشار محتوایی به بررسی انسانی نیاز است**. SHA-256 فقط تمامیت بایت‌ها را اثبات می‌کند.
+
+شبکه پس از idle/تعامل، با مسیر same-origin، schema، سقف ۸MiB، timeout و checksum کار می‌کند. fallback همان نمونهٔ برچسب‌دار است، نه متنی از حافظه. `dist/quran/quran.json.br` خروجی فشرده است؛ dev/preview با Content-Encoding: br خدمت می‌دهند. در میزبان static واقعی تنظیم Brotli را فعال کنید. خط‌مشی update PWA: پیشنهاد روشن → ذخیرهٔ پایدار → رضایت reload؛ در خطای IDB یا private mode، update عقب می‌افتد.
+
 ## فاز ۷ — متاگیم و تجربهٔ کاربر
 
 - **FTUE تعاملی:** ۱۱ گام قابل‌ردکردن با نشانگر و هایلایت هدف، از فروشگاه و نخستین مزرعه تا برداشت، درس و گسترش شهر. پیشرفت رویدادمحور است؛ از «تنظیمات» یا «کارنامه» می‌توان راهنما را دوباره مرور و پیش از پایان بست.
@@ -300,11 +317,26 @@ npm run smoke        # آزمون یکپارچهٔ jsdom، شامل فاز ۴:
 **راستی‌آزمایی فاز ۹:**
 
 ```bash
-npm test             # ۱۱۲ بررسی (check.mjs) + ۴۰ آزمون Vitest — همه باید پاس شوند
+npm test             # ۱۱۲ بررسی (check.mjs) + آزمون‌های Vitest (از جمله regressionهای upgrade) — همه باید پاس شوند
 npm run smoke        # بوت کامل jsdom + سناریوهای پذیرش
 npm run build        # build تولیدی + sw.js + آیکن‌های کدتولید
 npm run test:pwa     # درگاه PWA روی dist (manifest، آیکن، precache)
-npm run test:hud     # هندسهٔ HUD در ۵ viewport × ۲ مقیاس فونت (Chromium headless)
+npm run test:hud     # هندسهٔ HUD در ۶ viewport × ۲ مقیاس فونت (Chromium headless)
 ```
 
 **محدودیت:** سنجش FPS/حافظهٔ واقعی روی گوشی میان‌رده و آزمون نصب/آفلاین در مرورگر واقعی در این محیط ممکن نیست؛ نتایج در `PERFORMANCE_REPORT.md` ثبت شده‌اند.
+
+
+## ارتقای مهندسی ۲۰۲۶-۱۰-۰۹
+
+گزارش صداقت‌محور قبل/بعد: [`docs/upgrade/REPORT.md`](docs/upgrade/REPORT.md)، باگ‌های تأیید/ردشده: [`docs/audit/BUGS.md`](docs/audit/BUGS.md)، مجوزها: [`ASSETS.md`](ASSETS.md).
+
+```bash
+npm run test:bundle   # static graph کامل JS اولیه ≤202.02 kB gzip (نه فقط entry)
+npm run audit:perf    # ۱۸ حالت WebGL/Chromium؛ با --url و --out قابل‌تکرار
+npm run audit:battle  # matrix و bit-identical replay
+node tools/lifecycle-audit.mjs --url http://127.0.0.1:4174/
+node tools/safe-area-audit.mjs
+```
+
+Instancing ساختمان‌ها، DPR governor با hysteresis، rAF متوقف در hidden/context-lost، fitting/snapping سایه، sRGB+ACES، ستارهٔ شب، mapهای normal/roughness procedural، تمایز سطوح ۱–۱۰، مدل‌های چندبخشی faceless و shader FSM/LOD، فونت OFL و SVG، checksum و RFC6455 سخت‌گیرانه اضافه شده‌اند. **۶۰fps/VRAM/حرارت/باتری گوشی واقعی اندازه‌گیری‌نشده است**. دامنهٔ باقی‌مانده و هزینه‌های هنوز فعال‌نشده در گزارش آمده‌اند؛ نتیجهٔ کامل روی گوشی ادعا نمی‌شود.

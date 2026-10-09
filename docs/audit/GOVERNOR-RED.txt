@@ -1,0 +1,35 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [31m❯[39m tests/upgrade-governor.test.js [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 12[2mms[22m[39m
+   [32m✓[39m steps resolution down within bounds, recovers slowly and respects hysteresis[32m 3[2mms[22m[39m
+   [32m✓[39m does no work when disabled and does not treat a deliberate battery cap as overload[32m 0[2mms[22m[39m
+[31m   [31m×[31m recovers at the real 60Hz cap instead of requiring impossible >77fps intervals[39m[32m 7[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-governor.test.js[2m > [22mrecovers at the real 60Hz cap instead of requiring impossible >77fps intervals
+[31m[1mAssertionError[22m: expected 0.7 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0.7[39m
+
+[36m [2m❯[22m tests/upgrade-governor.test.js:[2m19:72[22m[39m
+    [90m 17|[39m  const governor=new FrameTimeGovernor(quality.resolutionGovernor);gove…
+    [90m 18|[39m  for(let i=0;i<300;i++)governor.sample(45);expect(governor.scale).toBe…
+    [90m 19|[39m  for(let i=0;i<900;i++)governor.sample(1000/60);expect(governor.scale)…
+    [90m   |[39m                                                                        [31m^[39m
+    [90m 20|[39m });
+    [90m 21|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 09:21:29
+[2m   Duration [22m 178ms[2m (transform 56%, tests 19%, import 18%, worker 7%)[22m
+

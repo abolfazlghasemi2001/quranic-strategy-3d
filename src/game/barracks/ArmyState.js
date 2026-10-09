@@ -24,6 +24,7 @@ export function createArmyState() {
 /** سابقهٔ نبردها: بذر، دستورها و نتیجهٔ هر نبرد برای بازپخش. */
 export function createBattleState() {
   return {
+    simulationVersion: 2,
     seq: 0, // شمارهٔ نبردها؛ در بذر نبرد بعدی اثر می‌گذارد
     history: [], // { id, at, encounterId, seed, scenarioHash, result, ticks, commands, checkpoints, report }
     wins: 0,
@@ -82,6 +83,7 @@ export function normalizeBattleState(raw, { keep = 3 } = {}) {
     ? raw.history.filter((record) => record && typeof record.seed === 'number' && record.scenario)
     : [];
   return {
+    simulationVersion: 2,
     seq: Math.max(0, intOr(raw.seq)),
     history: history.slice(-Math.max(1, keep)),
     wins: Math.max(0, intOr(raw.wins)),

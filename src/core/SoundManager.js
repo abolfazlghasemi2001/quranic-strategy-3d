@@ -49,6 +49,8 @@ export class SoundManager {
     }
   }
 
+  unlockGesture() { this._onGesture(); }
+
   setEnabled(enabled) {
     this.enabled = Boolean(enabled);
     if (!this.enabled) this._stopAmbient();

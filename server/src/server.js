@@ -59,6 +59,8 @@ export class GameServer {
     this.online = new Map();
     /** all live connections */
     this.conns = new Set();
+    this.connectionsByIp = new Map();
+    this.transport = this.social.server.transport;
     this.connSeq = 1;
     this.playerSeq = 1;
     /** moderation reports (persisted) */
@@ -77,6 +79,8 @@ export class GameServer {
   async start() {
     if (this.http) return { port: this.port };
     this.http = createServer((req, res) => this._onRequest(req, res));
+    this.http.headersTimeout = this.transport.helloTimeoutMs;
+    this.http.requestTimeout = this.transport.idleTimeoutMs;
     this.http.on('upgrade', (req, socket, head) => this._onUpgrade(req, socket, head));
     await new Promise((resolve, reject) => {
       this.http.once('error', reject);
@@ -110,6 +114,7 @@ export class GameServer {
     }
     this.conns.clear();
     this.online.clear();
+    this.connectionsByIp.clear();
     if (this.http) {
       await new Promise((resolve) => this.http.close(() => resolve()));
       this.http = null;
@@ -144,7 +149,25 @@ export class GameServer {
   }
 
   _onUpgrade(req, socket, head) {
-    const ws = handleUpgradeRequest(req, socket, head, { path: this.path });
+    const ip = socket.remoteAddress || 'unknown';
+    const reject = (code, text) => {
+      socket.end(`HTTP/1.1 ${code} ${text}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
+      socket.destroy();
+    };
+    if (this.conns.size >= this.transport.maxConnections || (this.connectionsByIp.get(ip) || 0) >= this.transport.maxConnectionsPerIp) {
+      reject(429, 'Too Many Requests'); return;
+    }
+    const origin = req.headers.origin;
+    if (origin) {
+      let allowed = false;
+      try {
+        const url = new URL(origin);
+        allowed = ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password
+          && (url.host === req.headers.host || this.transport.allowedOrigins.includes(url.origin));
+      } catch { /* reject malformed Origin */ }
+      if (!allowed) { reject(403, 'Forbidden'); return; }
+    }
+    const ws = handleUpgradeRequest(req, socket, head, { path: this.path, limits: this.transport });
     if (!ws) return;
     const conn = {
       id: `c-${this.connSeq++}`,
@@ -152,17 +175,30 @@ export class GameServer {
       playerId: null,
       authed: false,
       connectedAt: this.now(),
+      ip,
+      helloTimer: setTimeout(() => ws.close(1008, 'hello-timeout'), this.transport.helloTimeoutMs),
     };
+    conn.helloTimer.unref?.();
     this.conns.add(conn);
-    ws.onMessage = (text) => this._onText(conn, text);
+    this.connectionsByIp.set(ip, (this.connectionsByIp.get(ip) || 0) + 1);
+    ws.onMessage = (text) => {
+      this._onText(conn, text);
+      if (conn.authed) { clearTimeout(conn.helloTimer); conn.helloTimer = null; }
+    };
     ws.onClose = () => this._onConnClose(conn);
     ws.onError = () => {
       /* rate/validation errors are answered, not thrown */
     };
+    ws.pushHead(head);
   }
 
   _onConnClose(conn) {
-    this.conns.delete(conn);
+    if (!this.conns.delete(conn)) return;
+    clearTimeout(conn.helloTimer);
+    const remaining = (this.connectionsByIp.get(conn.ip) || 1) - 1;
+    if (remaining > 0) this.connectionsByIp.set(conn.ip, remaining);
+    else this.connectionsByIp.delete(conn.ip);
+    for (const key of this.limiter.hits.keys()) if (key.startsWith(`${conn.id}:`)) this.limiter.reset(key);
     if (conn.playerId && this.online.get(conn.playerId) === conn) {
       this.online.delete(conn.playerId);
       const player = this.players.get(conn.playerId);

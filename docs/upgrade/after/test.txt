@@ -1,0 +1,161 @@
+
+> shahr-nur@0.3.0 test
+> node tools/check.mjs && npm run test:unit
+
+
+=== شهر نور — self checks (فازهای ۱ تا ۹) ===
+
+✓ data: all json files parse and hold the expected structure    
+✓ data: every quality tier caps the pixel ratio at 2            
+✓ data: paths and soil patches stay inside the grid             
+✓ data: the world size is derived from the grid config (80x80 world units)
+✓ rng: hashes and generators are deterministic                  
+✓ noise: value noise and fbm stay inside [0,1]                  
+✓ geometry: ground quad keeps world-unit UVs and faces up       
+✓ geometry: jitter is deterministic (same seed => identical rock)
+✓ geometry: tree parts are low poly and sit on the ground       
+✓ geometry: merge combines vertex counts and can be instanced   
+✓ terrain map: roads, soil and the reserved centre are recognised
+✓ terrain map: tile flags mark the road grid                    
+✓ world: getCellAt maps tile centres/edges to their own tile (regression: half-tile shift)
+✓ placement: scattering is deterministic and respects every rule
+✓ placement: quality tiers scale the amount of decor            
+✓ placement: chunk splitting keeps every prop                   
+✓ perf: draw call and triangle budget for the whole scene       
+✓ phase 9 day/night cycle is smooth, frame-delta based and deterministic
+✓ phase 9 shader hooks add wind/water uniforms without adding ground meshes
+✓ phase 9 grid and border are consolidated into one vertex-coloured draw call
+✓ phase 9 PWA manifest has generated install icons and offline shell source
+✓ camera: fixed pitch, zoom limits and frame independent smoothing
+✓ camera: the focus point can never leave the map bounds        
+✓ camera: dragging right moves the content with the finger      
+✓ camera: screenToGround hits the focus point at the screen centre
+✓ utils: math helpers behave                                    
+✓ balance: every building has a 10-level curve with monotonic costs and times
+✓ economy: starting resources fit inside base storage capacity  
+✓ economy: capacity = base + per-level warehouse bonus (ready only)
+✓ economy: production accrues at rate/hour and stops at the buffer ceiling
+✓ economy: production stops when storage is full (acceptance ②) 
+✓ economy: harvest moves min(pending, free) and never exceeds capacity
+✓ economy: offline accrual is clamped and backward clocks resync (acceptance ⑤)
+✓ economy: speedup cost = max(minGohar, ceil(remaining minutes) × perMinute)
+✓ queue: two builders run first jobs, others wait, chained fast-forward works
+✓ queue: speedup spends gohar, finishes the active job immediately
+✓ queue: enqueue is rejected when the queue is full             
+✓ save: v1 record migrates to current schema (gold→rizq etc.)   
+✓ save: future schema is backed up instead of crashing; current passes through
+✓ save: serialize contains no three.js roots                    
+✓ data: strings carry the current phase labels (queue, offline, lesson, campaign)
+✓ quran: the bundled sample carries no Quranic text and is fully labelled
+✓ phase 9 provenance: the active dataset is either fully pending or reviewed with a verifiable record
+✓ phase 9 provenance: placeholder word banks are sourced, labelled and excluded from distractors
+✓ phase 9 recitation: playback requires an explicit license and safe attribution URL
+✓ quran: validator catches empty text, missing diacritics and empty lessons
+✓ quran: sample lessons are 2–3 minutes and cover all three minigames
+✓ quran: only a checksummed relative query overrides the dataset path
+✓ minigame ①/۳: ayah completion is playable, marks mistakes and has no penalty path
+✓ minigame ۲/۳: word match pairs come from the lesson word bank and wrong picks never match
+✓ minigame ۳/۳: ayah order locks correct cards, supports hints and completes
+✓ leitner: correct answers climb boxes, wrong answers drop to box 1 and come back soon
+✓ learning: a full lesson session completes all three games and grants nur/hekmat/speedup
+✓ learning: wrong answers never cost resources and never block a reward
+✓ learning: spaced repetition re-shows mistakes — in-session requeue and next-session due items
+✓ learning: rewards respect the storage ceiling and only inform about overflow
+✓ learning: speedup shortens an active builder timer and never lengthens it
+✓ content policy: no Quran text is hard-coded anywhere in the code
+✓ content policy: the render layers never import the Quran dataset or text
+✓ content policy: neither the save file nor a lesson report carries Quran text
+✓ learning: the save roundtrip keeps Leitner boxes, lesson records and totals
+✓ phase 5 data: four unit types with roles, costs and combat stats in units.json
+✓ phase 5 data: wall + three defence structures carry range/damage/speed/hp/cost in defenses.json
+✓ phase 5 data: battle.json holds the whole simulation contract (no magic numbers in code)
+✓ phase 5: the simulation layer is free of Math.random, clocks and trigonometry
+✓ phase 5 pathfinding: a wall blocks the grid, breaching frees the cells and bumps the version
+✓ phase 5 pathfinding: A* routes around a wall through the only gate and never steps on a wall
+✓ phase 5 pathfinding: a sealed ring makes the inner tower unreachable, so raiders go for the wall
+✓ phase 5 pathfinding: no attack ever crosses a standing wall segment
+✓ phase 5 FSM: idle→move→attack→down/retreat and no illegal jump
+✓ phase 5 defence: a tower fires at the edge of its range (same measuring convention as units)
+✓ phase 5 defence: the sentry slows raiders and the beacon damages a group
+✓ phase 5 determinism: identical seed + identical commands ⇒ bit-identical battle
+✓ phase 5 determinism: a different seed produces a different battle
+✓ phase 5 replay: the recorded battle replays to the same hash and verifies like a server would
+✓ phase 5 replay: a recorded battle with 25 raiders still replays identically (server validation)
+✓ phase 5 battle: raiders walk through an open gate and never chew the wall instead
+✓ phase 5 battle: a healer heals its own side and never fires at anyone
+✓ phase 5 battle: defeated units retreat and fade out — no blood, no corpses
+✓ phase 5 battle: deployment is validated (free tile, safe distance, in-battle limit) and recorded
+✓ phase 5 battle: withdraw ends the battle and is recorded as a command
+✓ phase 5 army: capacity and training come from battle.json + units.json
+✓ phase 5 army: barracks level raises capacity and a full reserve blocks training
+✓ phase 5 army: no barracks means no training, and the save keeps the garrison and the queue
+✓ phase 5 army: events + readiness summary are emitted for the UI
+✓ phase 5 outcome: rewards, damaged structures and the army write-back follow the report
+✓ phase 5 outcome: repair restores health and costs resources from defenses.json
+✓ phase 5 save: structure health and the battle record survive the save roundtrip
+✓ phase 5 content policy: the battle layers know nothing about Quran text
+✓ phase 5 perf: a 25-raider battle simulates far faster than real time (30-unit budget)
+✓ phase 6 data: the three missions normalize, validate and chain in order
+✓ phase 6 policy: mission data carries references only — no verse text anywhere
+✓ phase 6 mission 1: two stars without capacity, three stars with it, reward paid once
+✓ phase 6 mission 2: waves punish gaps — idle city floods, diligent crew holds the dam
+✓ phase 6 mission 3: neglect costs the gardens; upkeep and gratitude keep prosperity
+✓ phase 6 save: stars and the active run survive the roundtrip — and the run resumes paused
+✓ phase 6 queue: mission work uses city builders, is not refunded on abort and rolls back on a full queue
+✓ phase 6 missions pay star rewards that respect the warehouse ceiling and never gamble
+✓ phase 7 data: FTUE covers the first 30 minutes and daily tasks have no miss-day penalty
+✓ phase 7 engine: battery saver caps the frame rate at 30 and disables shadows
+✓ phase 7 meta: real progression events guide construction, harvest and the first lesson
+✓ phase 7 FTUE: skip is available and replay walks the same staged guide
+✓ phase 7 daily + settings: unfinished tasks and preferences persist across days and saves
+✓ phase 8 chat filter: masks blocked words incl. Arabic variants and stretching
+✓ phase 8 rate limit: sliding window blocks bursts then refills 
+✓ phase 8 auth: tokens unique, display names sanitised, privacy minimal
+✓ economy: gohar has no Math.random and no purchase path        
+✓ save: memory-backend roundtrip preserves resources, entities and jobs
+✓ quran: a broken remote dataset falls back to the placeholder sample (no crash)
+✓ quran: a Tanzil-style dataset swaps in without code changes (verse text from remote, lessons kept)
+✓ phase 8 client: SocialClient request/response, pushes and graceful failure
+✓ phase 8 e2e: two clients join one jamaat — help, ledger authority, filter, rate limit, report, child, event
+
+112/112 checks passed.
+
+> shahr-nur@0.3.0 test:unit
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+ [32m✓[39m tests/battle-sim.test.js [2m([22m[2m17 tests[22m[2m)[22m[33m 679[2mms[22m[39m
+   [32m✓[39m battle: determinism (core acceptance) [2m(3)[22m
+     [33m[2m✓[22m[39m identical seed + identical commands ⇒ bit-identical battle[33m 386[2mms[22m[39m
+ [32m✓[39m tests/upgrade-battle.test.js [2m([22m[2m6 tests[22m[2m)[22m[33m 365[2mms[22m[39m
+ [32m✓[39m tests/hud.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 181[2mms[22m[39m
+ [32m✓[39m tests/upgrade-panels.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 174[2mms[22m[39m
+ [32m✓[39m tests/upgrade-security.test.js [2m([22m[2m34 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+ [32m✓[39m tests/upgrade-buildings.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 114[2mms[22m[39m
+ [32m✓[39m tests/barracks-characters.test.js [2m([22m[2m1 test[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32m✓[39m tests/upgrade-pwa-ui.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m tests/upgrade-quran.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m tests/character-pipeline.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/economy.test.js [2m([22m[2m19 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m tests/upgrade-unit-models.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/building-architecture.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m tests/upgrade-render.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/perf-monitor.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/upgrade-server.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/upgrade-architecture.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/upgrade-shadows.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/upgrade-lazy.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/upgrade-governor.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/upgrade-save.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/upgrade-pwa.test.js [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m22 passed[39m[22m[90m (22)[39m
+[2m      Tests [22m [1m[32m142 passed[39m[22m[90m (142)[39m
+[2m   Start at [22m 09:28:43
+[2m   Duration [22m 9.70s[2m (environment 43%, tests 27%, transform 16%, import 12%, worker 1%)[22m
+
+[2m    Isolate [22m [33m22 workers spawned[39m[2m · ~246ms startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~5.17s faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+

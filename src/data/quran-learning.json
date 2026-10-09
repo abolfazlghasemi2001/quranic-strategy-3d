@@ -3,8 +3,14 @@
   "dataset": {
     "expectedPath": "./quran/quran.json",
     "queryParam": "quran",
-    "cacheBust": true,
-    "rejectPlaceholderFromRemote": false
+    "cacheBust": false,
+    "rejectPlaceholderFromRemote": false,
+    "timeoutMs": 8000,
+    "idleTimeoutMs": 5000,
+    "maxBytes": 8388608,
+    "checksums": {
+      "./quran/quran.json": "77dfcb0b730cd67677a23b0f004f047b701ab13c8ca608c0bb6d3836f4f2e778"
+    }
   },
   "lesson": {
     "targetSecondsMin": 120,
@@ -18,11 +24,31 @@
     "lapseBox": 1,
     "requeueAfter": 3,
     "boxes": [
-      { "box": 1, "minutes": 10, "label": "۱۰ دقیقه" },
-      { "box": 2, "minutes": 720, "label": "۱۲ ساعت" },
-      { "box": 3, "minutes": 4320, "label": "۳ روز" },
-      { "box": 4, "minutes": 10080, "label": "۷ روز" },
-      { "box": 5, "minutes": 30240, "label": "۲۱ روز" }
+      {
+        "box": 1,
+        "minutes": 10,
+        "label": "۱۰ دقیقه"
+      },
+      {
+        "box": 2,
+        "minutes": 720,
+        "label": "۱۲ ساعت"
+      },
+      {
+        "box": 3,
+        "minutes": 4320,
+        "label": "۳ روز"
+      },
+      {
+        "box": 4,
+        "minutes": 10080,
+        "label": "۷ روز"
+      },
+      {
+        "box": 5,
+        "minutes": 30240,
+        "label": "۲۱ روز"
+      }
     ],
     "newItemBox": 1
   },
@@ -55,10 +81,26 @@
     "shuffleWithSeed": true
   },
   "rewards": {
-    "lessonComplete": { "nur": 45, "hekmat": 30, "speedupSeconds": 90 },
-    "firstCompletion": { "nur": 60, "hekmat": 40, "speedupSeconds": 120 },
-    "reviewSession": { "nur": 12, "hekmat": 8, "speedupSeconds": 0 },
-    "perfectLessonBonus": { "nur": 15, "hekmat": 10, "speedupSeconds": 0 },
+    "lessonComplete": {
+      "nur": 45,
+      "hekmat": 30,
+      "speedupSeconds": 90
+    },
+    "firstCompletion": {
+      "nur": 60,
+      "hekmat": 40,
+      "speedupSeconds": 120
+    },
+    "reviewSession": {
+      "nur": 12,
+      "hekmat": 8,
+      "speedupSeconds": 0
+    },
+    "perfectLessonBonus": {
+      "nur": 15,
+      "hekmat": 10,
+      "speedupSeconds": 0
+    },
     "respectStorageCapacity": true,
     "speedupPoolMaxSeconds": 300,
     "note": "پاداش‌ها اختیاری و فقط تسریع‌کننده‌اند؛ هیچ خطا یا ترک درسی جریمه ندارد و پاداش هرگز از منابع کم نمی‌کند."

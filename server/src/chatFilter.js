@@ -1,63 +1,44 @@
-/**
- * Persian chat filter: normalise Arabic-script variants, then mask blocked
- * tokens. Data-driven — the word list lives in src/data/social.json and this
- * module never hardcodes any word.
- *
- * Normalisation handles the usual evasions: Arabic ي/ك, diacritics, tatweel,
- * zero-width joiners and stretched letters («جــنــده» → «جنده»).
- */
-
-const ARABIC_YEH = /[يى]/g;
-const ARABIC_KEH = /[كک]/g;
-/* eslint-disable no-misleading-character-class */
-const DIACRITICS = /[ً-ٰٟـ]/g;
-const ZERO_WIDTH = /[‌‍]/g;
-const REPEATS = /(.)\1{2,}/g;
-
-/** Canonical form used ONLY for matching (the original text keeps its shape). */
+/** Data-driven Persian moderation. Matching never rewrites innocent display text. */
 export function normalizeForMatch(text) {
-  return String(text || '')
-    .replace(ARABIC_YEH, 'ی')
-    .replace(ARABIC_KEH, 'ک')
-    .replace(/ة/g, 'ه')
-    .replace(DIACRITICS, '')
-    .replace(ZERO_WIDTH, '')
-    .replace(REPEATS, '$1')
-    .toLowerCase();
+  return String(text || '').normalize('NFKC')
+    .replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/ة/g, 'ه')
+    .replace(/[\p{M}\p{Cf}\u0640]/gu, '')
+    .replace(/(.)\1{2,}/gu, '$1').toLowerCase();
 }
-
-/** Collapse whitespace/control characters and enforce the length cap. */
 export function cleanChatText(text, { maxLength = 280 } = {}) {
   if (typeof text !== 'string') return '';
-  // eslint-disable-next-line no-control-regex
-  const cleaned = text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/\s+/g, ' ').trim();
-  return cleaned.slice(0, Math.max(0, maxLength));
+  return text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g, '')
+    .replace(/\s+/g, ' ').trim().slice(0, Math.max(0, maxLength));
 }
+const canonical = (text) => normalizeForMatch(text).replace(/[^\p{L}]/gu, '');
 
-/**
- * @param {string} text — raw client text
- * @param {object} options — { wordlist:string[], mask:string, maxLength:number }
- * @returns {{text:string, blocked:boolean, hits:number}} — `text` is safe to broadcast.
- */
 export function filterChat(text, { wordlist = [], mask = '⁂', maxLength = 280 } = {}) {
   const cleaned = cleanChatText(text, { maxLength });
   if (!cleaned) return { text: '', blocked: false, hits: 0 };
-  const blocked = wordlist
-    .filter((word) => typeof word === 'string' && word.trim().length >= 2)
-    .map((word) => normalizeForMatch(word.trim()));
-  if (blocked.length === 0) return { text: cleaned, blocked: false, hits: 0 };
-
-  // Split while keeping separators so the rebuilt string preserves spacing.
+  const blocked = [...new Set(wordlist.filter((word) => typeof word === 'string' && word.trim().length >= 2).map(canonical))].filter(Boolean);
+  if (!blocked.length) return { text: cleaned, blocked: false, hits: 0 };
   const parts = cleaned.split(/(\s+)/);
+  const words = parts.map((part, index) => ({ index, value: canonical(part) })).filter((entry) => entry.value);
+  const masked = new Set();
   let hits = 0;
-  const masked = parts.map((part) => {
-    if (/^\s*$/.test(part) || part.length === 0) return part;
-    const canonical = normalizeForMatch(part).replace(/[^آ-یa-z]/g, '');
-    if (canonical.length < 2) return part;
-    const hit = blocked.some((word) => canonical.includes(word));
-    if (!hit) return part;
-    hits += 1;
-    return String(mask).repeat(Math.min(Math.max(part.length, 3), 8));
-  });
-  return { text: masked.join(''), blocked: hits > 0, hits };
+  for (let i = 0; i < words.length; i += 1) {
+    if (blocked.some((word) => words[i].value.includes(word))) { masked.add(words[i].index); hits += 1; }
+    // Across whitespace, match complete canonical tokens ONLY. This catches
+    // arbitrary cuts of a blocked word without joining unrelated whole words
+    // and censoring a substring at their accidental boundary ("ab cd" ≠ "bc").
+    for (const word of blocked) {
+      let joined = words[i].value;
+      if (!word.startsWith(joined) || joined === word) continue;
+      for (let j = i + 1; j < words.length && joined.length < word.length; j += 1) {
+        joined += words[j].value;
+        if (!word.startsWith(joined)) break;
+        if (joined === word) {
+          for (let k = i; k <= j; k += 1) masked.add(words[k].index);
+          hits += 1; break;
+        }
+      }
+    }
+  }
+  for (const index of masked) parts[index] = String(mask).repeat(Math.min(Math.max(parts[index].length, 3), 8));
+  return { text: parts.join(''), blocked: hits > 0, hits };
 }

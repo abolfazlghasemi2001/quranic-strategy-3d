@@ -12,6 +12,7 @@
  */
 import { SocialClient } from './SocialClient.js';
 import { EVENTS } from '../../core/EventBus.js';
+import { socialEndpoint } from '../../core/EndpointPolicy.js';
 
 const SERVER_JOB = 'srv-';
 const PULL_SECONDS = 20;
@@ -35,6 +36,7 @@ export class SocialSystem {
   constructor({ config, bus, state, economy, queue, game, url = null }) {
     Object.assign(this, { config, bus, state, economy, queue, game });
     this.urlOverride = url;
+    this.baseUrl = config.appUrl;
     this.client = null;
     this.status = 'offline'; // offline | connecting | online | error
     this.statusDetail = '';
@@ -65,15 +67,7 @@ export class SocialSystem {
 
   defaultUrl() {
     if (this.urlOverride) return this.urlOverride;
-    try {
-      if (typeof window !== 'undefined' && window.location?.host) {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${protocol}//${window.location.host}/social-ws`;
-      }
-    } catch {
-      /* non-browser */
-    }
-    return 'ws://127.0.0.1:8081/social-ws';
+    return socialEndpoint(this.config.social.client?.defaultPath || '/social-ws', { baseUrl: this.baseUrl });
   }
 
   /* -------------------------------------------------------------- connect */
@@ -85,12 +79,16 @@ export class SocialSystem {
   async connect({ displayName, isChild, url } = {}) {
     if (this.isOnline()) return this.snapshot();
     if (this.status === 'connecting') throw { error: 'busy' }; // eslint-disable-line no-throw-literal
+    const target = socialEndpoint(url || this.defaultUrl(), { baseUrl: this.baseUrl, allowedOrigins: this.config.social.client?.allowedOrigins || [] });
+    if (!target) {
+      this.bus.emit(EVENTS.UI_TOAST, this.config.t('security.socialRejected'));
+      throw { error: 'invalid-endpoint' };
+    }
     const prefs = this.prefs;
     if (displayName !== undefined) prefs.displayName = String(displayName).slice(0, 16);
     if (isChild !== undefined) prefs.isChild = isChild === true;
     this.game.persist();
 
-    const target = url || this.defaultUrl();
     this._setStatus('connecting');
     const client = new SocialClient({
       url: target,

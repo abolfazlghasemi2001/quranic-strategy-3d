@@ -1,0 +1,70 @@
+
+> shahr-nur@0.3.0 test:pwa
+> node tools/pwa-check.mjs
+
+PWA release check — dist/
+  ✓ dist/index.html exists
+  ✓ index.html links the manifest
+  ✓ index.html is fa/rtl
+  ✓ index.html sets theme-color
+  ✓ dist/manifest.webmanifest exists
+  ✓ manifest has name + short_name
+  ✓ manifest lang/dir = fa-IR / rtl
+  ✓ manifest display = standalone
+  ✓ manifest has start_url
+  ✓ manifest declares >= 2 icons
+  ✓ icon exists: ./icons/icon-192.png
+  ✓ icon is a real PNG: ./icons/icon-192.png
+  ✓ icon ./icons/icon-192.png is 192x192 px (got 192x192)
+  ✓ icon exists: ./icons/icon-512.png
+  ✓ icon is a real PNG: ./icons/icon-512.png
+  ✓ icon ./icons/icon-512.png is 512x512 px (got 512x512)
+  ✓ dist/sw.js exists (registered by src/main.js in PROD)
+  ✓ service worker handles 'install'
+  ✓ service worker handles 'activate'
+  ✓ service worker handles 'fetch'
+  ✓ service worker precaches the app shell
+  ✓ service worker cleans up old caches on activate
+  ✓ service worker has an explicit precache list
+  ✓ precache list includes ./index.html
+  ✓ precache list includes the JS bundle
+  ✓ precache list includes the CSS bundle
+  ✓ precache list includes the manifest
+  ✓ precache list includes icons
+  ✓ precached file exists on disk: ./assets/ArmyFeature-Bzwoijrl.js
+  ✓ precached file exists on disk: ./assets/BuildingSurfaceMaps-BeSlNyW6.js
+  ✓ precached file exists on disk: ./assets/CampaignFeature-wna4x-cl.js
+  ✓ precached file exists on disk: ./assets/FTUEGuide-DE5-80uQ.js
+  ✓ precached file exists on disk: ./assets/FrameTimeGovernor-CStVnbIj.js
+  ✓ precached file exists on disk: ./assets/PanelsFeature-BGM82D-n.js
+  ✓ precached file exists on disk: ./assets/PwaUpdateNotice-Cj9z49vQ.js
+  ✓ precached file exists on disk: ./assets/ShadowRig-D48yv96l.js
+  ✓ precached file exists on disk: ./assets/SoundManager-CBgPHd2s.js
+  ✓ precached file exists on disk: ./assets/VerseIds-_iqcZdS_.js
+  ✓ precached file exists on disk: ./assets/battle-T4MFPDi0.js
+  ✓ precached file exists on disk: ./assets/characters-BZd4g6JF.js
+  ✓ precached file exists on disk: ./assets/characters/ATTRIBUTIONS.md
+  ✓ precached file exists on disk: ./assets/characters/LICENSE.txt
+  ✓ precached file exists on disk: ./assets/characters/archers/archer.glb
+  ✓ precached file exists on disk: ./assets/characters/builders/builder.glb
+  ✓ precached file exists on disk: ./assets/characters/farmers/farmer.glb
+  ✓ precached file exists on disk: ./assets/characters/guards/guard.glb
+  ✓ precached file exists on disk: ./assets/characters/scholars/scholar.glb
+  ✓ precached file exists on disk: ./assets/index-0pDypMT3.css
+  ✓ precached file exists on disk: ./assets/index-N6wBDXgW.js
+  ✓ precached file exists on disk: ./assets/quran-DWDQuD4d.js
+  ✓ precached file exists on disk: ./assets/strings.fa-_ITr6Dc5.js
+  ✓ precached file exists on disk: ./assets/three-CRFS15zL.js
+  ✓ precached file exists on disk: ./fonts/AmiriQuran-Arabic.woff2
+  ✓ precached file exists on disk: ./fonts/OFL-AmiriQuran.txt
+  ✓ precached file exists on disk: ./fonts/OFL-Vazirmatn.txt
+  ✓ precached file exists on disk: ./fonts/Vazirmatn-Variable.woff2
+  ✓ precached file exists on disk: ./icons/icon-192.png
+  ✓ precached file exists on disk: ./icons/icon-512.png
+  ✓ precached file exists on disk: ./index.html
+  ✓ precached file exists on disk: ./manifest.webmanifest
+  ✓ precached file exists on disk: ./quran/README.md
+  ✓ precached file exists on disk: ./quran/quran.json
+
+PWA check passed: the build is installable-shaped and precaches 34 offline files.
+Remaining (needs a real device): install prompt, offline launch after install, Cache Storage size.

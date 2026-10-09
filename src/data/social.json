@@ -9,14 +9,38 @@
     "completeGraceMs": 1500,
     "tickMs": 5000,
     "clientVersion": "0.3.0",
-    "note": "سرور مرجع: منابع و تایمرها فقط در سرور معتبرند. ساعت سرور تنها مرجع زمان است؛ هیچ عددی از کلاینت (منابع، endsAt) پذیرفته نمی‌شود."
+    "note": "سرور مرجع: منابع و تایمرها فقط در سرور معتبرند. ساعت سرور تنها مرجع زمان است؛ هیچ عددی از کلاینت (منابع، endsAt) پذیرفته نمی‌شود.",
+    "transport": {
+      "maxFrameBytes": 65536,
+      "maxMessageBytes": 262144,
+      "maxBufferedBytes": 524288,
+      "maxFragments": 128,
+      "frameTimeoutMs": 8000,
+      "closeTimeoutMs": 1000,
+      "idleTimeoutMs": 60000,
+      "helloTimeoutMs": 10000,
+      "maxConnectionsPerIp": 8,
+      "maxConnections": 200,
+      "maxFramesPerSecond": 160,
+      "allowedOrigins": []
+    }
   },
   "ledger": {
     "maxBuildingsAdopted": 60,
     "linkSeedBudgetHours": 8,
     "harvestSlack": 1.0,
     "maxCostTotal": 1000000,
-    "allowedGrantSources": ["lesson", "review", "mission", "battle", "town", "refund", "event", "daily", "other"],
+    "allowedGrantSources": [
+      "lesson",
+      "review",
+      "mission",
+      "battle",
+      "town",
+      "refund",
+      "event",
+      "daily",
+      "other"
+    ],
     "grantCaps": {
       "lesson": 200,
       "review": 60,
@@ -46,30 +70,75 @@
     "presetWindowMs": 60000,
     "maxPresetPerWindow": 12,
     "mask": "⁂",
-    "profanity": ["کیر", "کص", "کون", "جنده", "فاحشه", "حرومزاده", "حرمزاده", "بیناموس", "کسکش", "قحبه"],
+    "profanity": [
+      "کیر",
+      "کص",
+      "کون",
+      "جنده",
+      "فاحشه",
+      "حرومزاده",
+      "حرمزاده",
+      "بیناموس",
+      "کسکش",
+      "قحبه"
+    ],
     "note": "فهرست آغازین واژه‌های نامناسب برای فیلتر چت؛ نمونه است و باید با بازبینی ناظر انسانی کامل شود. متن چت فقط در حافظه نگه‌داری می‌شود و ذخیرهٔ دائم ندارد."
   },
   "quickChat": [
-    { "id": "salam", "text": "سلام! 👋" },
-    { "id": "help-me", "text": "کمکم می‌کنی؟ 🙏" },
-    { "id": "thanks", "text": "ممنون! 🌟" },
-    { "id": "bravo", "text": "آفرین! 👏" },
-    { "id": "event", "text": "برای رویداد هفتگی کمک کنید 🤝" },
-    { "id": "goodluck", "text": "موفق باشی! 🍀" }
+    {
+      "id": "salam",
+      "text": "سلام! 👋"
+    },
+    {
+      "id": "help-me",
+      "text": "کمکم می‌کنی؟ 🙏"
+    },
+    {
+      "id": "thanks",
+      "text": "ممنون! 🌟"
+    },
+    {
+      "id": "bravo",
+      "text": "آفرین! 👏"
+    },
+    {
+      "id": "event",
+      "text": "برای رویداد هفتگی کمک کنید 🤝"
+    },
+    {
+      "id": "goodluck",
+      "text": "موفق باشی! 🍀"
+    }
   ],
   "event": {
     "title": "کاروان نور",
     "description": "هدف مشترک هفتگی جماعت: با اهدای رزق، نور و حکمت کاروان را به مقصد برسانید. رقابت فقط دوستانه است؛ بدون غارت و بدون از دست دادن منابع.",
     "goal": 1000,
-    "weights": { "rizq": 1, "nur": 2, "hekmat": 3 },
+    "weights": {
+      "rizq": 1,
+      "nur": 2,
+      "hekmat": 3
+    },
     "rewardGohar": 8,
     "note": "با کامل‌شدن هدف، همهٔ هم‌سهم‌ها پاداش یکسان می‌گیرند. هفتهٔ میلادی (UTC) مبنای دوره است."
   },
   "reportReasons": [
-    { "id": "spam", "text": "هرزنگاری" },
-    { "id": "insult", "text": "توهین یا فحاشی" },
-    { "id": "cheat", "text": "تقلب" },
-    { "id": "other", "text": "دیگر موارد نامناسب" }
+    {
+      "id": "spam",
+      "text": "هرزنگاری"
+    },
+    {
+      "id": "insult",
+      "text": "توهین یا فحاشی"
+    },
+    {
+      "id": "cheat",
+      "text": "تقلب"
+    },
+    {
+      "id": "other",
+      "text": "دیگر موارد نامناسب"
+    }
   ],
   "rate": {
     "globalPerMinute": 120,
@@ -88,9 +157,22 @@
   },
   "privacy": {
     "minimalData": true,
-    "storedFields": ["token", "displayName", "isChild", "resources", "jobs", "buildings", "contributions", "reports"],
+    "storedFields": [
+      "token",
+      "displayName",
+      "isChild",
+      "resources",
+      "jobs",
+      "buildings",
+      "contributions",
+      "reports"
+    ],
     "chatPersisted": false,
     "childFreeChat": false,
     "note": "حداقل داده: فقط نام نمایشی (بدون اطلاعات شخصی)، پرچم کودک، لجر بازی و گزارش‌ها. چت آزاد برای حساب کودک بسته است و فقط پیام آماده مجاز است."
+  },
+  "client": {
+    "defaultPath": "/social-ws",
+    "allowedOrigins": []
   }
 }

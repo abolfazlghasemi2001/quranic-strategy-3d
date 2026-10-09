@@ -20,9 +20,10 @@ export function paint(geometry, color) {
   const count = geometry.attributes.position.count;
   const colors = new Float32Array(count * 3);
   for (let i = 0; i < count; i += 1) {
-    colors[i * 3] = value.r;
-    colors[i * 3 + 1] = value.g;
-    colors[i * 3 + 2] = value.b;
+    const ao = 0.82 + Math.max(0, geometry.attributes.normal?.getY(i) || 0) * 0.18;
+    colors[i * 3] = value.r * ao;
+    colors[i * 3 + 1] = value.g * ao;
+    colors[i * 3 + 2] = value.b * ao;
   }
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   return geometry;
@@ -45,6 +46,7 @@ export function mergePainted(parts, name = 'merged') {
     offset += n;
     source.dispose();
   }
+  for (const original of parts) if (original?.index) original.dispose();
   const merged = new THREE.BufferGeometry();
   merged.setAttribute('position', new THREE.BufferAttribute(position, 3));
   merged.setAttribute('normal', new THREE.BufferAttribute(normal, 3));
@@ -67,9 +69,9 @@ const at = (geometry, x, y, z, rotate = null) => {
  * هندسهٔ هر گونهٔ واحد. واحدها رو به +Z ساخته می‌شوند؛ چرخش نهایی در شبیه‌ساز
  * نمایش داده می‌شود. هیچ جزئیات چهره‌ای وجود ندارد (قاعدهٔ محتوایی پروژه).
  */
-export function createUnitGeometry(type, palette) {
+export function createUnitGeometry(type, palette, render = {}) {
   const parts = [];
-  const body = (r, h, color, y = h / 2) => at(paint(new THREE.ConeGeometry(r, h, 7), color), 0, y, 0);
+  const body = (r, h, color, y = h / 2 + 0.25) => at(paint(new THREE.ConeGeometry(r, h, 7), color), 0, y, 0);
   const head = (r, color, y) => at(paint(new THREE.SphereGeometry(r, 8, 6), color), 0, y, 0);
   const crown = (r, h, color, y) => at(paint(new THREE.ConeGeometry(r, h, 7), color), 0, y, 0);
 
@@ -106,12 +108,43 @@ export function createUnitGeometry(type, palette) {
     parts.push(body(0.3, 1.0, palette.body));
     parts.push(head(0.18, palette.trim, 1.1));
   }
-  return mergePainted(parts, `unit:${type}`);
+  for (const side of [-1, 1]) {
+    parts.push(at(paint(new THREE.BoxGeometry(.12,.42,.14),palette.dark),side*.13,.21,0));
+    parts.push(at(paint(new THREE.BoxGeometry(.17,.12,.26),palette.dark),side*.13,.06,.06));
+    parts.push(at(paint(new THREE.CylinderGeometry(.07,.075,.42,6),palette.body),side*.29,.66,.02,{z:side*.18}));
+    parts.push(at(paint(new THREE.SphereGeometry(.085,6,4),palette.trim),side*.32,.44,.03));
+  }
+  const result = mergePainted(parts, `unit:${type}`);
+  if (result.attributes.position.count / 3 > (render.maxTriangles || 800)) { result.dispose(); throw new Error(`unit-triangle-cap:${type}`); }
+  return result;
 }
 
 /** متریال مشترک واحدها (یک بار ساخته و همه‌جا استفاده می‌شود). */
 export function createUnitMaterial() {
-  return new THREE.MeshLambertMaterial({ vertexColors: true });
+  const material = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+  const uniforms = { time: { value: 0 }, strength: { value: 1 } };
+  const bind = (shader) => {
+    shader.uniforms.uPoseTime = uniforms.time; shader.uniforms.uPoseStrength = uniforms.strength;
+    shader.vertexShader = `attribute vec4 aPose; uniform float uPoseTime; uniform float uPoseStrength; varying vec4 vPose;\n${shader.vertexShader}`;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      vPose = aPose;
+      if (uPoseStrength > 0.0) {
+        float walk = (aPose.x == 1.0 || aPose.x == 4.0) ? 1.0 : 0.0;
+        float phase = uPoseTime * 8.0 + aPose.y;
+        float foot = 1.0 - smoothstep(0.36, 0.55, position.y);
+        transformed.z += sin(phase + step(0.0, position.x) * 3.14159) * foot * walk * 0.13;
+        float hand = smoothstep(0.25, 0.35, abs(position.x)) * step(position.y, 1.2);
+        float act = (aPose.x == 2.0 || aPose.x == 3.0) ? 1.0 : 0.0;
+        transformed.z += sin(phase * 1.6) * hand * act * 0.12;
+        transformed.y += sin(uPoseTime * 2.0 + aPose.y) * 0.015;
+      }`);
+    shader.fragmentShader = `varying vec4 vPose;\n${shader.fragmentShader}`.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+      if (vPose.x == 5.0 && fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453) < vPose.w) discard;`);
+  };
+  for (const item of [material, depth]) { item.onBeforeCompile = bind; item.customProgramCacheKey = () => 'faceless-pose-v1'; }
+  material.userData.pose = uniforms; material.userData.depthMaterial = depth;
+  return material;
 }
 
 /** هندسهٔ تیر/گلولهٔ نوری (برای پروازهای کوتاه دیداری). */

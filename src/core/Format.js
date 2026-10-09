@@ -11,3 +11,6 @@ export function formatFa(value, digits = 0) {
   const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
   return faDigits(decPart ? `${grouped}٫${decPart}` : grouped);
 }
+
+/** Compatibility alias for numeric Quran/reference labels; no dataset dependency. */
+export const toFaDigits = faDigits;

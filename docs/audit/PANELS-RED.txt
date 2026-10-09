@@ -1,0 +1,103 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/user/quranic-strategy-3d[39m
+
+[90mstderr[2m | tests/upgrade-panels.test.js[2m > [22m[2mBarracksPanel smoke[2m > [22m[2mopens, starts deterministic training, closes and reopens with queue intact
+[22m[39m[EventBus] listener for "army:changed" failed: TypeError: Cannot read properties of undefined (reading 'style')
+    at BarracksPanel._renderProgress [90m(/home/user/quranic-strategy-3d/[39msrc/ui/BarracksPanel.js:316:17[90m)[39m
+    at BarracksPanel.renderQueue [90m(/home/user/quranic-strategy-3d/[39msrc/ui/BarracksPanel.js:309:10[90m)[39m
+    at BarracksPanel.render [90m(/home/user/quranic-strategy-3d/[39msrc/ui/BarracksPanel.js:261:10[90m)[39m
+    at [90m/home/user/quranic-strategy-3d/[39msrc/ui/BarracksPanel.js:92:32
+    at EventBus.emit [90m(/home/user/quranic-strategy-3d/[39msrc/core/EventBus.js:44:9[90m)[39m
+    at BarracksSystem.emitChanged [90m(/home/user/quranic-strategy-3d/[39msrc/game/barracks/BarracksSystem.js:331:15[90m)[39m
+    at BarracksSystem.startTraining [90m(/home/user/quranic-strategy-3d/[39msrc/game/barracks/BarracksSystem.js:204:10[90m)[39m
+    at [90m/home/user/quranic-strategy-3d/[39mtests/upgrade-panels.test.js:60:26
+    at [90mfile:///home/user/quranic-strategy-3d/[39mnode_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:1628:35
+    at [90mfile:///home/user/quranic-strategy-3d/[39mnode_modules/[4mvitest[24m/dist/chunks/run.BTlFXlnv.js:2783:26
+
+ [31m❯[39m tests/upgrade-panels.test.js [2m([22m[2m6 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 202[2mms[22m[39m
+   [31m❯[39m BattlePanel smoke regressions [2m(5)[22m
+     [32m✓[39m keeps the withdrawal report visible and lets the player close the session[32m 59[2mms[22m[39m
+[31m     [31m×[31m does not display the live controls over a finished replay report[39m[32m 38[2mms[22m[39m
+[31m     [31m×[31m replays directly from its own result button without a manual session close[39m[32m 22[2mms[22m[39m
+[31m     [31m×[31m keeps a valid replay verified at completion, not just on initial verification[39m[32m 23[2mms[22m[39m
+     [32m✓[39m unsubscribes when disposed and renders hostile encounter text literally[32m 9[2mms[22m[39m
+   [31m❯[39m BarracksPanel smoke [2m(1)[22m
+[31m     [31m×[31m opens, starts deterministic training, closes and reopens with queue intact[39m[32m 50[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-panels.test.js[2m > [22mBattlePanel smoke regressions[2m > [22mdoes not display the live controls over a finished replay report
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-panels.test.js:[2m34:59[22m[39m
+    [90m 32|[39m     game.battle.sim.runToEnd(); game.battle.update(0.1);
+    [90m 33|[39m     expect(panel.resultBox.classList.contains('is-hidden')).toBe(false…
+    [90m 34|[39m     expect(panel.liveBox.classList.contains('is-hidden')).toBe(true);
+    [90m   |[39m                                                           [31m^[39m
+    [90m 35|[39m   });
+    [90m 36|[39m   it('replays directly from its own result button without a manual ses…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-panels.test.js[2m > [22mBattlePanel smoke regressions[2m > [22mreplays directly from its own result button without a manual session close
+[31m[1mAssertionError[22m: expected 'live' to be 'replay' // Object.is equality[39m
+
+Expected: [32m"replay"[39m
+Received: [31m"live"[39m
+
+[36m [2m❯[22m tests/upgrade-panels.test.js:[2m38:58[22m[39m
+    [90m 36|[39m   it('replays directly from its own result button without a manual ses…
+    [90m 37|[39m     const panel = makePanel(); panel.show(); panel.startBattle(); game…
+    [90m 38|[39m     panel.replayButton.click(); expect(game.battle.mode).toBe('replay'…
+    [90m   |[39m                                                          [31m^[39m
+    [90m 39|[39m   });
+    [90m 40|[39m   it('keeps a valid replay verified at completion, not just on initial…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-panels.test.js[2m > [22mBattlePanel smoke regressions[2m > [22mkeeps a valid replay verified at completion, not just on initial verification
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/upgrade-panels.test.js:[2m44:45[22m[39m
+    [90m 42|[39m     game.battle.closeSession(); expect(game.battle.startReplay(0).ok).…
+    [90m 43|[39m     game.battle.sim.runToEnd(); game.battle.update(0.1);
+    [90m 44|[39m     expect(game.battle.lastVerification.ok).toBe(true);
+    [90m   |[39m                                             [31m^[39m
+    [90m 45|[39m   });
+    [90m 46|[39m   it('unsubscribes when disposed and renders hostile encounter text li…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/upgrade-panels.test.js[2m > [22mBarracksPanel smoke[2m > [22mopens, starts deterministic training, closes and reopens with queue intact
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'style')[39m
+[36m [2m❯[22m BarracksPanel._renderProgress src/ui/BarracksPanel.js:[2m316:17[22m[39m
+    [90m314|[39m       const elapsed = entry.duration > 0 ? (entry.job.endsAt - Date.no…
+    [90m315|[39m       const pct = Math.min(100, Math.max(0, (1 - elapsed) * 100));
+    [90m316|[39m       entry.row.style.setProperty('--progress', `${pct}%`);
+    [90m   |[39m                 [31m^[39m
+    [90m317|[39m     }
+    [90m318|[39m   }
+[90m [2m❯[22m BarracksPanel.renderQueue src/ui/BarracksPanel.js:[2m309:10[22m[39m
+[90m [2m❯[22m BarracksPanel.render src/ui/BarracksPanel.js:[2m261:10[22m[39m
+[90m [2m❯[22m tests/upgrade-panels.test.js:[2m61:11[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 07:39:01
+[2m   Duration [22m 1.56s[2m (environment 44%, transform 32%, tests 14%, import 9%)[22m
+
